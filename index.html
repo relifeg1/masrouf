@@ -1,9 +1,24 @@
-<title>خطتي الشهرية</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#4C3AE3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0D0F14" media="(prefers-color-scheme: dark)">
+<meta name="description" content="ميزانية شهرية بالعربية · بياناتك في جهازك">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" sizes="192x192">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="مصروف">
+<title>مصروف — خطتي الشهرية</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alexandria:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 
+</head>
+<body>
 <style id="app-style">
 :root{
   /* ══ نظام التنسيق ══
@@ -6548,6 +6563,23 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
 
     /* ── أين تُحفظ بياناتك ── */
     var CC = cloudCfg() || {};
+    if(!(window.claude && window.claude.use)){
+      h += '<div class="sec"><h2>التطبيق على جهازك</h2>'
+        + '<span class="hint">' + (isInstalled() ? "مثبَّت" : "من المتصفّح") + '</span></div>'
+        + '<div class="card"><div class="mrow"><span class="mn">ثبّته كتطبيق'
+        + '<span class="ms">' + (isInstalled()
+            ? "يعمل الآن كتطبيق مستقلّ — بلا شريط متصفّح، وبلا إنترنت."
+            : (installPrompt
+                ? "أيقونة على شاشتك · يفتح في ملء الشاشة · ويعمل بلا إنترنت."
+                : "افتحه من خادم https ثم استعمل «تثبيت» في قائمة متصفّحك. "
+                  + "من الملفّ مباشرة لا يمكن التثبيت — قيدٌ في المتصفّحات لا فينا."))
+        + '</span></span>'
+        + (isInstalled() ? '<span class="pill">مثبَّت</span>'
+           : (installPrompt ? '<button class="mini on" data-install="1">ثبّته</button>'
+                            : '<span class="pill">غير متاح هنا</span>'))
+        + '</div></div>';
+    }
+
     h += '<div class="sec"><h2>البداية</h2>'
       + '<span class="hint">' + (state.onboard ? "أُنجزت" : "لم تبدأ بعد") + '</span></div>'
       + '<div class="card"><div class="mrow"><span class="mn">معالج البدء'
@@ -7960,6 +7992,12 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       }
     });
     on("[data-onbstart]", function(){ onboardDlg(); });
+    on("[data-install]", function(){
+      if(!installPrompt){ toast("غير متاح الآن"); return; }
+      installPrompt.prompt();
+      installPrompt.userChoice.then(function(){ installPrompt = null; render(); })
+        ["catch"](function(){});
+    });
     on("[data-cloudcfg]", function(){
       var C = cloudCfg() || {};
       ask({ title: "اربط سحابتك",
@@ -8244,6 +8282,39 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     return ui.month + "-01";
   }
   /* الشهر يُشتقّ من التاريخ — لا من الشاشة المفتوحة */
+  /* ═══ التثبيت على الجهاز ═══
+     يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
+  var installPrompt = null, swReady = false;
+  function pwaInit(){
+    try{
+      /* isSecureContext هو المعيار: يشمل https وlocalhost و127.0.0.1
+         معاً. وشرطُ الاسم نصّاً يسقط على 127.0.0.1 — وقد سقط. */
+      if("serviceWorker" in navigator && window.isSecureContext){
+        navigator.serviceWorker.register("sw.js").then(function(){
+          swReady = true;
+        })["catch"](function(){});
+      }
+    }catch(e){}
+    try{
+      window.addEventListener("beforeinstallprompt", function(e){
+        e.preventDefault();
+        installPrompt = e;
+        render();
+      });
+      window.addEventListener("appinstalled", function(){
+        installPrompt = null;
+        toast("ثُبِّت على جهازك");
+        render();
+      });
+    }catch(e){}
+  }
+  function isInstalled(){
+    try{
+      return window.matchMedia("(display-mode: standalone)").matches
+          || window.navigator.standalone === true;
+    }catch(e){ return false; }
+  }
+
   /* ═══ معالج البدء ═══
      يظهر لمن لم يبدأ بعد: لا دخل ولا حركة. وعلامته في الحالة لا في
      المتصفّح، فمن نقل بياناته لا يُسأل من جديد. */
@@ -8615,6 +8686,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   if(!ui.month) ui.month = todayKey();
   month(ui.month);
   applyTheme();
+  pwaInit();
   render();
   /* أول مرة: المعالج بعد الرسم لا قبله — فيرى الشاشة خلفه ويعرف أين هو */
   if(needOnboard()) setTimeout(function(){ onboardDlg(); }, 120);
@@ -8624,3 +8696,6 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   }
 })();
 </script>
+
+</body>
+</html>
