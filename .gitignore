@@ -1,0 +1,5 @@
+# لا تُرفع نسخة أحدٍ الشخصية أبداً
+*.local.html
+*-private.html
+app-state*.json
+backup/
