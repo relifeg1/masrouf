@@ -341,6 +341,7 @@ input,select,button,textarea{font-family:inherit;font-size:16px;min-width:0;max-
   border-inline-start:2px solid var(--line-2);padding-inline-start:12px}
 .hintnote b{color:var(--ink-2);font-weight:600}
 .flag b{font-weight:700}
+.savebar{margin:12px 0}
 .flag .acts{margin-top:9px}
 
 .nav{position:fixed;inset-inline:0;bottom:0;z-index:40;background:var(--navbg);
@@ -3080,9 +3081,29 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
      صار يؤجَّل ٤٠٠ms: عشرة حقول تُملأ متتابعةً تُكتب مرّة لا عشراً.
      ويُفرَغ فوراً عند مغادرة الصفحة، فلا يضيع تعديلٌ أخير. */
   var _lsT = null, _lsDirty = false;
+  /* سببُ تعذّر الحفظ، إن تعذّر. "" يعني أنّه يعمل. */
+  var saveBlocked = "";
   function localWrite(){
     _lsDirty = false;
-    try{ localStorage.setItem(LSKEY, JSON.stringify(state)); }catch(e){}
+    try{
+      localStorage.setItem(LSKEY, JSON.stringify(state));
+      if(saveBlocked === "store"){ saveBlocked = ""; render(); }
+    }catch(e){
+      /* قد تكون المساحة امتلأت، وقد يكون التخزين ممنوعاً أصلاً.
+         الفرق يهمّ المستخدم: الأولى يعالجها، والثانية ليست بيده. */
+      var full = /quota|exceed/i.test(String(e && (e.name + " " + e.message)));
+      var was = saveBlocked;
+      saveBlocked = full ? "full" : "store";
+      if(was !== saveBlocked) render();
+    }
+  }
+  /* فحصٌ عند الإقلاع: لا ننتظر أوّل تعديلٍ ليكتشف أن عمله يضيع */
+  function storeProbe(){
+    try{
+      localStorage.setItem("kh_probe", "1");
+      if(localStorage.getItem("kh_probe") !== "1") throw new Error("no readback");
+      localStorage.removeItem("kh_probe");
+    }catch(e){ saveBlocked = "store"; }
   }
   function localSave(){
     _lsDirty = true;
@@ -3152,7 +3173,12 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       ["catch"](function(err){
         var c = err && err.code;
         if(c === "conflict") toast("حُفظت نسخة أحدث من جهاز آخر");
-        else if(c === "not_granted" || c === "not_writer") toast("العرض للقراءة فقط");
+        else if(c === "not_granted" || c === "not_writer"){
+          /* عرضٌ للقراءة: لو كان التخزين المحلّي يعمل لبقي عمله فيه،
+             وإلا فهو يضيع مع كل تحديثٍ للصفحة. شتّان. */
+          saveBlocked = (saveBlocked === "store") ? "store" : "readonly";
+          render();
+        }
         else toast("تعذّر الحفظ — محفوظ على هذا الجهاز");
       });
     }, 2200);
@@ -6903,7 +6929,9 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     /* صنف الشاشة على .wrap — مقبض تخطيطها في الأنماط */
     document.getElementById("root").innerHTML =
       '<div class="wrap v-' + (ui.tab || "dash") + '">'
-      + topbar() + updateBar() + body + '<footer>بياناتك تُحفظ تلقائياً</footer></div>'
+      + topbar() + saveBar() + updateBar() + body
+      + '<footer>' + (saveBlocked ? 'الحفظ متعذّر — اقرأ التنبيه أعلاه'
+                                  : 'بياناتك تُحفظ تلقائياً') + '</footer></div>'
       + navbar() + dlgHTML();
     applyNotes();
     wire(); if(!setNav()) colLayout(); wire(); dlgWire(); restoreFocus();
@@ -8390,7 +8418,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "2026.08.31+ab5e3d";
+  var APP_VERSION = "2026.08.31+4eda14";
   var installPrompt = null, swReady = false, swWaiting = null;
   function pwaInit(){
     try{
@@ -8452,6 +8480,24 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     try{ swWaiting.postMessage({ type: "SKIP_WAITING" }); }catch(e){}
     swWaiting = null;
     toast("جارٍ التحديث…");
+  }
+  function saveBar(){
+    if(!saveBlocked) return "";
+    var msg, act = "";
+    if(saveBlocked === "store")
+      msg = '<b>لا يُحفظ شيء في هذا العرض.</b> متصفّحك يمنع التخزين هنا — '
+          + 'كلّ ما تكتبه يضيع عند تحديث الصفحة. افتح التطبيق من رابطه '
+          + 'المستضاف، أو اسحب نسخة احتياطية قبل أن تغادر.';
+    else if(saveBlocked === "full")
+      msg = '<b>امتلأت مساحة التخزين.</b> بياناتك القديمة سليمة، لكن الجديد '
+          + 'لا يُكتب. احذف لقطة ما قبل التحديث من الأسفل أو صدّر نسخة.';
+    else
+      msg = '<b>هذا عرضٌ للقراءة فقط.</b> تعديلاتك محفوظة على هذا الجهاز '
+          + 'وحده ولن تصل غيره. افتح النسخة التي تملكها لتُحفظ.';
+    if(saveBlocked !== "readonly")
+      act = '<div class="acts"><button class="act solid" data-backup="1">'
+          + 'انسخ بياناتي الآن</button></div>';
+    return '<div class="flag warn savebar">' + msg + act + '</div>';
   }
   function updateBar(){
     if(!swWaiting) return "";
@@ -9075,6 +9121,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   }
 
   /* ═══ إقلاع ═══ */
+  storeProbe();           /* قبل كل شيء: أيُحفظ العمل أصلاً؟ */
   localLoad();
   snapBeforeUpdate();     /* قبل migrate — اللقطة للبنية القديمة لا المرقّاة */
   migrate();
@@ -9094,7 +9141,10 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   var backFromAuth = authFromHash();
   render();
   /* أول مرة: المعالج بعد الرسم لا قبله — فيرى الشاشة خلفه ويعرف أين هو */
-  if(needOnboard() && !backFromAuth) setTimeout(function(){ onboardDlg(); }, 120);
+  /* لو كان الحفظ متعذّراً لعاد المعالج مع كل تحديثٍ للصفحة — وهو ما
+     شكا منه المستخدم. التنبيه أصدق منه هنا. */
+  if(needOnboard() && !backFromAuth && !saveBlocked)
+    setTimeout(function(){ onboardDlg(); }, 120);
   /* جلسةٌ قائمة من زيارةٍ سابقة: تُنزَّل نسخةُ الحساب إن كان الجهاز خالياً */
   if(!backFromAuth && signedIn()) setTimeout(cloudFirstPull, 400);
 
