@@ -3246,7 +3246,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   function dlgHTML(){
     if(!dlg) return "";
     var f = dlg.fields || [];
-    return '<div class="ovl" data-ovl="1"><div class="dlg" data-stop="1">'
+    return '<div class="ovl" data-ovl="1"><div class="dlg">'
       + '<h3>' + esc(dlg.title) + '</h3>'
       + (dlg.msg ? '<p class="dmsg">' + dlg.msg + '</p>' : "")
       + '<div class="dlghtml">'
@@ -7056,6 +7056,15 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     });
 
     /* الدخل — يخص الشهر المعروض */
+    /* حقلا «الدخل الافتراضي» في الإعدادات كانا بلا مقبض: تكتب فيهما
+       فلا يُحفظ شيء. كشفهما تدقيقُ المقابض، وأكّده اختبارٌ حيّ. */
+    ch("[data-inc]", function(el){
+      var f = el.getAttribute("data-inc");
+      var v = calcAmt(el.value); if(v === null) v = num(el.value);
+      state.income[f] = Math.max(0, Math.round(v));
+      toast("حُدّث الدخل الافتراضي");
+      save(); render();
+    });
     ch("[data-minc]", function(el){
       var f = el.getAttribute("data-minc"), o = incObj(ui.month), v = num(el.value);
       if(onePlan() && !isPast(ui.month)){
@@ -7631,21 +7640,6 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       var c = catOf(b.getAttribute("data-hidecat"));
       c.hidden = !c.hidden;
       if(c.hidden && ui.cat === c.k) ui.cat = null;
-      save(); render();
-    });
-    on("[data-wizmove]", function(){
-      var sp = autoSplit(), done = 0, miss = 0;
-      sp.forEach(function(x){
-        if(!x.acct){ miss++; return; }
-        x.acct.bal = num(x.acct.bal) + x.a;
-        if(!x.acct.log) x.acct.log = [];
-        x.acct.log.push({ id: uid(), a: x.a, kind: "in",
-                          t: "تحويل شهري — " + mName(ui.month),
-                          d: new Date().toISOString().slice(0,10) });
-        done++;
-      });
-      month(ui.month).setup = true;
-      toast(miss ? ("سُجّل " + done + " تحويل · " + miss + " بلا حساب") : ("سُجّلت " + done + " تحويلات"));
       save(); render();
     });
 
