@@ -3074,7 +3074,29 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   function freshDone(){ return state.goals.filter(function(g){ return isDone(g) && !g.arch; }); }
 
   /* ═══ حفظ ═══ */
-  function localSave(){ try{ localStorage.setItem(LSKEY, JSON.stringify(state)); }catch(e){} }
+  /* ── الحفظ المحلّي: خارج مسار التفاعل ──
+     كان يُسلسل الحالة كلها في كل تعديل. والقياس أراه ٥ms من أصل ١٦
+     عند عشر سنوات — وهو الشيء الوحيد الذي ينمو مع تاريخك.
+     صار يؤجَّل ٤٠٠ms: عشرة حقول تُملأ متتابعةً تُكتب مرّة لا عشراً.
+     ويُفرَغ فوراً عند مغادرة الصفحة، فلا يضيع تعديلٌ أخير. */
+  var _lsT = null, _lsDirty = false;
+  function localWrite(){
+    _lsDirty = false;
+    try{ localStorage.setItem(LSKEY, JSON.stringify(state)); }catch(e){}
+  }
+  function localSave(){
+    _lsDirty = true;
+    clearTimeout(_lsT);
+    _lsT = setTimeout(localWrite, 400);
+  }
+  function localFlush(){ if(_lsDirty){ clearTimeout(_lsT); localWrite(); } }
+  try{
+    window.addEventListener("pagehide", localFlush);
+    window.addEventListener("beforeunload", localFlush);
+    document.addEventListener("visibilitychange", function(){
+      if(document.visibilityState === "hidden") localFlush();
+    });
+  }catch(e){}
   function countItems(ms){ var n=0; for(var k in ms){ if(ms[k]&&ms[k].items) n += ms[k].items.length; } return n; }
   function localLoad(){
     try{
