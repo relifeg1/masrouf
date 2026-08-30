@@ -7780,7 +7780,9 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       confirmDlg("تصفير كل البيانات؟",
         "سيُمسح كل شيء: الأشهر والعمليات والأهداف والحسابات. لا يمكن التراجع.", "صفّر كل شيء",
         function(){
-          state = { v: 8, income: { salary: 0, extra: 0 }, months: {}, cats: state.cats.map(function(c){
+          /* رقم البنية يبقى كما هو — التصفير يمحو البيانات لا يُنزل
+             الحالة إلى إصدارٍ أقدم. كان مكتوباً 8 والبنية 15. */
+          state = { v: state.v, income: { salary: 0, extra: 0 }, months: {}, cats: state.cats.map(function(c){
             return { k: c.k, n: c.n, e: c.e, c: c.c, p: 0, subs: [], custom: c.custom,
                      t: c.t, cls: c.cls, ro: c.ro };
           }), goals: [], invest: [], accts: [] };
@@ -8388,7 +8390,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "2026.08.31+fda13a";
+  var APP_VERSION = "2026.08.31+354629";
   var installPrompt = null, swReady = false, swWaiting = null;
   function pwaInit(){
     try{
