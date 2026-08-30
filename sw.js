@@ -10,7 +10,7 @@
  * ولا تُخزَّن بيانات المستخدم هنا إطلاقاً — هي في localStorage، ومسح
  * ذاكرة العامل لا يمسّها.
  */
-var VERSION = 'masrouf-v1';
+var VERSION = 'masrouf-2026.08.31+ae11db';
 var SHELL = [
   './',
   './index.html',
@@ -24,9 +24,14 @@ self.addEventListener('install', function (e) {
   e.waitUntil(
     caches.open(VERSION)
       .then(function (c) { return c.addAll(SHELL); })
-      .then(function () { return self.skipWaiting(); })
+      /* لا skipWaiting هنا: النسخة الجديدة تنتظر حتى يقول المستخدم
+         «حدّث الآن». وإلا استُبدلت الشيفرة تحت يده وهو يكتب. */
       .catch(function () { /* ملفّ ناقص لا يمنع التثبيت */ })
   );
+});
+
+self.addEventListener('message', function (e) {
+  if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
 self.addEventListener('activate', function (e) {
@@ -67,8 +72,12 @@ self.addEventListener('fetch', function (e) {
 
   /* الصفحة: الشبكة أولاً كي تصل التحديثات، والمخزَّن حين لا شبكة */
   if (req.mode === 'navigate' || /index\.html$/.test(url) || url.replace(/[?#].*$/, '').endsWith('/')) {
+    /* cache:'reload' يتجاوز ذاكرة HTTP ويحدّثها.
+       بدونه يعيد fetch نسخةً مخزَّنة في المتصفّح، فتُنشر نسخة جديدة
+       ولا تصل أحداً — قِيس فوصلت القديمة بعد النشر. */
     e.respondWith(
-      fetch(req).then(function (res) {
+      fetch(new Request(req.url, { cache: 'reload', credentials: 'same-origin' }))
+        .then(function (res) {
         var copy = res.clone();
         caches.open(VERSION).then(function (c) { c.put('./index.html', copy); });
         return res;

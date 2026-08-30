@@ -6602,6 +6602,14 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
         + '</div></div>';
     }
 
+    h += '<div class="sec"><h2>عن التطبيق</h2>'
+      + '<span class="hint">' + esc(APP_VERSION) + '</span></div>'
+      + '<div class="card"><div class="mrow"><span class="mn">النسخة'
+      + '<span class="ms">' + esc(APP_VERSION)
+      + (swReady ? ' · يعمل بلا إنترنت' : '') + '</span></span>'
+      + (swWaiting ? '<button class="mini on" data-update="1">حدّث الآن</button>'
+                   : '<span class="pill">أحدث نسخة</span>') + '</div></div>';
+
     h += '<div class="sec"><h2>البداية</h2>'
       + '<span class="hint">' + (state.onboard ? "أُنجزت" : "لم تبدأ بعد") + '</span></div>'
       + '<div class="card"><div class="mrow"><span class="mn">معالج البدء'
@@ -6861,7 +6869,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     /* صنف الشاشة على .wrap — مقبض تخطيطها في الأنماط */
     document.getElementById("root").innerHTML =
       '<div class="wrap v-' + (ui.tab || "dash") + '">'
-      + topbar() + body + '<footer>بياناتك تُحفظ تلقائياً</footer></div>'
+      + topbar() + updateBar() + body + '<footer>بياناتك تُحفظ تلقائياً</footer></div>'
       + navbar() + dlgHTML();
     applyNotes();
     wire(); if(!setNav()) colLayout(); wire(); dlgWire(); restoreFocus();
@@ -8008,6 +8016,8 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       }
     });
     on("[data-onbstart]", function(){ onboardDlg(); });
+    on("[data-update]", function(){ applyUpdate(); });
+    on("[data-updlater]", function(){ swWaiting = null; render(); });
     on("[data-install]", function(){
       if(!installPrompt){ toast("غير متاح الآن"); return; }
       installPrompt.prompt();
@@ -8300,15 +8310,48 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* الشهر يُشتقّ من التاريخ — لا من الشاشة المفتوحة */
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
-  var installPrompt = null, swReady = false;
+  /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
+  var APP_VERSION = "2026.08.31+ae11db";
+  var installPrompt = null, swReady = false, swWaiting = null;
   function pwaInit(){
     try{
       /* isSecureContext هو المعيار: يشمل https وlocalhost و127.0.0.1
          معاً. وشرطُ الاسم نصّاً يسقط على 127.0.0.1 — وقد سقط. */
       if("serviceWorker" in navigator && window.isSecureContext){
-        navigator.serviceWorker.register("sw.js").then(function(){
+        /* updateViaCache:"none" — وإلا أعاد المتصفّح استعمال sw.js من
+             ذاكرة HTTP بلا طلبٍ أصلاً، فلا يعرف بنسخةٍ نُشرت. قِيس: في
+             الزيارة الثانية لم يُطلب الملفّ ولا مرّة. */
+        navigator.serviceWorker.register("sw.js", { updateViaCache: "none" })
+          .then(function(reg){
           swReady = true;
+          /* نسخة تنتظر: لا تُفرَض على المستخدم وهو يكتب، بل تُعرض عليه */
+          if(reg.waiting){ swWaiting = reg.waiting; render(); }
+          reg.addEventListener("updatefound", function(){
+            var w = reg.installing;
+            if(!w) return;
+            w.addEventListener("statechange", function(){
+              if(w.state === "installed" && navigator.serviceWorker.controller){
+                swWaiting = w; render();
+              }
+            });
+          });
+          /* فحصٌ صريح عند كل فتح: الفحص التلقائي للمتصفّح لا يُعتمد
+             عليه — قِيس فلم يطلب sw.js أصلاً في زيارةٍ ثانية.
+             وعند العودة للتطبيق المثبَّت بعد غياب، وكل ساعة إن بقي مفتوحاً. */
+          try{ reg.update(); }catch(e){}
+          document.addEventListener("visibilitychange", function(){
+            if(document.visibilityState === "visible"){
+              try{ reg.update(); }catch(e){}
+            }
+          });
+          setInterval(function(){ try{ reg.update(); }catch(e){} }, 3600000);
         })["catch"](function(){});
+        var reloaded = false;
+        navigator.serviceWorker.addEventListener("controllerchange", function(){
+          if(reloaded) return;
+          reloaded = true;
+          location.reload();
+        });
       }
     }catch(e){}
     try{
@@ -8323,6 +8366,19 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
         render();
       });
     }catch(e){}
+  }
+  function applyUpdate(){
+    if(!swWaiting) return;
+    localFlush();                         /* لا يضيع تعديلٌ عند إعادة التحميل */
+    try{ swWaiting.postMessage({ type: "SKIP_WAITING" }); }catch(e){}
+    swWaiting = null;
+    toast("جارٍ التحديث…");
+  }
+  function updateBar(){
+    if(!swWaiting) return "";
+    return '<div class="flag ok updbar">نسخة جديدة من التطبيق جاهزة.'
+      + '<div class="acts"><button class="act solid" data-update="1">حدّث الآن</button>'
+      + '<button class="act" data-updlater="1">لاحقاً</button></div></div>';
   }
   function isInstalled(){
     try{
