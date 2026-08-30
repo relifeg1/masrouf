@@ -3,3 +3,4 @@
 *-private.html
 app-state*.json
 backup/
+supabase.json

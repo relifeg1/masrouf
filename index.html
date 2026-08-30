@@ -6617,7 +6617,8 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       + '<button class="mini" data-onbstart="1">شغّله</button></div></div>';
 
     h += '<div class="sec"><h2>أين تُحفظ بياناتك</h2>'
-      + '<span class="hint">' + (cloudOn() ? "جهازك وسحابتك" : "جهازك وحده") + '</span></div>'
+      + '<span class="hint">' + (signedIn() ? "جهازك وحسابك"
+                                 : cloudOn() ? "جهازك وسحابتك" : "جهازك وحده") + '</span></div>'
       + '<div class="card">'
       + '<div class="mrow"><span class="mn">في جهازك — دائماً'
       + '<span class="ms">تُحفظ في متصفّحك أوّلاً وتعمل بلا إنترنت. لا تغادره إلا إن '
@@ -6627,6 +6628,29 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
         + '<span class="ms">غير متاحة داخل أرتفاكت كلود — سياسة الأمان تمنع الاتّصال '
         + 'بمضيف خارجي. تعمل في النسخة المستقلّة.</span></span>'
         + '<span class="pill">غير متاحة هنا</span></div>';
+    } else if(signedIn()){
+      h += '<div class="mrow"><span class="mn">حسابك'
+        + '<span class="ms">' + esc(cloudWho())
+        + ' · بياناتك تتبعك إلى أيّ جهاز تدخل منه'
+        + (cloudMsg ? " · " + esc(cloudMsg) : "") + '</span></span>'
+        + (cloudBusy ? '<span class="pill">جارٍ…</span>'
+                     : '<button class="mini" data-authout="1">اخرج</button>') + '</div>'
+        + '<div class="mrow"><span class="mn">مزامنة يدوية'
+        + '<span class="ms">الرفع تلقائيّ بعد كل تعديل. وهذان لحين تريد أن تقرّر '
+        + 'بنفسك — الدمج التلقائي في أرقامٍ مالية يخطئ بصمت.</span></span>'
+        + '<span class="cmodes"><button class="mini" data-cloudpush="1">ارفع الآن</button>'
+        + '<button class="mini" data-cloudpull="1">أنزِل الآن</button></span></div>';
+    } else if(supaReady()){
+      h += '<div class="mrow"><span class="mn">مزامنة سحابية'
+        + '<span class="ms">سجّل دخولك ببريدك أو بحساب Google، فتصل بياناتك إلى '
+        + 'هاتفك وحاسوبك معاً. لا مفاتيح تُلصق ولا كلمة مرور تُحفظ.</span></span>'
+        + (cloudBusy ? '<span class="pill">جارٍ…</span>'
+                     : '<button class="mini on" data-authin="1">سجّل الدخول</button>') + '</div>'
+        + '<div class="mrow"><span class="mn">أو قاعدتك أنت'
+        + '<span class="ms">إن أردت بياناتك في مشروعٍ تملكه — تربطه برابطه ومفتاحه'
+        + (cloudOn() ? (" · مربوطة: " + esc(String(CC.uid || ""))) : "") + '</span></span>'
+        + '<button class="mini' + (cloudOn() ? " on" : "") + '" data-cloudcfg="1">'
+        + (cloudOn() ? "غيّر" : "اربط") + '</button></div>';
     } else {
       h += '<div class="mrow"><span class="mn">مزامنة سحابية — سحابتك أنت'
         + '<span class="ms">' + (cloudOn()
@@ -8024,6 +8048,34 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       installPrompt.userChoice.then(function(){ installPrompt = null; render(); })
         ["catch"](function(){});
     });
+    on("[data-authin]", function(){
+      ask({ title: "سجّل الدخول",
+        msg: "اكتب بريدك، فيصلك رمزٌ من ستة أرقام ورابط. استعمل أيّهما شئت — "
+           + "لا كلمة مرور تُنشأ ولا تُحفظ.",
+        fields: [ { label: "بريدك", value: (authSess() || {}).email || "",
+                    ph: "you@example.com" } ],
+        ok: "أرسل الرمز",
+        onOk: function(v){
+          var em = String(v[0] || "").trim();
+          if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){ toast("بريدٌ غير صحيح"); return; }
+          cloudBusy = true; render();
+          authSendCode(em, function(err){
+            cloudBusy = false;
+            if(err){ toast("تعذّر الإرسال: " + err); render(); return; }
+            var a = authSess() || {}; a.email = em; authSet(a);
+            askCode(em);
+          });
+        },
+        cancel: "إلغاء",
+        html: dgroup("أو بحسابٍ عندك",
+          '<button class="mini" data-authgoogle="1">ادخل بحساب Google</button>') });
+    });
+    on("[data-authgoogle]", function(){ authGoogle(); });
+    on("[data-authout]", function(){
+      confirmDlg("اخرج من حسابك",
+        "بياناتك تبقى في هذا الجهاز، وتبقى نسختها في حسابك. تعود إليها متى دخلت.",
+        "اخرج", function(){ authOut(); toast("خرجت"); render(); });
+    });
     on("[data-cloudcfg]", function(){
       var C = cloudCfg() || {};
       ask({ title: "اربط سحابتك",
@@ -8311,7 +8363,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "2026.08.31+ae11db";
+  var APP_VERSION = "2026.08.31+5f567f";
   var installPrompt = null, swReady = false, swWaiting = null;
   function pwaInit(){
     try{
@@ -8462,6 +8514,113 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ طبقة التخزين ═══
      وجهان خلف واجهة واحدة: جهازك (localStorage) أو سحابتك (Supabase).
      الإعدادات في localStorage لا في الحالة — لأنها تُقرأ قبل الحالة. */
+  /* المفتاح العلني يُحقن عند البناء. علنيّ بطبعه: من فتح الصفحة قرأه.
+     الحماية من RLS في القاعدة — كل صفٍّ مقيَّد بـauth.uid() — لا من
+     إخفاء المفتاح. */
+  var SUPA_URL = "";
+  var SUPA_KEY = "";
+  var AKEY = "kh_auth";
+
+  function supaReady(){
+    return /^https:\/\//.test(SUPA_URL) && SUPA_KEY.length > 30;
+  }
+  function authSess(){
+    try{ var r = localStorage.getItem(AKEY); return r ? JSON.parse(r) : null; }
+    catch(e){ return null; }
+  }
+  function authSet(o){
+    try{ if(o) localStorage.setItem(AKEY, JSON.stringify(o));
+         else localStorage.removeItem(AKEY); }catch(e){}
+  }
+  function signedIn(){
+    var a = authSess();
+    return cloudAllowed() && supaReady() && !!(a && a.access_token && a.uid);
+  }
+  function supaHead(tok){
+    return { "apikey": SUPA_KEY, "Content-Type": "application/json",
+             "Authorization": "Bearer " + (tok || SUPA_KEY) };
+  }
+  function authStore(j){
+    if(!j || !j.access_token) return null;
+    var o = { access_token: j.access_token, refresh_token: j.refresh_token,
+              exp: Date.now() + ((j.expires_in || 3600) * 1000),
+              uid: (j.user && j.user.id) || (authSess() || {}).uid,
+              email: (j.user && j.user.email) || (authSess() || {}).email };
+    authSet(o); return o;
+  }
+  /* الرمز ينتهي بعد ساعة. فيُجدَّد قبل كل طلب إن قارب — وإلا ردّت
+     القاعدة 401 وظنّ المستخدم أن بياناته ضاعت. */
+  function withTok(then){
+    var a = authSess();
+    if(!a){ then(null, "لم تسجّل دخولك"); return; }
+    if(a.exp - Date.now() > 60000){ then(a, null); return; }
+    if(!a.refresh_token){ then(null, "انتهت الجلسة — سجّل دخولك"); return; }
+    fetch(SUPA_URL + "/auth/v1/token?grant_type=refresh_token", {
+      method: "POST", headers: supaHead(null),
+      body: JSON.stringify({ refresh_token: a.refresh_token })
+    }).then(function(r){ return r.json(); })
+      .then(function(j){
+        var o = authStore(j);
+        if(o) then(o, null);
+        else { authSet(null); then(null, "انتهت الجلسة — سجّل دخولك"); }
+      })["catch"](function(e){ then(null, String(e.message || e)); });
+  }
+  function authSendCode(email, then){
+    fetch(SUPA_URL + "/auth/v1/otp", {
+      method: "POST", headers: supaHead(null),
+      body: JSON.stringify({ email: email, create_user: true })
+    }).then(function(r){
+      if(r.ok){ then(null); return; }
+      return r.json().then(function(j){ then(j.msg || j.error_description || ("HTTP " + r.status)); });
+    })["catch"](function(e){ then(String(e.message || e)); });
+  }
+  function authVerify(email, code, then){
+    fetch(SUPA_URL + "/auth/v1/verify", {
+      method: "POST", headers: supaHead(null),
+      body: JSON.stringify({ email: email, token: String(code).trim(), type: "email" })
+    }).then(function(r){ return r.json().then(function(j){ return { ok: r.ok, j: j }; }); })
+      .then(function(x){
+        if(!x.ok || !x.j.access_token){
+          then(x.j.msg || x.j.error_description || "رمزٌ غير صحيح"); return;
+        }
+        authStore(x.j); then(null);
+      })["catch"](function(e){ then(String(e.message || e)); });
+  }
+  function authGoogle(){
+    var back = location.href.replace(/[#?].*$/, "");
+    location.href = SUPA_URL + "/auth/v1/authorize?provider=google&redirect_to="
+                  + encodeURIComponent(back);
+  }
+  function authOut(){
+    var a = authSess();
+    if(a) try{ fetch(SUPA_URL + "/auth/v1/logout", { method: "POST", headers: supaHead(a.access_token) }); }catch(e){}
+    authSet(null);
+  }
+  /* العودة من Google أو من رابط البريد: الرمز في الجزء بعد #.
+     يُقرأ ثم يُمحى من الشريط — كي لا يبقى في التاريخ ولا يُشارَك. */
+  function authFromHash(){
+    if(!supaReady() || !location.hash || location.hash.indexOf("access_token") < 0) return false;
+    var q = {}, h = location.hash.replace(/^#/, "");
+    h.split("&").forEach(function(p){
+      var i = p.indexOf("="); if(i < 0) return;
+      q[decodeURIComponent(p.slice(0, i))] = decodeURIComponent(p.slice(i + 1));
+    });
+    try{ history.replaceState(null, "", location.pathname + location.search); }catch(e){}
+    if(!q.access_token) return false;
+    authSet({ access_token: q.access_token, refresh_token: q.refresh_token || "",
+              exp: Date.now() + ((+q.expires_in || 3600) * 1000),
+              uid: "", email: "" });
+    /* الهويّة تُقرأ من الخادم — لا تُستنتج من الرمز */
+    fetch(SUPA_URL + "/auth/v1/user", { headers: supaHead(q.access_token) })
+      .then(function(r){ return r.json(); })
+      .then(function(u){
+        var a = authSess() || {};
+        a.uid = u.id || ""; a.email = u.email || "";
+        authSet(a); toast("أهلاً " + (u.email || "")); cloudFirstPull();
+      })["catch"](function(){ render(); });
+    return true;
+  }
+
   var CKEY = "kh_cloud";
   function cloudCfg(){
     try{
@@ -8477,9 +8636,17 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   }
   /* داخل أرتفاكت كلود لا اتّصال بمضيف خارجي — فلا يُعرض خيارٌ لا يعمل */
   function cloudAllowed(){ return !(window.claude && window.claude.use); }
+  /* وجهان يصلان القاعدة نفسها: حسابٌ مسجَّل، أو ربطٌ يدويّ لمن أراد
+     قاعدته هو. الأوّل هو الطريق، والثاني يبقى لمن يريده. */
   function cloudOn(){
+    if(signedIn()) return true;
     var c = cloudCfg();
     return cloudAllowed() && !!(c && c.url && c.key && c.uid);
+  }
+  function cloudWho(){
+    if(signedIn()) return (authSess() || {}).email || "حسابك";
+    var c = cloudCfg() || {};
+    return String(c.uid || "");
   }
   function cloudHead(c){
     return { "apikey": c.key, "Authorization": "Bearer " + c.key,
@@ -8488,40 +8655,101 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   function cloudUrl(c){
     return String(c.url).replace(/\/+$/, "") + "/rest/v1/" + (c.table || "budget");
   }
+  /* يجمع ما يلزم الطلب — عنواناً ورؤوساً ومعرّفاً — أيّاً كان الوجه */
+  function cloudCtx(then){
+    if(signedIn()){
+      withTok(function(a, err){
+        if(err){ then(null, err); return; }
+        then({ url: SUPA_URL.replace(/\/+$/, "") + "/rest/v1/budget",
+               head: supaHead(a.access_token), uid: a.uid }, null);
+      });
+      return;
+    }
+    var c = cloudCfg();
+    if(!c){ then(null, "لم تُربط سحابة"); return; }
+    then({ url: cloudUrl(c), head: cloudHead(c), uid: c.uid }, null);
+  }
   var cloudBusy = false, cloudMsg = "";
   function cloudPull(then){
-    var c = cloudCfg();
     if(!cloudOn()) { if(then) then(null, "لم تُربط سحابة"); return; }
     cloudBusy = true; render();
-    fetch(cloudUrl(c) + "?id=eq." + encodeURIComponent(c.uid) + "&select=data,updated_at",
-          { headers: cloudHead(c) })
-      .then(function(r){ if(!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
-      .then(function(rows){
-        cloudBusy = false;
-        if(!rows || !rows.length){ if(then) then(null, "لا نسخة في سحابتك بعد"); return; }
-        if(then) then(rows[0], null);
-      })["catch"](function(e){
-        cloudBusy = false;
-        if(then) then(null, String(e.message || e));
-      });
+    cloudCtx(function(c, err){
+      if(err){ cloudBusy = false; if(then) then(null, err); render(); return; }
+      fetch(c.url + "?id=eq." + encodeURIComponent(c.uid) + "&select=data,updated_at",
+            { headers: c.head })
+        .then(function(r){ if(!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+        .then(function(rows){
+          cloudBusy = false;
+          if(!rows || !rows.length){ if(then) then(null, "لا نسخة في سحابتك بعد"); return; }
+          if(then) then(rows[0], null);
+        })["catch"](function(e){
+          cloudBusy = false;
+          if(then) then(null, String(e.message || e));
+        });
+    });
   }
   function cloudPush(then){
-    var c = cloudCfg();
     if(!cloudOn()){ if(then) then("لم تُربط سحابة"); return; }
     cloudBusy = true; render();
-    var body = [{ id: c.uid, data: state, updated_at: new Date().toISOString() }];
-    fetch(cloudUrl(c), {
-      method: "POST",
-      headers: (function(){ var h = cloudHead(c); h.Prefer = "resolution=merge-duplicates"; return h; })(),
-      body: JSON.stringify(body)
-    }).then(function(r){
-      cloudBusy = false;
-      if(!r.ok) throw new Error("HTTP " + r.status);
-      cloudMsg = "رُفعت " + new Date().toLocaleTimeString("en-GB").slice(0, 5);
-      if(then) then(null);
-    })["catch"](function(e){
-      cloudBusy = false;
-      if(then) then(String(e.message || e));
+    cloudCtx(function(c, err){
+      if(err){ cloudBusy = false; if(then) then(err); render(); return; }
+      var body = [{ id: c.uid, data: state, updated_at: new Date().toISOString() }];
+      var h = {}; for(var k in c.head) h[k] = c.head[k];
+      h.Prefer = "resolution=merge-duplicates";
+      fetch(c.url, { method: "POST", headers: h, body: JSON.stringify(body) })
+        .then(function(r){
+          cloudBusy = false;
+          if(!r.ok) throw new Error("HTTP " + r.status);
+          cloudMsg = "رُفعت " + new Date().toLocaleTimeString("en-GB").slice(0, 5);
+          if(then) then(null);
+        })["catch"](function(e){
+          cloudBusy = false;
+          if(then) then(String(e.message || e));
+        });
+    });
+  }
+  /* أوّل دخولٍ على جهاز جديد: إن كانت السحابة أحدث وجهازك فارغ، تنزل
+     بلا سؤال. وإن كان في الجهاز عملٌ فالقرار للمستخدم — الدمج التلقائي
+     في أرقامٍ مالية يخطئ بصمت. */
+  function applyCloud(row){
+    try{
+      var d = row.data;
+      for(var k in d) state[k] = d[k];
+      migrate();                 /* نسخةٌ رُفعت من إصدارٍ أقدم تُرقّى */
+      localSave();
+      toast("نزلت بياناتك");
+    }catch(e){ toast("تعذّرت القراءة"); }
+    render();
+  }
+  function askCode(em){
+    ask({ title: "الرمز وصل إلى " + em,
+      msg: "افتح بريدك: إمّا تضغط الرابط فتدخل مباشرةً، وإمّا تنسخ الرمز هنا.",
+      fields: [ { label: "الرمز", value: "", ph: "123456" } ],
+      ok: "ادخل",
+      onOk: function(v){
+        cloudBusy = true; render();
+        authVerify(em, v[0], function(err){
+          cloudBusy = false;
+          if(err){ toast(err); render(); return; }
+          toast("دخلت"); cloudFirstPull();
+        });
+      },
+      cancel: "لاحقاً" });
+  }
+  function cloudFirstPull(){
+    cloudPull(function(row, err){
+      if(err || !row || !row.data){ render(); return; }
+      var mine = 0;
+      for(var k in state.months) mine += (state.months[k].items || []).length;
+      if(mine === 0 && !state.onboard){
+        applyCloud(row); return;
+      }
+      confirmDlg("في حسابك نسخة",
+        "آخر رفع: <b>" + esc(String(row.updated_at || "").slice(0, 16).replace("T", " "))
+        + "</b>. أتُنزِلها بدل ما في هذا الجهاز؟",
+        "أنزِلها", function(){
+          applyCloud(row);
+        });
     });
   }
   var cloudPending = null;
@@ -8759,9 +8987,14 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   month(ui.month);
   applyTheme();
   pwaInit();
+  /* العودة من Google أو من رابط البريد تُقرأ قبل الرسم — فلا تومض شاشةُ
+     «غير مسجَّل» ثم تنقلب */
+  var backFromAuth = authFromHash();
   render();
   /* أول مرة: المعالج بعد الرسم لا قبله — فيرى الشاشة خلفه ويعرف أين هو */
-  if(needOnboard()) setTimeout(function(){ onboardDlg(); }, 120);
+  if(needOnboard() && !backFromAuth) setTimeout(function(){ onboardDlg(); }, 120);
+  /* جلسةٌ قائمة من زيارةٍ سابقة: تُنزَّل نسخةُ الحساب إن كان الجهاز خالياً */
+  if(!backFromAuth && signedIn()) setTimeout(cloudFirstPull, 400);
 
   if(window.claude && typeof window.claude.use === "function"){
     window.claude.use("artifact").then(function(api){ pubApi = api; })["catch"](function(){});
