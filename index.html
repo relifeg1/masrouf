@@ -8131,11 +8131,11 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
         cancel: "إلغاء" });
     });
     on("[data-cloudpush]", function(){
-      cloudPush(function(err){ toast(err ? "تعذّر: " + err : "رُفعت"); render(); });
+      cloudPush(function(err){ toast(err ? "تعذّر: " + cloudErr(err) : "رُفعت"); render(); });
     });
     on("[data-cloudpull]", function(){
       cloudPull(function(row, err){
-        if(err || !row){ toast(err || "لا نسخة"); render(); return; }
+        if(err || !row){ toast(cloudErr(err) || "لا نسخة"); render(); return; }
         confirmDlg("أنزِل نسخة سحابتك",
           "ستحلّ محلّ ما في جهازك. آخر رفع: <b>"
           + esc(String(row.updated_at || "").slice(0, 16).replace("T", " ")) + "</b>.",
@@ -8390,7 +8390,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "2026.08.31+354629";
+  var APP_VERSION = "2026.08.31+ab5e3d";
   var installPrompt = null, swReady = false, swWaiting = null;
   function pwaInit(){
     try{
@@ -8493,7 +8493,14 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
         var inc = num(v && v[0]);
         var n = 0;
         for(var k in onbSel){ if(onbSel[k]) n++; }
-        return '<div class="f2"><label>أهمّ بنود صرفك — اختر ما ينطبق عليك</label>'
+        return (supaReady() && !signedIn()
+            ? '<div class="f2"><label>ليتبعك دفترك بين أجهزتك</label>'
+              + '<div class="dbtns"><button class="mini on" data-authin="1">'
+              + 'سجّل الدخول</button></div>'
+              + '<div class="ms" style="margin-top:4px">اختياريّ — بلا دخولٍ يعمل '
+              + 'التطبيق كاملاً على هذا الجهاز وحده.</div></div>'
+            : "")
+          + '<div class="f2"><label>أهمّ بنود صرفك — اختر ما ينطبق عليك</label>'
           + '<div class="chips onbchips">' + ONB_PICK.map(function(ck){
               var c = catOf(ck);
               if(!c || c.n === "بند محذوف") return "";
@@ -8549,7 +8556,11 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   var AKEY = "kh_auth";
 
   function supaReady(){
-    return /^https:\/\//.test(SUPA_URL) && SUPA_KEY.length > 30;
+    /* https وحده — إلا localhost، فالمتصفّحات نفسها تعدّه أصلاً آمناً،
+       وعليه تُختبر الدورة كاملة قبل أن يُنشأ مشروعٌ حقيقي. */
+    var ok = /^https:\/\//.test(SUPA_URL)
+          || /^http:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(SUPA_URL);
+    return ok && SUPA_KEY.length > 30;
   }
   function authSess(){
     try{ var r = localStorage.getItem(AKEY); return r ? JSON.parse(r) : null; }
@@ -8738,6 +8749,15 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     then({ url: cloudUrl(c), head: cloudHead(c), uid: c.uid }, null);
   }
   var cloudBusy = false, cloudMsg = "";
+  /* رسائل الخادم لا تُعرض كما هي: HTTP 404 لا يقول لصاحبه شيئاً */
+  function cloudErr(e){
+    var t = String(e || "");
+    if(t === "EMPTY") return "لا نسخة في حسابك بعد";
+    if(/HTTP 40[13]/.test(t)) return "انتهت جلستك — سجّل دخولك من جديد";
+    if(/HTTP 404/.test(t)) return "لم يُهيَّأ الجدول في القاعدة بعد";
+    if(/Failed to fetch|NetworkError/i.test(t)) return "لا اتّصال بالإنترنت";
+    return t;
+  }
   function cloudPull(then){
     if(!cloudOn()) { if(then) then(null, "لم تُربط سحابة"); return; }
     cloudBusy = true; render();
@@ -8748,7 +8768,9 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
         .then(function(r){ if(!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
         .then(function(rows){
           cloudBusy = false;
-          if(!rows || !rows.length){ if(then) then(null, "لا نسخة في سحابتك بعد"); return; }
+          /* لا صفّ ليس خطأً: هو أوّل مرة. يُمرَّر رمزاً لا جملةً كي
+             يفرّق المتّصل بين «جديد» و«تعطّل شيء». */
+          if(!rows || !rows.length){ if(then) then(null, "EMPTY"); return; }
           if(then) then(rows[0], null);
         })["catch"](function(e){
           cloudBusy = false;
@@ -8806,7 +8828,18 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   }
   function cloudFirstPull(){
     cloudPull(function(row, err){
-      if(err || !row || !row.data){ render(); return; }
+      /* لا صفّ في حسابه: يُنشأ الآن برفع ما عنده. هذه هي كلّ «إنشاء
+         قاعدة البيانات» من ناحيته — لا خطوة يفعلها ولا رسالة يقرؤها. */
+      if(err === "EMPTY"){
+        cloudPush(function(e2){
+          if(e2) toast("تعذّر التجهيز: " + cloudErr(e2));
+          else { cloudMsg = "جُهّز حسابك"; toast("جُهّز حسابك — بياناتك تُحفظ فيه من الآن"); }
+          render();
+        });
+        return;
+      }
+      if(err){ toast(cloudErr(err)); render(); return; }
+      if(!row || !row.data){ render(); return; }
       var mine = 0;
       for(var k in state.months) mine += (state.months[k].items || []).length;
       if(mine === 0 && !state.onboard){
@@ -8825,7 +8858,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     if(!cloudOn()) return;
     clearTimeout(cloudPending);
     cloudPending = setTimeout(function(){
-      cloudPush(function(err){ if(err) toast("تعذّر الرفع: " + err); render(); });
+      cloudPush(function(err){ if(err) toast("تعذّر الرفع: " + cloudErr(err)); render(); });
     }, 2500);
   }
 
