@@ -6623,6 +6623,16 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       + '<div class="mrow"><span class="mn">في جهازك — دائماً'
       + '<span class="ms">تُحفظ في متصفّحك أوّلاً وتعمل بلا إنترنت. لا تغادره إلا إن '
       + 'ربطتَ سحابة.</span></span><span class="pill">مفعّل</span></div>';
+    var SNP = snapInfo();
+    if(SNP){
+      h += '<div class="mrow"><span class="mn">لقطة ما قبل التحديث'
+        + '<span class="ms">حُفظت بياناتك كما كانت على النسخة '
+        + esc(String(SNP.ver || "")) + ' قبل أن يصلك التحديث'
+        + (SNP.at ? (' · ' + esc(String(SNP.at).slice(0, 16).replace("T", " "))) : "")
+        + '. إن بدا شيءٌ في غير موضعه بعد تحديث، ارجع إليها.</span></span>'
+        + '<span class="cmodes"><button class="mini" data-snapback="1">ارجع إليها</button>'
+        + '<button class="mini" data-snapdrop="1">احذفها</button></span></div>';
+    }
     if(!cloudAllowed()){
       h += '<div class="mrow"><span class="mn">مزامنة سحابية'
         + '<span class="ms">غير متاحة داخل أرتفاكت كلود — سياسة الأمان تمنع الاتّصال '
@@ -8048,6 +8058,21 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       installPrompt.userChoice.then(function(){ installPrompt = null; render(); })
         ["catch"](function(){});
     });
+    on("[data-snapback]", function(){
+      var o = snapInfo(); if(!o) return;
+      confirmDlg("ارجع لما قبل التحديث",
+        "ستحلّ بياناتك كما كانت على النسخة <b>" + esc(String(o.ver || "")) + "</b> محلّ "
+        + "ما في جهازك الآن. وكلّ ما أدخلتَه بعد التحديث يضيع.",
+        "أرجِعها", function(){
+          if(snapRestore()) toast("رجعت بياناتك"); else toast("تعذّرت القراءة");
+          render();
+        }, true);
+    });
+    on("[data-snapdrop]", function(){
+      confirmDlg("احذف اللقطة",
+        "لن تستطيع الرجوع إلى ما قبل هذا التحديث بعدها.",
+        "احذفها", function(){ snapDrop(); toast("حُذفت"); render(); }, true);
+    });
     on("[data-authin]", function(){
       ask({ title: "سجّل الدخول",
         msg: "اكتب بريدك، فيصلك رمزٌ من ستة أرقام ورابط. استعمل أيّهما شئت — "
@@ -8363,7 +8388,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "2026.08.31+5f567f";
+  var APP_VERSION = "2026.08.31+fda13a";
   var installPrompt = null, swReady = false, swWaiting = null;
   function pwaInit(){
     try{
@@ -8620,6 +8645,47 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       })["catch"](function(){ render(); });
     return true;
   }
+
+  /* ═══ لقطة ما قبل التحديث ═══ */
+  var SNAPKEY = "kh_snap", VERKEY = "kh_ver";
+
+  /* تُستدعى قبل migrate() — وإلا حُفظت البنية بعد ترقيتها فلا تنفع رجوعاً */
+  function snapBeforeUpdate(){
+    var prev = null, raw = null;
+    try{ prev = localStorage.getItem(VERKEY); }catch(e){}
+    try{ localStorage.setItem(VERKEY, APP_VERSION); }catch(e){}
+    if(!prev || prev === APP_VERSION) return;    /* أوّل تشغيل، أو لا جديد */
+    try{ raw = localStorage.getItem(LSKEY); }catch(e){}
+    if(!raw || raw.length < 40) return;          /* لا بيانات تستحقّ */
+    try{
+      localStorage.setItem(SNAPKEY, JSON.stringify({
+        ver: prev, at: new Date().toISOString(), data: raw }));
+    }catch(e){
+      /* امتلأت المساحة: التحديث أولى من اللقطة — لا يُوقَف من أجلها */
+      try{ localStorage.removeItem(SNAPKEY); }catch(e2){}
+    }
+  }
+  function snapInfo(){
+    try{
+      var r = localStorage.getItem(SNAPKEY);
+      if(!r) return null;
+      var o = JSON.parse(r);
+      return (o && o.data) ? o : null;
+    }catch(e){ return null; }
+  }
+  function snapRestore(){
+    var o = snapInfo();
+    if(!o) return false;
+    try{
+      var d = JSON.parse(o.data);
+      for(var k in state) if(!(k in d)) delete state[k];
+      for(var k2 in d) state[k2] = d[k2];
+      migrate();
+      localWrite();
+      return true;
+    }catch(e){ return false; }
+  }
+  function snapDrop(){ try{ localStorage.removeItem(SNAPKEY); }catch(e){} }
 
   var CKEY = "kh_cloud";
   function cloudCfg(){
@@ -8975,6 +9041,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
 
   /* ═══ إقلاع ═══ */
   localLoad();
+  snapBeforeUpdate();     /* قبل migrate — اللقطة للبنية القديمة لا المرقّاة */
   migrate();
   try{
     var st0 = state.startTab || "last";
