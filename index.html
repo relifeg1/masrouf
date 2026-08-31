@@ -6974,7 +6974,6 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       + '<div class="eta">أي شهر لم تحدّد له دخلاً خاصاً يأخذ هذا المبلغ.</div></div>';
 
     /* ── أين تُحفظ بياناتك ── */
-    var CC = cloudCfg() || {};
     if(!(window.claude && window.claude.use)){
       h += '<div class="sec"><h2>تثبيت التطبيق</h2>'
         + '<span class="hint">' + (isInstalled() ? "مثبَّت" : "من المتصفّح") + '</span></div>'
@@ -7071,10 +7070,10 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
 
     var SNP = snapInfo();
     if(SNP){
-      h += '<div class="mrow"><span class="mn">لقطة ما قبل التحديث'
-        + '<span class="ms">حُفظت بياناتك كما كانت قبل التحديث '
-        + esc(String(SNP.ver || "")) + '. إن بدا شيءٌ في غير موضعه بعده، '
-        + 'ارجع إليها.</span></span>'
+      h += '<div class="mrow"><span class="mn">نسخةٌ محفوظة قبل آخر تحديث'
+        + '<span class="ms">قبل أن يصلك تحديثٌ يغيّر بنية البيانات، يحفظ '
+        + 'التطبيق نسخةً منها كما كانت. فلو أخطأ التحديث رجعتَ بضغطة. '
+        + 'هذه من الإصدار <b>' + esc(String(SNP.ver || "")) + '</b>.</span></span>'
         + '<span class="cmodes"><button class="mini" data-snapback="1">ارجع إليها</button>'
         + '<button class="mini" data-snapdrop="1">احذفها</button></span></div>';
     }
@@ -7085,14 +7084,13 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
         + '<span class="ms">غير متاحة داخل أرتفاكت كلود — سياسة الأمان تمنع '
         + 'الاتّصال بمضيف خارجي. وتعمل في النسخة المستقلّة.</span></span>'
         + '<span class="pill">غير متاحة هنا</span></div>';
-    } else if(!supaReady() || !gdReady() || !cloudOn()){
+    } else if(!supaReady() || !gdReady()){
       h += '<div class="mrow off"><span class="mn">إعدادٌ للمطوّر'
         + '<span class="ms">المزامنة بين الأجهزة تحتاج مفتاحاً يُسجَّل مرّةً '
         + 'واحدة عند مزوّدها — وهذا عملُ من يوزّع النسخة لا من يستعملها.'
         + '</span></span><span class="cmodes">'
         + (!gdReady() ? '<button class="mini" data-conf="drive">درايف</button>' : "")
         + (!supaReady() ? '<button class="mini" data-conf="account">حساب</button>' : "")
-        + (!cloudOn() ? '<button class="mini" data-cloudcfg="1">قاعدة يدوية</button>' : "")
         + '</span></div>';
     }
     h += '</div>';
@@ -8609,33 +8607,6 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
         "بياناتك تبقى في هذا الجهاز، وتبقى نسختها في حسابك. تعود إليها متى دخلت.",
         "اخرج", function(){ authOut(); toast("خرجت"); render(); });
     });
-    on("[data-cloudcfg]", function(){
-      var C = cloudCfg() || {};
-      ask({ title: "اربط سحابتك",
-        msg: "أنشئ مشروعاً مجانياً في Supabase، ثم من Settings ← API انسخ "
-           + "<b>Project URL</b> و<b>anon public key</b>. وأنشئ الجدول بهذا السطر في "
-           + "SQL Editor:<br><b style=\'font-family:monospace;font-size:11px\'>create table budget (id text primary key, data jsonb, updated_at timestamptz default now());</b>"
-           + "<br><br>بياناتك تذهب إلى قاعدتك أنت — لا خادم لنا يحملها.",
-        fields: [
-          { label: "Project URL", value: C.url || "", ph: "https://xxxx.supabase.co" },
-          { label: "anon public key", value: C.key || "" },
-          { label: "معرّفك (أي كلمة تميّزك)", value: C.uid || "me" },
-          { label: "اسم الجدول", value: C.table || "budget" }
-        ],
-        ok: "اربط",
-        onOk: function(v){
-          var url = String(v[0] || "").trim(), key = String(v[1] || "").trim();
-          var uid = String(v[2] || "").trim() || "me", tb = String(v[3] || "").trim() || "budget";
-          if(!url || !key){ cloudSet(null); toast("فُكّ الربط"); render(); return; }
-          if(!/^https:\/\//.test(url)){ toast("الرابط يبدأ بـ https://"); return; }
-          cloudSet({ url: url, key: key, uid: uid, table: tb });
-          cloudPush(function(err){
-            toast(err ? "تعذّر الرفع: " + err : "رُبطت سحابتك ورُفعت نسختك");
-            render();
-          });
-        },
-        cancel: "إلغاء" });
-    });
     on("[data-cloudpush]", function(){
       syncPush(function(err){ toast(err ? "تعذّر: " + cloudErr(err) : "رُفعت"); render(); });
     });
@@ -8879,10 +8850,10 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "35";
+  var APP_VERSION = "1.4.0+9";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
-  function verLabel(){ return "#" + APP_VERSION; }
+  function verLabel(){ return APP_VERSION; }
   /* بيت التطبيق. يُذكر حيث يحتاجه من فتحه في مكانٍ لا يُحفظ فيه. */
   var HOME = "relifeg1.github.io/masrouf";
   var installPrompt = null, swReady = false, swWaiting = null;
@@ -9448,11 +9419,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       d: "يُحفظ ملفٌّ واحد في مجلَّدٍ خفيّ خاصّ بالتطبيق داخل درايفك. "
        + "لا نرى شيئاً، ولا يصل التطبيق إلى بقيّة ملفّاتك — الصلاحية "
        + "المطلوبة هي appdata وحدها.",
-      act: '<button class="mini" data-gdin="1">ادخل بدرايف</button>' },
-    { k: "own", n: "قاعدةٌ تملكها أنت",
-      d: "لمن يريد بياناته في مشروعٍ باسمه هو — تربطه برابطه ومفتاحه. "
-       + "لا يمرّ شيء بخادمٍ لنا.",
-      act: '<button class="mini" data-cloudcfg="1">اربطها</button>' }
+      act: '<button class="mini" data-gdin="1">ادخل بدرايف</button>' }
   ];
   /* full=true في الإعدادات: يُعرض ما ليس مهيّأً وسببُه.
      full=false في معالج البدء: من يفتح أوّل مرة لا يعنيه ما لا يعمل. */
@@ -9463,9 +9430,6 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       if(!cloudAllowed()) why = "غير متاح داخل أرتفاكت كلود";
       else if(o.k === "account" && !supaReady()) why = "يحتاج مفاتيح مشروع — تُدخلها من هنا";
       else if(o.k === "drive" && !gdReady()) why = "يحتاج معرّف عميل جوجل — تُدخله من هنا";
-      /* الربط اليدويّ طريقٌ لمن ربط فعلاً — لا خيارٌ يُعرض على من لم يربط،
-         فهو وأصلُ «حسابك» مزوّدٌ واحد، وعرضهما معاً يُوهم أنهما شيئان. */
-      else if(o.k === "own" && !cloudOn()) why = "ربطٌ يدويّ — من سطر الإعداد أدناه";
       if(why && o.k === "device") why = "";
       /* ما لا يعمل لا يُعرض خياراً — تهيئتُه في سطرٍ أسفل البطاقة */
       if(why) return "";
@@ -9669,40 +9633,13 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* أوّل دخول: إن لم يكن له ملفٌّ في درايف أُنشئ الآن بما عنده */
   function gdFirstPull(){ syncNow(false); }
 
-  var CKEY = "kh_cloud";
-  function cloudCfg(){
-    try{
-      var raw = localStorage.getItem(CKEY);
-      return raw ? JSON.parse(raw) : null;
-    }catch(e){ return null; }
-  }
-  function cloudSet(o){
-    try{
-      if(o) localStorage.setItem(CKEY, JSON.stringify(o));
-      else localStorage.removeItem(CKEY);
-    }catch(e){}
-  }
   /* داخل أرتفاكت كلود لا اتّصال بمضيف خارجي — فلا يُعرض خيارٌ لا يعمل */
   function cloudAllowed(){ return !(window.claude && window.claude.use); }
-  /* وجهان يصلان القاعدة نفسها: حسابٌ مسجَّل، أو ربطٌ يدويّ لمن أراد
-     قاعدته هو. الأوّل هو الطريق، والثاني يبقى لمن يريده. */
-  function cloudOn(){
-    if(signedIn()) return true;
-    var c = cloudCfg();
-    return cloudAllowed() && !!(c && c.url && c.key && c.uid);
-  }
-  function cloudWho(){
-    if(signedIn()) return (authSess() || {}).email || "حسابك";
-    var c = cloudCfg() || {};
-    return String(c.uid || "");
-  }
-  function cloudHead(c){
-    return { "apikey": c.key, "Authorization": "Bearer " + c.key,
-             "Content-Type": "application/json" };
-  }
-  function cloudUrl(c){
-    return String(c.url).replace(/\/+$/, "") + "/rest/v1/" + (c.table || "budget");
-  }
+  /* طريقٌ واحد إلى القاعدة: الدخول بالحساب. وكان ثمّة ربطٌ يدويّ يلصق
+     فيه المستخدم رابط مشروعٍ ومفتاحاً — وهو المزوّد نفسه بطريقٍ أوعر،
+     فحُذف: خياران لشيءٍ واحد عبءٌ لا سعة. */
+  function cloudOn(){ return signedIn(); }
+  function cloudWho(){ return (authSess() || {}).email || "حسابك"; }
   /* يجمع ما يلزم الطلب — عنواناً ورؤوساً ومعرّفاً — أيّاً كان الوجه */
   function cloudCtx(then){
     if(signedIn()){
@@ -9713,9 +9650,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       });
       return;
     }
-    var c = cloudCfg();
-    if(!c){ then(null, "لم تُربط سحابة"); return; }
-    then({ url: cloudUrl(c), head: cloudHead(c), uid: c.uid }, null);
+    then(null, "لم تسجّل دخولك");
   }
   var cloudBusy = false, cloudMsg = "";
   /* رسائل الخادم لا تُعرض كما هي: HTTP 404 لا يقول لصاحبه شيئاً */
