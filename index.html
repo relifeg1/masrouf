@@ -1657,7 +1657,27 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     if(out === null || i !== t.length || !isFinite(out)) return null;
     return Math.round(out * 100) / 100;
   }
-  function uid(){ return Date.now().toString(36) + Math.floor(Math.random()*1e4).toString(36); }
+  /* المعرّف يحمل بصمة الجهاز.
+     كان الوقت والعشوائيّ وحدهما، فيتصادم جهازان كتبا في المللي ثانية
+     نفسها — وهو ما وقع في الاختبار فعلاً. والتصادم مع الدمج ليس خطأً
+     يُرى: يعدّ السجلّين واحداً فيضيع أحدهما صامتاً. */
+  function uid(){
+    return Date.now().toString(36)
+         + Math.floor(Math.random() * 1e6).toString(36)
+         + "-" + devTag();
+  }
+  var _devTag = null;
+  function devTag(){
+    if(_devTag) return _devTag;
+    var d = "";
+    try{ d = localStorage.getItem("kh_dev") || ""; }catch(e){}
+    if(!d){
+      d = "d" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+      try{ localStorage.setItem("kh_dev", d); }catch(e){}
+    }
+    _devTag = d.slice(-4);
+    return _devTag;
+  }
   function catOf(k){ for(var i=0;i<state.cats.length;i++) if(state.cats[i].k === k) return state.cats[i];
     return {k:k,n:"بند محذوف",e:"•",c:"#8A92A0",p:0,subs:[]}; }
   function subOf(c, sid){
@@ -3090,6 +3110,196 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
      عند عشر سنوات — وهو الشيء الوحيد الذي ينمو مع تاريخك.
      صار يؤجَّل ٤٠٠ms: عشرة حقول تُملأ متتابعةً تُكتب مرّة لا عشراً.
      ويُفرَغ فوراً عند مغادرة الصفحة، فلا يضيع تعديلٌ أخير. */
+  /* ═══ الوسم والدمج ═══ */
+  var DEVKEY = "kh_dev";
+  function deviceId(){
+    var d = null;
+    try{ d = localStorage.getItem(DEVKEY); }catch(e){}
+    if(d) return d;
+    d = "d" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    try{ localStorage.setItem(DEVKEY, d); }catch(e){}
+    return d;
+  }
+  var GONE_DAYS = 60;
+
+  /* كل ما يُدمج وحدةً وحدة. المفتاح يحمل نوعه فلا يختلط هدفٌ بمحفظة. */
+  function units(st){
+    var u = {}, mk, i;
+    (st.cats || []).forEach(function(c){ u["c:" + c.k] = c; });
+    (st.goals || []).forEach(function(g){ u["g:" + g.id] = g; });
+    (st.invest || []).forEach(function(x){ u["v:" + x.id] = x; });
+    (st.accts || []).forEach(function(a){ u["a:" + a.id] = a; });
+    for(mk in (st.months || {})){
+      var m = st.months[mk];
+      (m.items || []).forEach(function(it){ u["i:" + mk + ":" + it.id] = it; });
+    }
+    return u;
+  }
+  /* بصمةٌ تتجاهل الوسم نفسه — وإلا وُسم السجلّ لأنه وُسم */
+  function unitSig(o){
+    var c = {}, k;
+    for(k in o) if(k !== "at") c[k] = o[k];
+    return JSON.stringify(c);
+  }
+
+  var _stampPrev = null;
+  function stampChanges(){
+    var now = Date.now(), cur = units(state), k;
+    if(!state.gone) state.gone = {};
+
+    if(_stampPrev === null){
+      /* أوّل كتابة في هذه الجلسة: يُوسَم ما لا وسم له فقط */
+      _stampPrev = {};
+      for(k in cur){
+        _stampPrev[k] = unitSig(cur[k]);
+        if(!cur[k].at) cur[k].at = now;
+      }
+    } else {
+      for(k in cur){
+        var sig = unitSig(cur[k]);
+        if(_stampPrev[k] !== sig){ cur[k].at = now; _stampPrev[k] = sig; }
+        if(!cur[k].at) cur[k].at = now;
+      }
+      /* ما اختفى: شاهدُ حذف */
+      for(k in _stampPrev){
+        if(!(k in cur)){
+          state.gone[k] = now;
+          delete _stampPrev[k];
+        }
+      }
+    }
+
+    /* التوزيع والإعدادات وحدتان لهما وسمهما */
+    for(var mk in (state.months || {})){
+      var m = state.months[mk];
+      var ds = JSON.stringify(m.dist || {});
+      if(m._ds !== ds){ m._ds = ds; m.distAt = now; }
+    }
+    var setSig = JSON.stringify({
+      income: state.income, cur: state.cur, monthStart: state.monthStart,
+      arDigits: state.arDigits, startTab: state.startTab, startMonth: state.startMonth,
+      salaryAcct: state.salaryAcct, hijri: state.hijri, rules: state.rules,
+      trackSrc: state.trackSrc, onboard: state.onboard });
+    if(state._ss !== setSig){ state._ss = setSig; state.setAt = now; }
+
+    /* الشواهد تُنسى بعد ستّين يوماً */
+    var cut = now - GONE_DAYS * 86400000;
+    for(k in state.gone) if(state.gone[k] < cut) delete state.gone[k];
+
+    state.dev = deviceId();
+  }
+
+  /* ═══ الدمج ═══
+     يأخذ حالتين ويُرجع ثالثة. لا يعرف من أين جاءتا ولا إلى أين تذهبان. */
+  function mergeStates(a, b){
+    a = a || {}; b = b || {};
+    var out = JSON.parse(JSON.stringify((+b.savedAt || 0) > (+a.savedAt || 0) ? b : a));
+    var older = ((+b.savedAt || 0) > (+a.savedAt || 0)) ? a : b;
+
+    /* الإعدادات: الأحدث وسماً — لا الأحدث حفظاً */
+    if((+older.setAt || 0) > (+out.setAt || 0)){
+      ["income", "cur", "monthStart", "arDigits", "startTab", "startMonth",
+       "salaryAcct", "hijri", "rules", "trackSrc", "onboard"].forEach(function(k){
+        if(k in older) out[k] = older[k];
+      });
+      out.setAt = older.setAt;
+    }
+
+    /* شواهد الحذف تجتمع، والأحدث يبقى */
+    out.gone = out.gone || {};
+    var g = older.gone || {}, k;
+    for(k in g) if(!out.gone[k] || g[k] < out.gone[k]) out.gone[k] = Math.max(out.gone[k] || 0, g[k]);
+
+    /* السجلّات: اتّحادٌ بالمعرّف، والأحدث وسماً يغلب */
+    var A = units(out), B = units(older);
+    for(k in B){
+      var mine = A[k], theirs = B[k];
+      if(!mine){ addUnit(out, k, theirs); continue; }
+      if((+theirs.at || 0) > (+mine.at || 0)) replaceUnit(out, k, theirs);
+    }
+    /* ثم يُطرح ما حُذف بعد آخر تعديلٍ له */
+    A = units(out);
+    for(k in out.gone){
+      var u = A[k];
+      if(u && (+u.at || 0) <= out.gone[k]) removeUnit(out, k);
+    }
+
+    /* التوزيع لكل شهر: الأحدث وسماً */
+    for(var mk in (older.months || {})){
+      var om = older.months[mk];
+      if(!out.months[mk]){ out.months[mk] = om; continue; }
+      if((+om.distAt || 0) > (+out.months[mk].distAt || 0)){
+        out.months[mk].dist = om.dist;
+        out.months[mk].distAt = om.distAt;
+      }
+      if(om.setup) out.months[mk].setup = true;
+    }
+
+    out.savedAt = Math.max(+a.savedAt || 0, +b.savedAt || 0);
+    return out;
+  }
+
+  function unitParts(k){
+    var i = k.indexOf(":");
+    return { t: k.slice(0, i), rest: k.slice(i + 1) };
+  }
+  function addUnit(st, k, u){
+    var p = unitParts(k);
+    if(p.t === "c"){ (st.cats = st.cats || []).push(u); return; }
+    if(p.t === "g"){ (st.goals = st.goals || []).push(u); return; }
+    if(p.t === "v"){ (st.invest = st.invest || []).push(u); return; }
+    if(p.t === "a"){ (st.accts = st.accts || []).push(u); return; }
+    if(p.t === "i"){
+      var mk = p.rest.slice(0, p.rest.indexOf(":"));
+      st.months = st.months || {};
+      if(!st.months[mk]) st.months[mk] = { items: [], dist: {}, setup: true };
+      (st.months[mk].items = st.months[mk].items || []).push(u);
+    }
+  }
+  function eachList(st, t, fn){
+    var L = t === "c" ? st.cats : t === "g" ? st.goals
+          : t === "v" ? st.invest : t === "a" ? st.accts : null;
+    if(L) fn(L);
+  }
+  function replaceUnit(st, k, u){
+    var p = unitParts(k);
+    if(p.t === "i"){
+      var mk = p.rest.slice(0, p.rest.indexOf(":")), id = p.rest.slice(mk.length + 1);
+      var m = (st.months || {})[mk]; if(!m) return;
+      for(var i = 0; i < (m.items || []).length; i++)
+        if(String(m.items[i].id) === id){ m.items[i] = u; return; }
+      return;
+    }
+    eachList(st, p.t, function(L){
+      for(var i = 0; i < L.length; i++){
+        var key = (p.t === "c") ? L[i].k : L[i].id;
+        if(String(key) === p.rest){ L[i] = u; return; }
+      }
+    });
+  }
+  function removeUnit(st, k){
+    var p = unitParts(k);
+    if(p.t === "i"){
+      var mk = p.rest.slice(0, p.rest.indexOf(":")), id = p.rest.slice(mk.length + 1);
+      var m = (st.months || {})[mk]; if(!m || !m.items) return;
+      m.items = m.items.filter(function(x){ return String(x.id) !== id; });
+      return;
+    }
+    eachList(st, p.t, function(L){
+      for(var i = 0; i < L.length; i++){
+        var key = (p.t === "c") ? L[i].k : L[i].id;
+        if(String(key) === p.rest){ L.splice(i, 1); return; }
+      }
+    });
+  }
+
+  /* منفذُ اختبار — لا يوجد إلا بطلبٍ صريح في العنوان */
+  try{
+    if(location.search.indexOf("selftest") >= 0){
+      window.__mt = { merge: mergeStates, units: units, stamp: stampChanges };
+    }
+  }catch(e){}
+
   /* ═══ المخزن ═══
      IndexedDB أصلاً، وlocalStorage مرآةً للإقلاع السريع وللارتداد. */
   var IDB_NAME = "masrouf", IDB_VER = 1, IDB_STORE = "kv";
@@ -3204,6 +3414,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   function localWrite(){
     _lsDirty = false;
     try{
+      stampChanges();          /* ما تغيّر يُوسَم، وما اختفى يُشهَد عليه */
       state.savedAt = Date.now();
       var blob = JSON.stringify(state);
       localStorage.setItem(LSKEY, blob);
@@ -4652,7 +4863,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       onOk: function(v){
         var p = num(v[2]);
         if(!v[0] || p <= 0 || p > 100){ toast("اكتب نسبة بين ١ و١٠٠"); return; }
-        rules().push({ id: "r" + Date.now().toString(36), t: v[0], op: v[1], pct: p });
+        rules().push({ id: "r" + uid(), t: v[0], op: v[1], pct: p });
         toast("أُضيفت القاعدة");
         save();
       } });
@@ -6870,7 +7081,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
             + '<span class="ms">الرفع تلقائيّ بعد كل تعديل. وهذان لحين تريد '
             + 'أن تقرّر بنفسك.</span></span>'
             + '<span class="cmodes"><button class="mini" data-cloudpush="1">ارفع الآن</button>'
-            + '<button class="mini" data-cloudpull="1">أنزِل الآن</button></span></div>') : "");
+            + '<button class="mini" data-cloudpull="1">زامن الآن</button></span></div>') : "");
     } else if(signedIn()){
       h += '<div class="mrow"><span class="mn">حسابك'
         + '<span class="ms">' + esc(cloudWho())
@@ -6879,10 +7090,10 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
         + (cloudBusy ? '<span class="pill">جارٍ…</span>'
                      : '<button class="mini" data-authout="1">اخرج</button>') + '</div>'
         + '<div class="mrow"><span class="mn">مزامنة يدوية'
-        + '<span class="ms">الرفع تلقائيّ بعد كل تعديل. وهذان لحين تريد أن تقرّر '
-        + 'بنفسك — الدمج التلقائي في أرقامٍ مالية يخطئ بصمت.</span></span>'
+        + '<span class="ms">المزامنة تلقائية بعد كل تعديل: تنزل ما هناك، وتدمجه '
+        + 'بما هنا سجلّاً سجلّاً، وترفع الناتج. ولا يُستبدل شيء.</span></span>'
         + '<span class="cmodes"><button class="mini" data-cloudpush="1">ارفع الآن</button>'
-        + '<button class="mini" data-cloudpull="1">أنزِل الآن</button></span></div>';
+        + '<button class="mini" data-cloudpull="1">زامن الآن</button></span></div>';
     } else if(supaReady()){
       h += '<div class="mrow"><span class="mn">مزامنة سحابية'
         + '<span class="ms">سجّل دخولك ببريدك أو بحساب Google، فتصل بياناتك إلى '
@@ -6908,7 +7119,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
           + '<span class="ms">الرفع تلقائيّ بعد كل تعديل. وهذان للحالات التي تريد فيها '
           + 'أن تقرّر بنفسك — الدمج التلقائي في بيانات مالية يخطئ بصمت.</span></span>'
           + '<span class="cmodes"><button class="mini" data-cloudpush="1">ارفع الآن</button>'
-          + '<button class="mini" data-cloudpull="1">أنزِل الآن</button></span></div>';
+          + '<button class="mini" data-cloudpull="1">زامن الآن</button></span></div>';
       }
     }
     h += '</div>';
@@ -8438,23 +8649,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     on("[data-cloudpush]", function(){
       syncPush(function(err){ toast(err ? "تعذّر: " + cloudErr(err) : "رُفعت"); render(); });
     });
-    on("[data-cloudpull]", function(){
-      syncPull(function(row, err){
-        if(err || !row){ toast(cloudErr(err) || "لا نسخة"); render(); return; }
-        confirmDlg("أنزِل نسخة سحابتك",
-          "ستحلّ محلّ ما في جهازك. آخر رفع: <b>"
-          + esc(String(row.updated_at || "").slice(0, 16).replace("T", " ")) + "</b>.",
-          "أنزِلها", function(){
-            try{
-              var d = row.data;
-              for(var k in d) state[k] = d[k];
-              localSave();
-              toast("نُزّلت");
-            }catch(e){ toast("تعذّرت القراءة"); }
-            render();
-          }, true);
-      });
-    });
+    on("[data-cloudpull]", function(){ syncNow(false); });
     ch("[data-cur]", function(el){
       var v = String(el.value || "").trim().slice(0, 12);
       state.cur = v || "ريال";
@@ -8695,7 +8890,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "2026.08.31+b8818d";
+  var APP_VERSION = "2026.09.01+791228";
   /* بيت التطبيق. يُذكر حيث يحتاجه من فتحه في مكانٍ لا يُحفظ فيه. */
   var HOME = "relifeg1.github.io/masrouf";
   var installPrompt = null, swReady = false, swWaiting = null;
@@ -9031,7 +9226,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       if(c) c.p = num(onb.amt[k]);
     }
 
-    var t = Date.now().toString(36);
+    var t = uid();
     if(num(onb.goal) > 0){
       state.goals = state.goals || [];
       state.goals.push({ id: "g" + t, n: "صندوق الطوارئ", e: "🛟", c: "#0F7355",
@@ -9479,26 +9674,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     return true;
   }
   /* أوّل دخول: إن لم يكن له ملفٌّ في درايف أُنشئ الآن بما عنده */
-  function gdFirstPull(){
-    gdPull(function(row, err){
-      if(err === "EMPTY"){
-        gdPush(function(e2){
-          toast(e2 ? ("تعذّر التجهيز: " + e2) : "جُهّز درايفك — بياناتك تُحفظ فيه");
-          render();
-        });
-        return;
-      }
-      if(err){ toast(err); render(); return; }
-      if(!row || !row.data){ render(); return; }
-      var mine = 0;
-      for(var k in state.months) mine += (state.months[k].items || []).length;
-      if(mine === 0 && !state.onboard){ applyCloud(row); return; }
-      confirmDlg("في درايفك نسخة",
-        "آخر رفع: <b>" + esc(String(row.updated_at || "").slice(0, 16).replace("T", " "))
-        + "</b>. أتُنزِلها بدل ما في هذا الجهاز؟",
-        "أنزِلها", function(){ applyCloud(row); });
-    });
-  }
+  function gdFirstPull(){ syncNow(false); }
 
   var CKEY = "kh_cloud";
   function cloudCfg(){
@@ -9601,15 +9777,75 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* أوّل دخولٍ على جهاز جديد: إن كانت السحابة أحدث وجهازك فارغ، تنزل
      بلا سؤال. وإن كان في الجهاز عملٌ فالقرار للمستخدم — الدمج التلقائي
      في أرقامٍ مالية يخطئ بصمت. */
-  function applyCloud(row){
+  /* عدّ الوحدات — للرسالة التي تقول ماذا جاء من هناك */
+  function unitCount(st){
+    var n = 0, k, u = units(st || {});
+    for(k in u) n++;
+    return n;
+  }
+
+  /* يدمج ما جاء مع ما عندك، ثم يحفظ. ولا يستبدل شيئاً. */
+  function applyCloud(row, quiet){
     try{
-      var d = row.data;
-      for(var k in d) state[k] = d[k];
-      migrate();                 /* نسخةٌ رُفعت من إصدارٍ أقدم تُرقّى */
-      localSave();
-      toast("نزلت بياناتك");
-    }catch(e){ toast("تعذّرت القراءة"); }
+      var before = unitCount(state);
+      var merged = mergeStates(state, migrateOf(row.data));
+      for(var k in state) if(!(k in merged)) delete state[k];
+      for(var k2 in merged) state[k2] = merged[k2];
+      migrate();
+      _stampPrev = null;         /* الوسم يُعاد بناؤه على الحالة الجديدة */
+      localWrite();
+      var after = unitCount(state);
+      if(!quiet){
+        toast(after > before
+          ? ("دُمجت · وصل " + (after - before) + " سجلّاً جديداً")
+          : "دُمجت · لا جديد");
+      }
+    }catch(e){ toast("تعذّر الدمج"); }
     render();
+  }
+
+  /* نسخةٌ من إصدارٍ أقدم تُرقّى قبل أن تُدمج — وإلا دُمجت ببنيةٍ لا تُفهم */
+  function migrateOf(d){
+    if(!d || typeof d !== "object") return {};
+    var keep = state, out;
+    try{
+      state = JSON.parse(JSON.stringify(d));
+      migrate();
+      out = state;
+    }catch(e){ out = d; }
+    state = keep;
+    return out;
+  }
+
+  /* الدورة كاملة: أنزِل · ادمج · ارفع الناتج */
+  var syncBusy = false;
+  function syncNow(quiet, then){
+    if(!syncOn()){ if(then) then("لا مزامنة"); return; }
+    if(syncBusy){ if(then) then(null); return; }
+    syncBusy = true;
+    syncPull(function(row, err){
+      if(err === "EMPTY" || (!err && (!row || !row.data))){
+        /* لا نسخة هناك بعد: يُرفع ما هنا فيُنشأ */
+        syncPush(function(e2){
+          syncBusy = false;
+          if(!quiet) toast(e2 ? ("تعذّر الرفع: " + cloudErr(e2)) : "جُهّزت سحابتك");
+          render(); if(then) then(e2 || null);
+        });
+        return;
+      }
+      if(err){
+        syncBusy = false;
+        if(!quiet) toast(cloudErr(err));
+        render(); if(then) then(err);
+        return;
+      }
+      applyCloud(row, quiet);
+      syncPush(function(e3){
+        syncBusy = false;
+        if(e3 && !quiet) toast("دُمجت هنا · وتعذّر الرفع: " + cloudErr(e3));
+        render(); if(then) then(e3 || null);
+      });
+    });
   }
   function askCode(em){
     ask({ title: "الرمز وصل إلى " + em,
@@ -9626,39 +9862,17 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       },
       cancel: "لاحقاً" });
   }
-  function cloudFirstPull(){
-    cloudPull(function(row, err){
-      /* لا صفّ في حسابه: يُنشأ الآن برفع ما عنده. هذه هي كلّ «إنشاء
-         قاعدة البيانات» من ناحيته — لا خطوة يفعلها ولا رسالة يقرؤها. */
-      if(err === "EMPTY"){
-        cloudPush(function(e2){
-          if(e2) toast("تعذّر التجهيز: " + cloudErr(e2));
-          else { cloudMsg = "جُهّز حسابك"; toast("جُهّز حسابك — بياناتك تُحفظ فيه من الآن"); }
-          render();
-        });
-        return;
-      }
-      if(err){ toast(cloudErr(err)); render(); return; }
-      if(!row || !row.data){ render(); return; }
-      var mine = 0;
-      for(var k in state.months) mine += (state.months[k].items || []).length;
-      if(mine === 0 && !state.onboard){
-        applyCloud(row); return;
-      }
-      confirmDlg("في حسابك نسخة",
-        "آخر رفع: <b>" + esc(String(row.updated_at || "").slice(0, 16).replace("T", " "))
-        + "</b>. أتُنزِلها بدل ما في هذا الجهاز؟",
-        "أنزِلها", function(){
-          applyCloud(row);
-        });
-    });
-  }
+  /* أوّل دخول: لا سؤال. ما هناك وما هنا يجتمعان، ولا يفقد أحدهما شيئاً. */
+  function cloudFirstPull(){ syncNow(false); }
   var cloudPending = null;
   function cloudQueue(){
     if(!syncOn()) return;
     clearTimeout(cloudPending);
     cloudPending = setTimeout(function(){
-      syncPush(function(err){ if(err) toast("تعذّر الرفع: " + cloudErr(err)); render(); });
+      /* دورةٌ كاملة لا رفعاً وحده: جهازٌ آخر قد كتب بينهما */
+      syncNow(true, function(err){
+        if(err && err !== "لا مزامنة") toast("تعذّرت المزامنة: " + cloudErr(err));
+      });
     }, 2500);
   }
 
