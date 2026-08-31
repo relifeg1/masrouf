@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://www.googleapis.com https://accounts.google.com https://*.supabase.co; form-action 'none'; base-uri 'self'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://accounts.google.com; frame-src https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://www.googleapis.com https://accounts.google.com https://*.supabase.co; form-action 'none'; base-uri 'self'; object-src 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#4C3AE3" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0D0F14" media="(prefers-color-scheme: dark)">
@@ -7299,6 +7299,47 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
              + '<button class="mini" data-restore="1">استعادة</button>')
       + '</div>';
 
+    /* الاسترجاع: ثلاثة طرقٍ في مكانٍ واحد، تُقرأ قبل الحاجة */
+    h += '<div class="sec"><h2>لو ضاعت بياناتك</h2>'
+      + '<span class="hint">' + (syncOn() ? "لك نسخةٌ خارج الجهاز" : "لا نسخة خارج الجهاز")
+      + '</span></div><div class="card">'
+      + '<div class="mrow"><span class="mn">أين هي الآن'
+      + '<span class="ms">في متصفّح هذا الجهاز. ويضيع ما فيه إن مُسحت بيانات '
+      + 'المتصفّح، أو فُقد الجهاز، أو أُلغي تثبيت التطبيق مع بياناته.'
+      + '</span></span></div>'
+
+      + '<div class="mrow' + (syncOn() ? '' : ' off') + '"><span class="mn">'
+      + (syncOn() ? '١ · نسختك في ' + esc(storageName(storageMode()))
+                  : '١ · لا مزامنة — وهي أوثق حماية')
+      + '<span class="ms">'
+      + (syncOn()
+          ? 'تُرفع بعد كل تعديل. ولو فقدتَ هذا الجهاز، افتح التطبيق في جهازٍ '
+            + 'آخر وادخل بالحساب نفسه — تنزل بياناتك وتندمج.'
+          : 'الجهاز وحده يحمل بياناتك. وربطُ درايف يجعل نسخةً منها تتبعك — '
+            + 'من الأعلى في «أين تُحفظ بياناتك».')
+      + '</span></span></div>'
+
+      + '<div class="mrow"><span class="mn">٢ · ملفّ النسخة الاحتياطية'
+      + '<span class="ms">'
+      + (lastSave ? '' : '')
+      + 'خذ ملفّاً الآن واحفظه خارج الجهاز (بريدك · درايف · مفتاح). '
+      + 'ولاستعادته: «استعادة» في قسم النسخة الاحتياطية — يُفحص الملفّ '
+      + 'ويُعرض ما فيه قبل أن يحلّ محلّ شيء.</span></span>'
+      + '<span class="cmodes"><button class="mini on" data-backup="1">خذ نسخة</button>'
+      + '<button class="mini" data-restore="1">استعد</button></span></div>'
+
+      + (snapInfo()
+          ? ('<div class="mrow"><span class="mn">٣ · وإن أخطأ تحديث'
+             + '<span class="ms">عندك لقطةٌ حُفظت قبل آخر تحديثٍ غيّر بنية '
+             + 'البيانات. تجدها في «أين تُحفظ بياناتك».</span></span>'
+             + '<span class="pill">لك لقطة</span></div>')
+          : ('<div class="mrow off"><span class="mn">٣ · وإن أخطأ تحديث'
+             + '<span class="ms">يحفظ التطبيق لقطةً قبل أيّ تحديثٍ يغيّر بنية '
+             + 'البيانات، فترجع إليها بضغطة. ولا لقطة عندك الآن — لم يصلك '
+             + 'تحديثٌ من هذا النوع بعد.</span></span>'
+             + '<span class="pill">لا حاجة بعد</span></div>'))
+      + '</div>';
+
     h += '<div class="sec"><h2>منطقة الخطر</h2></div><div class="card">'
       + mrow("تصفير كل البيانات", "يمسح كل شيء ويبدأ من جديد",
              '<button class="mini bad" data-wipe="1">تصفير</button>')
@@ -7369,7 +7410,8 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   }
   /* خمس عائلات. والترتيب داخل كلٍّ هو ترتيب ورودها في الشاشة. */
   var SET_FAM = [
-    { n: "بياناتك", of: ["أين تُحفظ بياناتك", "النسخة الاحتياطية", "منطقة الخطر"] },
+    { n: "بياناتك", of: ["أين تُحفظ بياناتك", "النسخة الاحتياطية",
+                        "لو ضاعت بياناتك", "منطقة الخطر"] },
     { n: "خطتك", of: ["الدخل الافتراضي", "بنود المصروف", "الأهداف",
                       "جهات الاستثمار", "الحسابات", "قواعدك النسبية"] },
     { n: "شهرك", of: ["الشهر المالي", "الترحيل بين الشهور", "التقويم والزكاة"] },
@@ -8876,7 +8918,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.4.0+14";
+  var APP_VERSION = "1.4.0+15";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
@@ -9576,7 +9618,65 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       + "&prompt=consent"
       + "&state=gd";
   }
-  function gdOut(){ gdSet(null); }
+  function gdOut(){ gdSet(null); gdTok = null; }
+
+  /* ── التجديد الصامت ──
+     تُحمَّل مكتبة جوجل عند أوّل حاجة، لا في كل فتحة: من لم يربط درايف
+     لا يُحمَّل له شيء. */
+  var gisState = "?", gdTok = null, gdRenewing = false;
+  function gdLoadGis(then){
+    if(gisState === "ok") return then(true);
+    if(gisState === "off") return then(false);
+    if(!gdReady()) { gisState = "off"; return then(false); }
+    var el = document.createElement("script");
+    el.src = "https://accounts.google.com/gsi/client";
+    el.async = true;
+    el.onload = function(){
+      gisState = (window.google && google.accounts && google.accounts.oauth2)
+               ? "ok" : "off";
+      then(gisState === "ok");
+    };
+    el.onerror = function(){ gisState = "off"; then(false); };
+    try{ document.head.appendChild(el); }
+    catch(e){ gisState = "off"; then(false); }
+  }
+
+  /* يطلب رمزاً جديداً بلا شاشة. لا يعمل إلا لمن سبق أن أذن — ومن لم
+     يأذن يبقى على الطريق الأوّل. */
+  function gdSilentRenew(then){
+    if(gdRenewing) return then && then(false);
+    gdRenewing = true;
+    gdLoadGis(function(ok){
+      if(!ok){ gdRenewing = false; return then && then(false); }
+      try{
+        if(!gdTok){
+          gdTok = google.accounts.oauth2.initTokenClient({
+            client_id: gdClient(),
+            scope: "https://www.googleapis.com/auth/drive.appdata",
+            callback: function(r){
+              gdRenewing = false;
+              if(r && r.access_token){
+                gdSet({ token: r.access_token,
+                        exp: Date.now() + ((+r.expires_in || 3600) * 1000) });
+                then && then(true);
+              } else { then && then(false); }
+            },
+            error_callback: function(){ gdRenewing = false; then && then(false); }
+          });
+        }
+        gdTok.requestAccessToken({ prompt: "" });
+      }catch(e){ gdRenewing = false; then && then(false); }
+    });
+  }
+
+  /* يُدعى قبل كل طلبٍ إلى درايف: إن قارب الإذن على الانتهاء جُدِّد
+     قبل أن يُرفض الطلب — فلا يرى صاحبه خطأً أصلاً. */
+  function gdFresh(then){
+    var g = gdSess();
+    if(!g || !g.token) return then(false);
+    if(g.exp - Date.now() > 300000) return then(true);   /* أكثر من خمس دقائق */
+    gdSilentRenew(function(ok){ then(ok || (gdSess() || {}).exp > Date.now()); });
+  }
   function gdHead(extra){
     var h = { "Authorization": "Bearer " + (gdSess() || {}).token };
     for(var k in (extra || {})) h[k] = extra[k];
@@ -9601,7 +9701,12 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
         then(f ? f.id : null, f ? f.modifiedTime : null, null);
       })["catch"](function(e){ then(null, null, String(e.message || e)); });
   }
-  function gdPull(then){
+  function gdPull(then, retried){
+    /* التجديد أوّلاً: الطلب الذي يُرفض بانتهاء الإذن يُرى خطأً، وهو
+       ليس خطأً بل وقتاً مضى. */
+    if(!retried && (gdStale() || (gdSess() && gdSess().exp - Date.now() < 300000))){
+      return gdFresh(function(){ gdPull(then, true); });
+    }
     if(!gdOn()){ then(null, gdStale() ? "انتهت جلسة درايف — ادخل ثانيةً"
                                       : "لم تدخل درايف"); return; }
     cloudBusy = true; render();
@@ -9618,7 +9723,12 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
         });
     });
   }
-  function gdPush(then){
+  function gdPush(then, retried){
+    /* التجديد أوّلاً: الطلب الذي يُرفض بانتهاء الإذن يُرى خطأً، وهو
+       ليس خطأً بل وقتاً مضى. */
+    if(!retried && (gdStale() || (gdSess() && gdSess().exp - Date.now() < 300000))){
+      return gdFresh(function(){ gdPush(then, true); });
+    }
     if(!gdOn()){ then(gdStale() ? "انتهت جلسة درايف — ادخل ثانيةً"
                                 : "لم تدخل درايف"); return; }
     cloudBusy = true; render();
