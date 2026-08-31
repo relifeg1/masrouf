@@ -3093,11 +3093,18 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   var _lsT = null, _lsDirty = false;
   /* سببُ تعذّر الحفظ، إن تعذّر. "" يعني أنّه يعمل. */
   var saveBlocked = "";
+  var lastSave = 0, lastSize = 0;
   function localWrite(){
     _lsDirty = false;
     try{
       state.savedAt = Date.now();
-      localStorage.setItem(LSKEY, JSON.stringify(state));
+      var blob = JSON.stringify(state);
+      localStorage.setItem(LSKEY, blob);
+      /* بعد الكتابة لا قبلها: الدليل يُسجَّل حين يقع الفعل */
+      lastSave = state.savedAt; lastSize = blob.length;
+      /* الأسفل وحده يُحدَّث لا الشاشة كلّها: رسمٌ كامل بعد كل ضغطة
+         يسرق التركيز من الحقل الذي تكتب فيه. */
+      footProof();
       if(saveBlocked === "store"){ saveBlocked = ""; render(); }
     }catch(e){
       /* قد تكون المساحة امتلأت، وقد يكون التخزين ممنوعاً أصلاً.
@@ -6682,6 +6689,21 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       + '<span class="ms">مهما اخترتَ، تُكتب في متصفّحك أوّلاً فيعمل التطبيق '
       + 'بلا إنترنت. وما يزيد على ذلك هو اختيارك أدناه.</span></span>'
       + '<span class="pill">مفعّل</span></div>'
+      + (function(){
+          var raw = "";
+          try{ raw = localStorage.getItem(LSKEY) || ""; }catch(e){}
+          var n = 0, mk;
+          for(mk in (state.months || {})) n += ((state.months[mk].items) || []).length;
+          return '<div class="mrow"><span class="mn">ما هو محفوظ الآن'
+            + '<span class="ms">' + Object.keys(state.months || {}).length + ' شهراً · '
+            + n + ' حركة · ' + (state.cats || []).length + ' بنداً · '
+            + ((state.goals || []).length) + ' هدفاً · '
+            + ((state.accts || []).length) + ' محفظة'
+            + (raw ? (' — ' + kb(raw.length) + ' في متصفّح هذا الجهاز') : '')
+            + (lastSave ? (' · آخر كتابة ' + clock(lastSave)) : '')
+            + '</span></span>'
+            + '<button class="mini" data-backup="1">انسخها</button></div>';
+        })()
       + storageHTML(true);
     var SNP = snapInfo();
     if(SNP){
@@ -6980,8 +7002,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     document.getElementById("root").innerHTML =
       '<div class="wrap v-' + (ui.tab || "dash") + '">'
       + topbar() + saveBar() + updateBar() + body
-      + '<footer>' + (saveBlocked ? 'الحفظ متعذّر — اقرأ التنبيه أعلاه'
-                                  : 'بياناتك تُحفظ تلقائياً')
+      + '<footer>' + (saveBlocked ? 'الحفظ متعذّر — اقرأ التنبيه أعلاه' : saveProof())
       + ' <span class="vtag">مصروف ' + esc(APP_VERSION) + '</span></footer></div>'
       + navbar() + dlgHTML();
     applyNotes();
@@ -8539,7 +8560,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "2026.08.31+bd7b0f";
+  var APP_VERSION = "2026.08.31+8eebe6";
   /* بيت التطبيق. يُذكر حيث يحتاجه من فتحه في مكانٍ لا يُحفظ فيه. */
   var HOME = "relifeg1.github.io/masrouf";
   var installPrompt = null, swReady = false, swWaiting = null;
@@ -8622,6 +8643,32 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     try{ swWaiting.postMessage({ type: "SKIP_WAITING" }); }catch(e){}
     swWaiting = null;
     toast("جارٍ التحديث…");
+  }
+  function kb(n){
+    return n < 1024 ? (n + " بايت") : (Math.round(n / 102.4) / 10 + "KB");
+  }
+  function clock(t){
+    var d = new Date(t);
+    return pad(d.getHours()) + ":" + pad(d.getMinutes());
+  }
+  /* دليلٌ لا وعد: متى كُتبت آخر مرّة، وكم حجمها */
+  function saveProof(){
+    if(!lastSave){
+      var raw = null;
+      try{ raw = localStorage.getItem(LSKEY); }catch(e){}
+      if(raw){ lastSize = raw.length; return "محفوظة في هذا الجهاز · " + kb(lastSize); }
+      return "لم يُحفظ شيء بعد";
+    }
+    return "حُفظ " + clock(lastSave) + " · " + kb(lastSize)
+         + (syncOn() ? " · ومرفوعة" : "");
+  }
+  function footProof(){
+    try{
+      var f = document.querySelector("footer");
+      if(!f) return;
+      f.innerHTML = (saveBlocked ? "الحفظ متعذّر — اقرأ التنبيه أعلاه" : saveProof())
+        + ' <span class="vtag">مصروف ' + esc(APP_VERSION) + '</span>';
+    }catch(e){}
   }
   function saveBar(){
     if(!saveBlocked) return "";

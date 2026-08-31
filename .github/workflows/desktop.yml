@@ -70,7 +70,7 @@ jobs:
             desktop/out/*.exe
             desktop/out/*.dmg
             desktop/out/*.zip
-            desktop/out/*.yml
+            desktop/out/latest*.yml
             desktop/out/*.blockmap
           if-no-files-found: error
 
