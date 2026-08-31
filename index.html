@@ -3767,7 +3767,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   function typeFields(x){
     var t = typeOf(x), f = [];
     if(t === "seas") f.push({ label: "المبلغ السنوي (يُقسَّم على ١٢)", type: "number", value: num(x.yr) || num(x.p) * 12 });
-    else if(t === "inst") f.push({ label: "عدد الأشهر المتبقية", type: "number", value: instLeft(x, ui.month) || "" });
+    else if(t === "inst") f.push({ label: "عدد الأشهر المتبقّية", type: "number", value: instLeft(x, ui.month) || "" });
     return f;
   }
   function applyType(x, t, extra){
@@ -3840,7 +3840,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
           options: CLASSES.map(function(y){ return { v: y.k, n: y.n }; }) },
         { label: "النوع", type: "select", value: t,
           options: TYPES.map(function(y){ return { v: y.k, n: y.i + " " + y.n + " — " + y.d }; }) },
-        { label: "للموسمي: المبلغ السنوي · للقسط: عدد الأشهر المتبقية", type: "number",
+        { label: "للموسمي: المبلغ السنوي · للقسط: عدد الأشهر المتبقّية", type: "number",
           value: t === "seas" ? (num(c.yr) || num(c.p) * 12)
                : (t === "inst" ? (instLeft(c, ui.month) || "") : "") }
       ],
@@ -3868,7 +3868,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
         { label: "النوع", type: "select", value: t,
           options: TYPES.map(function(y){ return { v: y.k, n: y.i + " " + y.n + " — " + y.d }; }) },
         { label: "المبلغ الشهري (اتركه فارغاً للقسط ليُحسب)", type: "number", value: num(x.p) },
-        { label: "للموسمي: المبلغ السنوي · للقسط: عدد الأشهر المتبقية", type: "number",
+        { label: "للموسمي: المبلغ السنوي · للقسط: عدد الأشهر المتبقّية", type: "number",
           value: t === "seas" ? (num(x.yr) || num(x.p) * 12) : (t === "inst" ? (instLeft(x, ui.month) || "") : "") },
         { label: "للقسط فقط: إجمالي المشتَرى (يُقسَّم على الأشهر)", type: "number",
           value: t === "inst" ? (num(x.p) * (instLeft(x, ui.month) || 1)) : "" }
@@ -4312,7 +4312,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
             incObj(k).own ? "مخصص لهذا الشهر" : "من الافتراضي")
       + kpi("↓", "warn", "صُرف", fmt(spent),
             deltaTxt(spent, pSpent, true), "")
-      + kpi("◇", "ok", "المتبقي", fmt(inc - spent), "",
+      + kpi("◇", "ok", "المتبقّي", fmt(inc - spent), "",
             inc > 0 ? Math.round((inc - spent) / inc * 100) + "٪ من دخلك" : "")
       + kpi("▲", "gold", "صافي ثروتك", fmt(nw), "",
             "أصول " + fmt(assetTotal()) + " − التزامات " + fmt(liabTotal(k)))
@@ -5181,7 +5181,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       { n: "معيشة مرنة", v: T.flex, c: "var(--ink-2)", s: "ما تملك خفضه" },
       { n: "ادخار وصل فعلاً", v: T.saveMoved, c: "var(--ok)", s: "أهداف واستثمار" },
       { n: left >= 0 ? "بقي بلا صرف" : "صُرف من رصيد سابق", v: Math.abs(left),
-        c: "var(--line-2)", s: left >= 0 ? "لم يخرج من حسابك" : "أنفقت فوق دخل الفترة" }
+        c: "var(--line-2)", s: left >= 0 ? "لم يخرج من حسابك" : "صرفتَ فوق دخل الفترة" }
     ];
     h += '<div class="sec"><h2>مسار الريال</h2>'
       + '<span class="hint">من ' + fmt(T.inc) + ' إلى أين انتهت</span></div><div class="card">';
@@ -6976,7 +6976,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     /* ── أين تُحفظ بياناتك ── */
     var CC = cloudCfg() || {};
     if(!(window.claude && window.claude.use)){
-      h += '<div class="sec"><h2>التطبيق على جهازك</h2>'
+      h += '<div class="sec"><h2>تثبيت التطبيق</h2>'
         + '<span class="hint">' + (isInstalled() ? "مثبَّت" : "من المتصفّح") + '</span></div>'
         + '<div class="card"><div class="mrow"><span class="mn">ثبّته كتطبيق'
         + '<span class="ms">' + (isInstalled()
@@ -7003,7 +7003,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       + '<span class="ms">' + esc(HOME) + ' — كلّ فتحةٍ يسأل عن جديد، '
       + 'وإن وُجد ظهر لك شريطٌ ولا يُفرض عليك.</span></span></div></div>';
 
-    h += '<div class="sec"><h2>البداية</h2>'
+    h += '<div class="sec"><h2>معالج البدء</h2>'
       + '<span class="hint">' + (state.onboard ? "أُنجزت" : "لم تبدأ بعد") + '</span></div>'
       + '<div class="card"><div class="mrow"><span class="mn">معالج البدء'
       + '<span class="ms">ثلاثة أسئلة تبني خطةً أولى: راتبك · يوم وصوله · أهمّ بنودك</span></span>'
@@ -7163,7 +7163,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     h += zakatCard();
 
     /* ── التحكّم اليوميّ ── */
-    h += '<div class="sec"><h2>المظهر والإقلاع</h2>'
+    h += '<div class="sec"><h2>المظهر والفتح</h2>'
       + '<span class="hint">كيف يفتح ويبدو</span></div><div class="card">'
       + '<div class="mrow"><span class="mn">السمة'
       + '<span class="ms">«يتبع النظام» يتغيّر مع إعداد جهازك</span></span>'
@@ -7391,9 +7391,9 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     { n: "خطتك", of: ["الدخل الافتراضي", "بنود المصروف", "الأهداف",
                       "جهات الاستثمار", "الحسابات", "قواعدك النسبية"] },
     { n: "شهرك", of: ["الشهر المالي", "الترحيل بين الشهور", "التقويم والزكاة"] },
-    { n: "العرض", of: ["العملة والأرقام", "المظهر والإقلاع", "التبويبات",
+    { n: "العرض", of: ["العملة والأرقام", "المظهر والفتح", "التبويبات",
                        "التنبيه والتسجيل", "الشروح"] },
-    { n: "التطبيق", of: ["عن التطبيق", "التطبيق على جهازك", "البداية"] }
+    { n: "التطبيق", of: ["عن التطبيق", "تثبيت التطبيق", "معالج البدء"] }
   ];
   function famOf(name){
     for(var i = 0; i < SET_FAM.length; i++)
@@ -8911,7 +8911,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "33";
+  var APP_VERSION = "34";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return "#" + APP_VERSION; }
