@@ -23,7 +23,7 @@ static class Setup
 {
     const string NAME = "مصروف";
     const string ID = "Masrouf";
-    const string VER = "1.0";
+    const string VER = "1.1";
     const string URL = "https://relifeg1.github.io/masrouf/";
     const string REGKEY =
         @"Software\Microsoft\Windows\CurrentVersion\Uninstall\Masrouf";

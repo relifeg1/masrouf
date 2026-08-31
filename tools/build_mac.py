@@ -46,8 +46,8 @@ PLIST = '''<?xml version="1.0" encoding="UTF-8"?>
   <key>CFBundleName</key>                <string>Masrouf</string>
   <key>CFBundleDisplayName</key>         <string>مصروف</string>
   <key>CFBundleIdentifier</key>          <string>io.github.relifeg1.masrouf</string>
-  <key>CFBundleVersion</key>             <string>1.0</string>
-  <key>CFBundleShortVersionString</key>  <string>1.0</string>
+  <key>CFBundleVersion</key>             <string>1.1</string>
+  <key>CFBundleShortVersionString</key>  <string>1.1</string>
   <key>CFBundlePackageType</key>         <string>APPL</string>
   <key>CFBundleExecutable</key>          <string>masrouf</string>
   <key>CFBundleIconFile</key>            <string>masrouf</string>
