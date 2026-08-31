@@ -8473,7 +8473,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "2026.08.31+3f1e6f";
+  var APP_VERSION = "2026.08.31+371f2f";
   /* بيت التطبيق. يُذكر حيث يحتاجه من فتحه في مكانٍ لا يُحفظ فيه. */
   var HOME = "relifeg1.github.io/masrouf";
   var installPrompt = null, swReady = false, swWaiting = null;
@@ -8602,64 +8602,197 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   var ONB_PICK = ["grocery", "bills", "fuel", "food", "telecom", "install",
                   "personal", "health", "charity", "family", "subsc", "other"];
   var onbSel = null;
+  /* ما جمعه المعالج حتى الآن. يعيش حتى يفرغ أو يُلغى. */
+  var onb = null;
+
+  function onbLeft(){
+    var used = num(onb.goal) + num(onb.inv);
+    for(var k in onb.amt) used += num(onb.amt[k]);
+    return num(onb.salary) - used;
+  }
+  function onbPicks(){
+    var out = [];
+    for(var k in (onbSel || {})){
+      if(onbSel[k] && catOf(k) && catOf(k).n !== "بند محذوف") out.push(k);
+    }
+    return out;
+  }
+  function onbBar(txt, good){
+    return '<div class="bsum ' + (good ? "ok" : "warn") + '">' + txt + '</div>';
+  }
+  function onbHead(n){
+    return "الخطوة " + n + " من ٥";
+  }
+
   function onboardDlg(){
     if(onbSel === null) onbSel = { grocery: 1, bills: 1, fuel: 1 };
-    ask({ title: "لنبدأ خطتك",
-      msg: "ثلاثة أسئلة، ثم تعدّل كل شيء متى شئت.",
+    onb = { step: 1, salary: "", day: "1", goal: "", inv: "", amt: {} };
+    onbStep();
+  }
+
+  function onbQuit(){
+    state.onboard = true; onbSel = null; onb = null; save();
+  }
+
+  function onbStep(){
+    if(!onb) return;
+    if(onb.step === 1) return onbS1();
+    if(onb.step === 2) return onbS2();
+    if(onb.step === 3) return onbS3();
+    if(onb.step === 4) return onbS4();
+    return onbS5();
+  }
+
+  /* ١ · الراتب ويومه */
+  function onbS1(){
+    ask({ title: "لنبدأ خطتك", msg: onbHead("١") + " · دخلك",
       live: true,
       fields: [
-        { label: "كم راتبك الشهري؟", type: "number", value: "" },
-        { label: "في أي يوم من الشهر يصل؟", type: "number", value: "1" }
+        { label: "كم راتبك الشهري؟", type: "number", value: onb.salary },
+        { label: "في أي يوم من الشهر يصل؟", type: "number", value: onb.day }
       ],
       html: function(v){
-        var inc = num(v && v[0]);
-        var n = 0;
-        for(var k in onbSel){ if(onbSel[k]) n++; }
-        return '<div class="f2"><label>أهمّ بنود صرفك — اختر ما ينطبق عليك</label>'
-          + '<div class="chips onbchips">' + ONB_PICK.map(function(ck){
-              var c = catOf(ck);
-              if(!c || c.n === "بند محذوف") return "";
-              return '<button class="chip' + (onbSel[ck] ? " on" : "") + '" data-onb="' + ck + '">'
-                + c.e + ' ' + esc(c.n) + '</button>';
-            }).join("") + '</div></div>'
-          + '<div class="bsum ' + (inc > 0 && n ? "ok" : "warn") + '">'
-          + (inc > 0
-              ? (n ? 'سأوزّع <b>' + fmt(inc) + '</b> على <b>' + n + '</b> بنداً كبداية: '
-                     + '٦٠٪ للمعيشة و٢٠٪ للالتزامات و٢٠٪ للادخار — تعدّلها بعدها كما تشاء.'
-                   : 'اختر بنداً واحداً على الأقلّ.')
-              : 'اكتب راتبك أوّلاً.') + '</div>';
+        var inc = num(v && v[0]), d = Math.round(num(v && v[1]));
+        if(inc <= 0) return onbBar("اكتب راتبك لنبدأ.", false);
+        return onbBar("شهرك المالي سيبدأ يوم <b>" + (d >= 2 && d <= 28 ? d : 1)
+          + "</b> — يوم يصلك راتبك لا أوّل الشهر، فتُحسب فترتك كما تعيشها.", true);
       },
-      ok: "ابْنِ خطتي",
+      ok: "التالي",
       onOk: function(v){
         var inc = Math.round(num(v[0]));
-        var day = Math.round(num(v[1])) || 1;
         if(inc <= 0){ toast("اكتب راتباً أكبر من صفر"); return; }
-        var picks = [];
-        for(var k in onbSel){ if(onbSel[k] && catOf(k).n !== "بند محذوف") picks.push(k); }
-        if(!picks.length){ toast("اختر بنداً واحداً على الأقلّ"); return; }
-
-        state.income = { salary: inc, extra: 0 };
-        if(day >= 2 && day <= 28) state.monthStart = day;
-
-        /* ٦٠٪ للمعيشة تُقسَّم على ما اخترت · ٢٠٪ ادخاراً هدفاً أوّل · والباقي يبقى
-           غير مخصّص ليقرّره صاحبه — فالمعالج يبدأ ولا يحسم. */
-        var live = Math.round(inc * 0.6), each = Math.round(live / picks.length / 10) * 10;
-        state.cats.forEach(function(c){ c.p = 0; });
-        picks.forEach(function(ck){ var c = catOf(ck); if(c) c.p = each; });
-
-        state.goals = state.goals || [];
-        state.goals.push({ id: "g" + Date.now().toString(36), n: "صندوق الطوارئ",
-                           e: "🛟", c: "#0F7355", m: Math.round(inc * 0.2 / 10) * 10,
-                           saved: 0, target: inc * 3 });
-        state.onboard = true;
-        onbSel = null;
-        toast("بُنيت خطتك — عدّلها من شاشة الخطة");
-        save();
-        /* السؤال بعد أن يرى خطته: صار له ما يخاف عليه فيهمّه أين يُحفظ */
-        setTimeout(storageDlg, 700);
+        onb.salary = inc;
+        onb.day = Math.round(num(v[1])) || 1;
+        onb.step = 2; onbStep();
       },
-      cancel: "أبدأ فارغاً",
-      onCancel: function(){ state.onboard = true; onbSel = null; save(); } });
+      cancel: "أبدأ فارغاً", onCancel: onbQuit });
+  }
+
+  /* ٢ · البنود */
+  function onbS2(){
+    ask({ title: "على أي شيء تصرف؟", msg: onbHead("٢") + " · اختر ما ينطبق عليك",
+      live: true, fields: [],
+      html: function(){
+        var n = onbPicks().length;
+        return '<div class="chips onbchips">' + ONB_PICK.map(function(ck){
+            var c = catOf(ck);
+            if(!c || c.n === "بند محذوف") return "";
+            return '<button class="chip' + (onbSel[ck] ? " on" : "") + '" data-onb="' + ck + '">'
+              + c.e + " " + esc(c.n) + '</button>';
+          }).join("") + '</div>'
+          + onbBar(n ? ("اخترتَ <b>" + n + "</b> بنداً · تزيد وتنقص متى شئت لاحقاً")
+                     : "اختر بنداً واحداً على الأقلّ.", !!n);
+      },
+      ok: "التالي",
+      onOk: function(){
+        if(!onbPicks().length){ toast("اختر بنداً واحداً على الأقلّ"); return; }
+        onb.step = 3; onbStep();
+      },
+      cancel: "رجوع", onCancel: function(){ onb.step = 1; onbStep(); } });
+  }
+
+  /* ٣ · ادفع لنفسك أوّلاً */
+  function onbS3(){
+    ask({ title: "ادفع لنفسك أوّلاً", msg: onbHead("٣")
+        + " · قبل المصروف، كم يخرج للادخار والاستثمار؟",
+      live: true,
+      fields: [
+        { label: "ادخار شهري (هدفك الأوّل)", type: "number", value: onb.goal },
+        { label: "استثمار شهري", type: "number", value: onb.inv }
+      ],
+      html: function(v){
+        var g = num(v && v[0]), iv = num(v && v[1]), left = num(onb.salary) - g - iv;
+        if(left < 0) return onbBar("تجاوزتَ راتبك بـ<b>" + fmt(-left) + "</b>.", false);
+        var pct = onb.salary ? Math.round((g + iv) / onb.salary * 100) : 0;
+        return onbBar("يبقى للمعيشة <b>" + fmt(left) + "</b>"
+          + (g + iv > 0 ? (" · تدّخر <b>" + pct + "٪</b> من دخلك") : "")
+          + ". واتركها صفراً إن لم تكن مستعداً — تضيفها لاحقاً.", true);
+      },
+      ok: "التالي",
+      onOk: function(v){
+        var g = Math.round(num(v[0])), iv = Math.round(num(v[1]));
+        if(g < 0 || iv < 0){ toast("لا مبالغ سالبة"); return; }
+        if(g + iv > num(onb.salary)){ toast("المجموع أكبر من راتبك"); return; }
+        onb.goal = g; onb.inv = iv;
+        onb.step = 4; onbStep();
+      },
+      cancel: "رجوع", onCancel: function(){ onb.step = 2; onbStep(); } });
+  }
+
+  /* ٤ · مبلغ كل بند */
+  function onbS4(){
+    var picks = onbPicks();
+    var left = num(onb.salary) - num(onb.goal) - num(onb.inv);
+    var each = picks.length ? Math.round(left / picks.length / 10) * 10 : 0;
+    var flds = picks.map(function(k){
+      var c = catOf(k);
+      return { label: c.e + " " + c.n, type: "number", key: k,
+               value: (onb.amt[k] !== undefined && onb.amt[k] !== "")
+                        ? onb.amt[k] : each };
+    });
+    ask({ title: "كم لكل بند؟", msg: onbHead("٤")
+        + " · بدأتُ بقسمةٍ متساوية — عدّلها كما تعيش أنت.",
+      live: true, fields: flds,
+      html: function(v){
+        var used = 0;
+        (v || []).forEach(function(x){ used += num(x); });
+        var rest = left - used;
+        return onbBar("وزّعت <b>" + fmt(used) + "</b> من <b>" + fmt(left) + "</b>"
+          + " · " + (rest === 0 ? "لم يبقَ شيء غير مخصّص"
+                   : rest > 0 ? ("يبقى <b>" + fmt(rest) + "</b> غير مخصّص")
+                              : ("تجاوزت بـ<b>" + fmt(-rest) + "</b>")),
+          rest >= 0);
+      },
+      ok: "التالي",
+      onOk: function(v){
+        var used = 0;
+        flds.forEach(function(f, i){
+          var a = Math.round(num(v[i]));
+          onb.amt[f.key] = a; used += a;
+        });
+        if(used > left){ toast("المجموع يتجاوز ما بقي من راتبك"); return; }
+        onb.step = 5; onbStep();
+      },
+      cancel: "رجوع", onCancel: function(){ onb.step = 3; onbStep(); } });
+  }
+
+  /* ٥ · أين تُحفظ */
+  function onbS5(){
+    ask({ title: "أين تُحفظ بياناتك؟",
+      msg: onbHead("٥") + " · اختر ما يناسبك، وغيّره متى شئت من الإعدادات.",
+      fields: [],
+      html: function(){ return '<div class="card">' + storageHTML() + '</div>'; },
+      ok: "ابْنِ خطتي",
+      onOk: onbFinish,
+      cancel: false });
+  }
+
+  function onbFinish(){
+    state.income = { salary: num(onb.salary), extra: 0 };
+    if(onb.day >= 2 && onb.day <= 28) state.monthStart = onb.day;
+
+    state.cats.forEach(function(c){ c.p = 0; });
+    for(var k in onb.amt){
+      var c = catOf(k);
+      if(c) c.p = num(onb.amt[k]);
+    }
+
+    var t = Date.now().toString(36);
+    if(num(onb.goal) > 0){
+      state.goals = state.goals || [];
+      state.goals.push({ id: "g" + t, n: "صندوق الطوارئ", e: "🛟", c: "#0F7355",
+                         m: num(onb.goal), saved: 0,
+                         target: num(onb.salary) * 3, arch: false });
+    }
+    if(num(onb.inv) > 0){
+      state.invest = state.invest || [];
+      state.invest.push({ id: "i" + t, n: "استثماري", kind: "auto",
+                          m: num(onb.inv), "in": 0, val: 0 });
+    }
+    state.onboard = true;
+    onbSel = null; onb = null;
+    toast("بُنيت خطتك — عدّلها من شاشة الخطة");
+    save();
   }
 
   /* ═══ طبقة التخزين ═══
