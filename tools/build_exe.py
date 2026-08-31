@@ -7,6 +7,7 @@
 """
 import io
 import os
+import re
 import struct
 import subprocess
 
@@ -16,6 +17,24 @@ CSC = r'C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe'
 PNG = os.path.join(ROOT, 'icon-192.png')
 ICO = os.path.join(HERE, 'masrouf.ico')
 CS = os.path.join(HERE, 'Masrouf.cs')
+SETUP_SRC = os.path.join(HERE, 'Setup.cs')
+INDEX = os.path.join(ROOT, 'index.html')
+
+
+def app_version():
+    """نسخة التطبيق كما بناها build_dist — لا رقمٌ يُكتب باليد."""
+    s = io.open(INDEX, encoding='utf-8').read()
+    m = re.search(r'var APP_VERSION = "([^"]*)"', s)
+    return m.group(1) if m else '0.0.0-dev'
+
+
+def with_version(src_path, ver):
+    """نسخةٌ مؤقّتة من المصدر بعد حقن الرقم — الأصل يبقى بالعلامة."""
+    t = io.open(src_path, encoding='utf-8').read()
+    assert '__VER__' in t, 'لا علامة __VER__ في ' + src_path
+    tmp = src_path + '.gen'
+    io.open(tmp, 'w', encoding='utf-8').write(t.replace('__VER__', ver))
+    return tmp
 EXE = os.path.join(HERE, 'masrouf.exe')
 
 
@@ -52,12 +71,16 @@ print('بُني: %s · %d بايت' % (EXE, os.path.getsize(EXE)))
 SETUP_CS = os.path.join(HERE, 'Setup.cs')
 SETUP = os.path.join(HERE, 'masrouf-setup.exe')
 
+VER = app_version()
+print('النسخة المحقونة: %s' % VER)
+SETUP_GEN = with_version(SETUP_SRC, VER)
+
 r2 = subprocess.run(
     [CSC, '/nologo', '/target:winexe', '/optimize+', '/codepage:65001',
      '/win32icon:' + ICO, '/out:' + SETUP,
      '/resource:' + EXE + ',app', '/resource:' + ICO + ',icon',
      '/reference:System.dll', '/reference:System.Windows.Forms.dll',
-     '/reference:System.Drawing.dll', SETUP_CS],
+     '/reference:System.Drawing.dll', SETUP_GEN],
     capture_output=True, text=True, encoding='utf-8', errors='replace')
 
 if r2.returncode != 0:
@@ -65,4 +88,9 @@ if r2.returncode != 0:
     print((r2.stdout or '') + (r2.stderr or ''))
     raise SystemExit(1)
 
-print('المثبِّت: %s · %d بايت' % (SETUP, os.path.getsize(SETUP)))
+try:
+    os.remove(SETUP_GEN)
+except OSError:
+    pass
+print('المثبِّت: %s · %d بايت · نسخة %s'
+      % (SETUP, os.path.getsize(SETUP), VER))

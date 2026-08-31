@@ -13,6 +13,7 @@
 """
 import io
 import os
+import re
 import struct
 import zipfile
 
@@ -46,8 +47,8 @@ PLIST = '''<?xml version="1.0" encoding="UTF-8"?>
   <key>CFBundleName</key>                <string>Masrouf</string>
   <key>CFBundleDisplayName</key>         <string>مصروف</string>
   <key>CFBundleIdentifier</key>          <string>io.github.relifeg1.masrouf</string>
-  <key>CFBundleVersion</key>             <string>1.1</string>
-  <key>CFBundleShortVersionString</key>  <string>1.1</string>
+  <key>CFBundleVersion</key>             <string>__VER__</string>
+  <key>CFBundleShortVersionString</key>  <string>__VER__</string>
   <key>CFBundlePackageType</key>         <string>APPL</string>
   <key>CFBundleExecutable</key>          <string>masrouf</string>
   <key>CFBundleIconFile</key>            <string>masrouf</string>
@@ -67,6 +68,17 @@ def icns(png_path):
     entry = b'ic09' + struct.pack('>I', 8 + len(png)) + png
     return b'icns' + struct.pack('>I', 8 + len(entry)) + entry, w, h
 
+
+def app_version():
+    s = io.open(os.path.join(ROOT, 'index.html'), encoding='utf-8').read()
+    m = re.search(r'var APP_VERSION = "([^"]*)"', s)
+    return m.group(1) if m else '0.0.0-dev'
+
+
+VER = app_version()
+assert '__VER__' in PLIST, 'لا علامة __VER__ في الوصف'
+PLIST = PLIST.replace('__VER__', VER)
+print('النسخة المحقونة: %s' % VER)
 
 data, w, h = icns(PNG512)
 print('الأيقونة: %dx%d · %d بايت' % (w, h, len(data)))
