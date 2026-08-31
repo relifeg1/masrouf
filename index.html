@@ -344,6 +344,11 @@ input,select,button,textarea{font-family:inherit;font-size:16px;min-width:0;max-
 .vtag{opacity:.55;font-size:11px;font-family:var(--mono, monospace);
       letter-spacing:.2px;white-space:nowrap}
 .savebar{margin:12px 0}
+.gdvals{margin-top:10px;display:flex;flex-direction:column;gap:8px}
+.gdvals > div{background:var(--card-2,rgba(127,127,127,.09));border-radius:8px;padding:8px 10px}
+.gdvals s{display:block;text-decoration:none;font-size:10px;opacity:.6;margin-bottom:3px}
+.gdvals code{font-family:var(--mono,monospace);font-size:12px;
+  direction:ltr;display:block;word-break:break-all;text-align:left}
 .snvfam{font-size:10px;letter-spacing:.09em;color:var(--ink-3);
   padding:14px 12px 5px;font-weight:600}
 .setnav .snvfam:first-child{padding-top:4px}
@@ -8565,6 +8570,16 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       toast("بياناتك في هذا الجهاز — لا تنسَ نسخةً احتياطية");
     });
     on("[data-conf]", function(b){ confDlg(b.getAttribute("data-conf")); });
+    on("[data-gdcopy]", function(){
+      var t = location.origin + "\n" + gdRedirect();
+      try{
+        var a = document.createElement("textarea");
+        a.value = t; a.style.position = "fixed"; a.style.opacity = "0";
+        document.body.appendChild(a); a.select(); document.execCommand("copy");
+        document.body.removeChild(a);
+        toast("نُسختا — الأولى للأصول والثانية للعودة");
+      }catch(e){ toast("حدّدهما وانسخهما يدوياً"); }
+    });
     on("[data-gdin]", function(){
       if(!gdReady()){ toast("درايف غير مهيّأ في هذه النسخة"); return; }
       confirmDlg("الدخول بجوجل درايف",
@@ -8850,7 +8865,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.4.0+10";
+  var APP_VERSION = "1.4.0+11";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
@@ -9450,8 +9465,18 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
            + "لا كلُّ من يستعملها — وبعدها يرى الناسُ زرّ الدخول وحده."
            + "<br><br><b>الخطوات:</b> Google Cloud Console ← APIs &amp; Services "
            + "← Credentials ← OAuth client ID من نوع Web application. "
-           + "وأضف <b>" + esc(location.origin) + "</b> في Authorized JavaScript "
-           + "origins وفي redirect URIs. ثم فعّل <b>Google Drive API</b>.",
+           + "ثم فعّل <b>Google Drive API</b>."
+           + "<br><br>والصق هاتين في المشروع — <b>كما هما تماماً</b>، "
+           + "والشرطة الأخيرة منهما:"
+           + '<div class="gdvals">'
+           + '<div><s>Authorized JavaScript origins</s><code>'
+           + esc(location.origin) + '</code></div>'
+           + '<div><s>Authorized redirect URIs</s><code>'
+           + esc(gdRedirect()) + '</code></div></div>',
+        html: function(){
+          return dgroup("انسخهما",
+            '<button class="mini" data-gdcopy="1">انسخ القيمتين</button>');
+        },
         fields: [{ label: "Client ID", value: c.gdId || "",
                    ph: "xxxx.apps.googleusercontent.com" }],
         ok: "احفظ",
@@ -9526,8 +9551,11 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     var g = gdSess();
     return !!(g && g.token && g.exp <= Date.now());
   }
+  /* ما يُرسل إلى جوجل حرفاً بحرف — تُبنى منه النافذة والطلب معاً،
+     فلا يعرض التطبيق شيئاً ويرسل غيره. */
+  function gdRedirect(){ return location.href.replace(/[#?].*$/, ""); }
   function gdLogin(){
-    var back = location.href.replace(/[#?].*$/, "");
+    var back = gdRedirect();
     location.href = "https://accounts.google.com/o/oauth2/v2/auth"
       + "?client_id=" + encodeURIComponent(gdClient())
       + "&redirect_uri=" + encodeURIComponent(back)
@@ -9614,6 +9642,28 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
         then(null);
       })["catch"](function(e){ cloudBusy = false; then(String(e.message || e)); });
     });
+  }
+
+  /* جوجل تردّ الخطأ في الاستعلام لا في الجزء بعد # — يُقرأ ويُشرح،
+     فلا يعود المستخدم إلى شاشةٍ صامتة لا يدري لماذا لم يدخل. */
+  function gdErrorBack(){
+    var m = /[?&]error=([^&]+)/.exec(location.search || "");
+    if(!m) return false;
+    var e = decodeURIComponent(m[1]);
+    try{ history.replaceState(null, "", location.pathname); }catch(x){}
+    if(e.indexOf("redirect_uri_mismatch") >= 0){
+      ask({ title: "جوجل ردّت: عنوان العودة غير مسجَّل",
+        msg: "التطبيق أرسل هذا العنوان، وهو ليس في قائمة "
+           + "<b>Authorized redirect URIs</b> في مشروعك:"
+           + '<div class="gdvals"><div><s>redirect URI</s><code>'
+           + esc(gdRedirect()) + '</code></div></div>'
+           + "أضفه هناك حرفاً بحرف — والشرطة الأخيرة منه — ثم أعد المحاولة. "
+           + "وقد تأخذ جوجل دقائق حتى يسري التغيير.",
+        fields: [], ok: "فهمت", cancel: false });
+      return true;
+    }
+    toast("تعذّر الدخول بجوجل: " + e);
+    return true;
   }
 
   function gdFromHash(){
@@ -10224,6 +10274,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* العودة من Google أو من رابط البريد تُقرأ قبل الرسم — فلا تومض شاشةُ
      «غير مسجَّل» ثم تنقلب */
   var backFromAuth = authFromHash();
+  if(!backFromAuth) gdErrorBack();     /* عودةٌ بخطأٍ من جوجل تُشرح */
   render();
   /* أول مرة: المعالج بعد الرسم لا قبله — فيرى الشاشة خلفه ويعرف أين هو */
   /* لو كان الحفظ متعذّراً لعاد المعالج مع كل تحديثٍ للصفحة — وهو ما
