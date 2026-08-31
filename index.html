@@ -8865,7 +8865,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.4.0+12";
+  var APP_VERSION = "1.4.0+13";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
@@ -10290,6 +10290,30 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
      كانت مشروطة بـsignedIn، فمن اختار درايف لم يزامن عند الفتح قطّ:
      يرفع ما يكتبه، ولا ينزل ما كتبه جهازه الآخر. */
   if(!backFromAuth && syncOn()) setTimeout(function(){ syncNow(true); }, 500);
+
+  /* المزامنة كانت تقع عند الفتح وبعد كل تعديل فقط — فجهازٌ مفتوحٌ لا
+     تكتب فيه لا ينزل إليه شيء: تكتب في الحاسوب ويبقى جوّالك على القديم
+     حتى تلمسه. فأُضيف مُطلِقان:
+       العودة إلى التطبيق  — أشيعُ لحظةٍ تريد فيها أحدث ما عندك
+       ودورةٌ كل خمس دقائق ما دامت الشاشة ظاهرة
+     وكلاهما خلف حارس: لا مزامنة قبل مضيّ نصف دقيقة على سابقتها، فلا
+     يُنهك المزوّد ولا شبكة الجوّال. */
+  var _lastSync = 0;
+  function syncTick(why){
+    if(!syncOn()) return;
+    if(document.visibilityState === "hidden") return;
+    var now = Date.now();
+    if(now - _lastSync < 30000) return;
+    _lastSync = now;
+    syncNow(true);
+  }
+  try{
+    document.addEventListener("visibilitychange", function(){
+      if(document.visibilityState === "visible") syncTick("عودة");
+    });
+    window.addEventListener("focus", function(){ syncTick("تركيز"); });
+    setInterval(function(){ syncTick("دورة"); }, 300000);
+  }catch(e){}
 
   /* ثم القاعدة: إن كانت أحدث من المرآة حلّت محلّها. ويقع هذا حين
      تُمسح المرآة وحدها، أو تمتلئ فتتوقّف عن مجاراة القاعدة. */
