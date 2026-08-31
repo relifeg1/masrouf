@@ -224,3 +224,28 @@ app.on('window-all-closed', () => {
 
 /* الصفحة تطلب نسخةً احتياطية عبر الجسر */
 ipcMain.handle('masrouf:backup', () => backupToFile('نسخة احتياطية'));
+
+/* وتحفظ ما تشاء بأيّ صيغة: الامتداد يُشتقّ من الاسم، والمرشّح منه */
+ipcMain.handle('masrouf:saveAs', async (e, name, text) => {
+  if (!win || win.isDestroyed()) return false;
+  /* ما لا يصلح في اسم ملفٍّ على ويندوز — والشرطة المائلة الخلفية منها */
+  const safe = String(name || 'masrouf.txt').replace(/[\\/:*?"<>|]/g, '_');
+  const ext = (safe.split('.').pop() || 'txt').toLowerCase();
+  const res = await dialog.showSaveDialog(win, {
+    title: 'احفظ الملفّ',
+    defaultPath: path.join(app.getPath('downloads'), safe),
+    filters: [{ name: ext.toUpperCase(), extensions: [ext] },
+              { name: 'كل الملفّات', extensions: ['*'] }]
+  });
+  if (res.canceled || !res.filePath) return false;
+  try {
+    fs.writeFileSync(res.filePath, String(text), 'utf8');
+    return true;
+  } catch (err) {
+    await dialog.showMessageBox(win, {
+      type: 'error', title: 'مصروف',
+      message: 'تعذّر حفظ الملفّ: ' + err.message, buttons: ['حسناً']
+    });
+    return false;
+  }
+});

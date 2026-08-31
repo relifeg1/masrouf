@@ -9,5 +9,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('masrouf', {
   desktop: true,
   /* حوار حفظٍ من النظام: يختار المستخدم المجلّد والاسم */
-  backup: () => ipcRenderer.invoke('masrouf:backup')
+  backup: () => ipcRenderer.invoke('masrouf:backup'),
+  /* والصفحة تحفظ ما تشاء بأيّ صيغة — لا JSON وحده */
+  saveAs: (name, text) => ipcRenderer.invoke('masrouf:saveAs', String(name), String(text))
 });

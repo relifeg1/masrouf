@@ -344,6 +344,13 @@ input,select,button,textarea{font-family:inherit;font-size:16px;min-width:0;max-
 .vtag{opacity:.55;font-size:11px;font-family:var(--mono, monospace);
       letter-spacing:.2px;white-space:nowrap}
 .savebar{margin:12px 0}
+.navupd{margin-top:auto;position:relative;opacity:.72}
+.navupd .nvv{margin-inline-start:auto;font-size:10px;opacity:.7;
+  font-family:var(--mono,monospace);letter-spacing:0}
+.navupd.has{opacity:1;color:var(--ok);background:var(--ok-soft)}
+.navupd.has .nvv{opacity:1;font-family:inherit}
+.nvdot{position:absolute;inset-inline-start:6px;top:10px;width:7px;height:7px;
+  border-radius:99px;background:var(--ok)}
 .mrow.off{opacity:.62}
 .flag .acts{margin-top:9px}
 
@@ -3804,7 +3811,21 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       + tabs.map(function(t){
           return '<button data-tab="' + t[0] + '" class="' + (ui.tab === t[0] ? "on" : "") + '">'
             + '<span class="g">' + t[1] + '</span>' + t[2] + '</button>';
-        }).join("") + '</div></div>';
+        }).join("")
+      + navUpdate()
+      + '</div></div>';
+  }
+  /* صفٌّ ثابت آخر القائمة: رقم النسخة دائماً، وحالُ التحديث إن وُجد.
+     الشريط وحده لا يكفي — يظهر مرّةً ثم يُنسى، ولا يُسأل عنه. */
+  function navUpdate(){
+    if(window.claude && window.claude.use) return "";   /* لا تحديث داخل أرتفاكت */
+    var waiting = !!swWaiting;
+    return '<button class="navupd' + (waiting ? " has" : "") + '" data-navupd="1"'
+      + ' title="' + esc(waiting ? "نسخة جديدة جاهزة" : "النسخة " + APP_VERSION) + '">'
+      + '<span class="g">' + (waiting ? "⬆" : "◷") + '</span>'
+      + (waiting ? 'تحديث جاهز' : 'النسخة')
+      + '<span class="nvv">' + esc(waiting ? "جديد" : APP_VERSION.slice(0, 10)) + '</span>'
+      + (waiting ? '<span class="nvdot"></span>' : "") + '</button>';
   }
   /* مؤشّر: أيقونة · تسمية · رقم · مقارنة بالشهر الماضي */
   function kpi(icon, tone, lab, val, delta, note){
@@ -7812,35 +7833,63 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     });
     on("[data-rewiz]", function(){ month(ui.month).setup = null; save(); ui.tab = "dash"; render(); });
     on("[data-backup]", function(){
-      var ok = backupNow();
+      var mks = Object.keys(state.months || {}).length, n = 0;
+      for(var k in (state.months || {})) n += ((state.months[k].items) || []).length;
       ask({ title: "نسخة احتياطية",
-        msg: ok
-          ? ("نزل الملفّ <b>" + esc(backupName()) + "</b> إلى مجلّد تنزيلاتك. "
-             + "تستعيده لاحقاً من زرّ «استعادة». والنصّ تحته إن أردت نسخه.")
-          : ("تعذّر تنزيل الملفّ في هذا العرض — انسخ النصّ واحفظه عندك."),
-        fields: [{ label: "بياناتك", type: "area", value: backupText() }],
+        msg: "<b>" + mks + " شهراً · " + n + " حركة · "
+           + ((state.cats || []).length) + " بنداً</b>."
+           + "<br>اختر الصيغة — و<b>JSON</b> وحده هو الذي تُستعاد منه.",
+        fields: [],
         html: function(){
-          return dgroup("الملفّ",
-            '<button class="mini" data-bkdl="1">نزّله مرّة أخرى</button>');
+          return dgroup("للاستعادة",
+              '<button class="mini on" data-bk="json">JSON منسَّق</button>')
+            + dgroup("للقراءة والمراجعة",
+              '<button class="mini" data-bk="txt">تقرير نصّي</button>'
+            + '<button class="mini" data-bk="csv">حركاتك CSV</button>')
+            + dgroup("أو انسخه نصّاً",
+              '<button class="mini" data-bkshow="1">أظهر JSON</button>');
         },
-        ok: "تمام", cancel: "إغلاق", onOk: function(){} });
+        ok: "إغلاق", cancel: false, onOk: function(){} });
+    });
+    on("[data-bk]", function(b){
+      var kind = b.getAttribute("data-bk");
+      var name, text, mime;
+      if(kind === "json"){ name = backupName("json"); text = backupText(); mime = "application/json"; }
+      else if(kind === "csv"){ name = backupName("csv"); text = csvExport(); mime = "text/csv"; }
+      else { name = backupName("txt"); text = reportText(); mime = "text/plain"; }
+      saveText(name, text, mime, function(how){
+        toast(saveWord(how) + (how === "cancel" || how === "fail" ? "" : " · " + name));
+        if(how === "fail"){
+          ask({ title: "انسخ النصّ", msg: "تعذّر حفظ ملفٍّ في هذا العرض.",
+            fields: [{ label: name, type: "area", value: text }],
+            ok: "تمام", cancel: false, onOk: function(){} });
+        }
+      });
+    });
+    on("[data-bkshow]", function(){
+      ask({ title: "بياناتك نصّاً",
+        msg: "حدّده وانسخه. وللاستعادة الصقه في «استعادة».",
+        fields: [{ label: backupName("json"), type: "area", value: backupText() }],
+        ok: "تمام", cancel: false, onOk: function(){} });
       setTimeout(function(){
         var el = document.getElementById("df0");
         if(el){ el.readOnly = true; try{ el.select(); }catch(e){} }
       }, 60);
     });
-    on("[data-restore]", function(){
-      ask({ title: "استعادة من نسخة",
-        msg: "الصق نص النسخة الاحتياطية هنا. <b>سيحل محل كل بياناتك الحالية.</b>",
-        fields: [{ label: "النص", type: "area", value: "", ph: '{\"v\":6, ...' }],
-        ok: "استعد", danger: true,
-        onOk: function(v){
-          try{
-            var d = JSON.parse(v[0]);
-            if(!d || !d.months) throw new Error("bad");
-            state = d; migrate(); toast("تمت الاستعادة"); save();
-          }catch(e){ toast("النص غير صالح"); }
-        } });
+    on("[data-restore]", function(){ restoreDlg(); });
+    on("[data-rfile]", function(){
+      var inp = document.createElement("input");
+      inp.type = "file";
+      inp.accept = ".json,application/json,text/plain";
+      inp.onchange = function(){
+        var f = inp.files && inp.files[0];
+        if(!f) return;
+        var r = new FileReader();
+        r.onload = function(){ restorePreview(String(r.result || ""), f.name); };
+        r.onerror = function(){ toast("تعذّرت قراءة الملفّ"); };
+        r.readAsText(f, "utf-8");
+      };
+      inp.click();
     });
     on("[data-wipe]", function(){
       confirmDlg("تصفير كل البيانات؟",
@@ -8119,6 +8168,21 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     });
     on("[data-onbstart]", function(){ onboardDlg(); });
     on("[data-update]", function(){ askUpdate(); });
+    on("[data-navupd]", function(){
+      if(swWaiting) return askUpdate();
+      ask({ title: "النسخة", fields: [],
+        msg: "أنت على <b>" + esc(APP_VERSION) + "</b>."
+           + "<br>يسأل التطبيق عن جديدٍ في كل فتحة، وإن وُجد ظهر هنا "
+           + "ولم يُفرض عليك.",
+        html: function(){
+          return dgroup("من أين يأتي التحديث",
+            '<button class="mini" data-openhome="1">' + esc(HOME) + '</button>');
+        },
+        ok: "تمام", cancel: false });
+    });
+    on("[data-openhome]", function(){
+      try{ window.open("https://" + HOME, "_blank", "noopener"); }catch(e){}
+    });
     on("[data-updlater]", function(){ swWaiting = null; render(); });
     on("[data-install]", function(){
       if(!installPrompt){ toast("غير متاح الآن"); return; }
@@ -8145,6 +8209,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       closeDlg();
       toast("بياناتك في هذا الجهاز — لا تنسَ نسخةً احتياطية");
     });
+    on("[data-conf]", function(b){ confDlg(b.getAttribute("data-conf")); });
     on("[data-gdin]", function(){
       if(!gdReady()){ toast("درايف غير مهيّأ في هذه النسخة"); return; }
       confirmDlg("الدخول بجوجل درايف",
@@ -8213,9 +8278,6 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
           });
         },
         cancel: "إلغاء" });
-    });
-    on("[data-bkdl]", function(){
-      toast(backupNow() ? ("نزل " + backupName()) : "تعذّر التنزيل هنا");
     });
     on("[data-cloudpush]", function(){
       syncPush(function(err){ toast(err ? "تعذّر: " + cloudErr(err) : "رُفعت"); render(); });
@@ -8477,7 +8539,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "2026.08.31+c29cd4";
+  var APP_VERSION = "2026.08.31+bd7b0f";
   /* بيت التطبيق. يُذكر حيث يحتاجه من فتحه في مكانٍ لا يُحفظ فيه. */
   var HOME = "relifeg1.github.io/masrouf";
   var installPrompt = null, swReady = false, swWaiting = null;
@@ -8698,19 +8760,25 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ٣ · ادفع لنفسك أوّلاً */
   function onbS3(){
     ask({ title: "ادفع لنفسك أوّلاً", msg: onbHead("٣")
-        + " · قبل المصروف، كم يخرج للادخار والاستثمار؟",
+        + " · المبلغ الذي يخرج من راتبك <b>قبل</b> أن تصرف — لا ما يتبقّى "
+        + "في آخر الشهر، فالمتبقّي نادراً ما يتبقّى.",
       live: true,
       fields: [
-        { label: "ادخار شهري (هدفك الأوّل)", type: "number", value: onb.goal },
-        { label: "استثمار شهري", type: "number", value: onb.inv }
+        { label: "ادخار شهري — مالٌ تحفظه ليومٍ تحتاجه (طوارئ · سفر · زواج)",
+          type: "number", value: onb.goal, ph: "مثال: 500" },
+        { label: "استثمار شهري — مالٌ تُنمّيه (صندوق · أسهم · ذهب)",
+          type: "number", value: onb.inv, ph: "مثال: 300 · واتركه صفراً إن لم تبدأ بعد" }
       ],
       html: function(v){
         var g = num(v && v[0]), iv = num(v && v[1]), left = num(onb.salary) - g - iv;
         if(left < 0) return onbBar("تجاوزتَ راتبك بـ<b>" + fmt(-left) + "</b>.", false);
         var pct = onb.salary ? Math.round((g + iv) / onb.salary * 100) : 0;
-        return onbBar("يبقى للمعيشة <b>" + fmt(left) + "</b>"
-          + (g + iv > 0 ? (" · تدّخر <b>" + pct + "٪</b> من دخلك") : "")
-          + ". واتركها صفراً إن لم تكن مستعداً — تضيفها لاحقاً.", true);
+        if(g + iv === 0)
+          return onbBar("لم تخصّص شيئاً بعد — وهذا مقبول. سيبقى "
+            + "<b>" + fmt(left) + "</b> كلّه للمصروف، وتضيف الادخار متى استطعت.", true);
+        return onbBar("يخرج <b>" + fmt(g + iv) + "</b> أوّل الشهر (<b>" + pct
+          + "٪</b> من دخلك)، ويبقى <b>" + fmt(left) + "</b> توزّعه على بنودك "
+          + "في الخطوة التالية.", true);
       },
       ok: "التالي",
       onOk: function(v){
@@ -8808,13 +8876,31 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   var SUPA_URL = "";
   var SUPA_KEY = "";
   var AKEY = "kh_auth";
+  var CONFKEY = "kh_conf";
+
+  /* ما أدخله صاحب الجهاز يعلو ما حُقن عند البناء */
+  function conf(){
+    try{ return JSON.parse(localStorage.getItem(CONFKEY) || "{}") || {}; }
+    catch(e){ return {}; }
+  }
+  function confSet(o){
+    try{
+      var c = conf();
+      for(var k in o){ if(o[k]) c[k] = o[k]; else delete c[k]; }
+      localStorage.setItem(CONFKEY, JSON.stringify(c));
+    }catch(e){}
+  }
+  function supaUrl(){ return String(conf().supaUrl || SUPA_URL || ""); }
+  function supaKey(){ return String(conf().supaKey || SUPA_KEY || ""); }
+  function gdClient(){ return String(conf().gdId || GD_ID || ""); }
 
   function supaReady(){
     /* https وحده — إلا localhost، فالمتصفّحات نفسها تعدّه أصلاً آمناً،
        وعليه تُختبر الدورة كاملة قبل أن يُنشأ مشروعٌ حقيقي. */
-    var ok = /^https:\/\//.test(SUPA_URL)
-          || /^http:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(SUPA_URL);
-    return ok && SUPA_KEY.length > 30;
+    var u = supaUrl();
+    var ok = /^https:\/\//.test(u)
+          || /^http:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(u);
+    return ok && supaKey().length > 30;
   }
   function authSess(){
     try{ var r = localStorage.getItem(AKEY); return r ? JSON.parse(r) : null; }
@@ -8829,8 +8915,8 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     return cloudAllowed() && supaReady() && !!(a && a.access_token && a.uid);
   }
   function supaHead(tok){
-    return { "apikey": SUPA_KEY, "Content-Type": "application/json",
-             "Authorization": "Bearer " + (tok || SUPA_KEY) };
+    return { "apikey": supaKey(), "Content-Type": "application/json",
+             "Authorization": "Bearer " + (tok || supaKey()) };
   }
   function authStore(j){
     if(!j || !j.access_token) return null;
@@ -8847,7 +8933,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     if(!a){ then(null, "لم تسجّل دخولك"); return; }
     if(a.exp - Date.now() > 60000){ then(a, null); return; }
     if(!a.refresh_token){ then(null, "انتهت الجلسة — سجّل دخولك"); return; }
-    fetch(SUPA_URL + "/auth/v1/token?grant_type=refresh_token", {
+    fetch(supaUrl() + "/auth/v1/token?grant_type=refresh_token", {
       method: "POST", headers: supaHead(null),
       body: JSON.stringify({ refresh_token: a.refresh_token })
     }).then(function(r){ return r.json(); })
@@ -8858,7 +8944,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       })["catch"](function(e){ then(null, String(e.message || e)); });
   }
   function authSendCode(email, then){
-    fetch(SUPA_URL + "/auth/v1/otp", {
+    fetch(supaUrl() + "/auth/v1/otp", {
       method: "POST", headers: supaHead(null),
       body: JSON.stringify({ email: email, create_user: true })
     }).then(function(r){
@@ -8867,7 +8953,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     })["catch"](function(e){ then(String(e.message || e)); });
   }
   function authVerify(email, code, then){
-    fetch(SUPA_URL + "/auth/v1/verify", {
+    fetch(supaUrl() + "/auth/v1/verify", {
       method: "POST", headers: supaHead(null),
       body: JSON.stringify({ email: email, token: String(code).trim(), type: "email" })
     }).then(function(r){ return r.json().then(function(j){ return { ok: r.ok, j: j }; }); })
@@ -8880,12 +8966,12 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   }
   function authGoogle(){
     var back = location.href.replace(/[#?].*$/, "");
-    location.href = SUPA_URL + "/auth/v1/authorize?provider=google&redirect_to="
+    location.href = supaUrl() + "/auth/v1/authorize?provider=google&redirect_to="
                   + encodeURIComponent(back);
   }
   function authOut(){
     var a = authSess();
-    if(a) try{ fetch(SUPA_URL + "/auth/v1/logout", { method: "POST", headers: supaHead(a.access_token) }); }catch(e){}
+    if(a) try{ fetch(supaUrl() + "/auth/v1/logout", { method: "POST", headers: supaHead(a.access_token) }); }catch(e){}
     authSet(null);
   }
   /* العودة من Google أو من رابط البريد: الرمز في الجزء بعد #.
@@ -8906,7 +8992,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
               exp: Date.now() + ((+q.expires_in || 3600) * 1000),
               uid: "", email: "" });
     /* الهويّة تُقرأ من الخادم — لا تُستنتج من الرمز */
-    fetch(SUPA_URL + "/auth/v1/user", { headers: supaHead(q.access_token) })
+    fetch(supaUrl() + "/auth/v1/user", { headers: supaHead(q.access_token) })
       .then(function(r){ return r.json(); })
       .then(function(u){
         var a = authSess() || {};
@@ -9006,14 +9092,19 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     return STOR_OPTS.map(function(o){
       var why = "";
       if(!cloudAllowed()) why = "غير متاح داخل أرتفاكت كلود";
-      else if(o.k === "account" && !supaReady()) why = "يحتاج مفاتيح مشروع في هذه النسخة";
-      else if(o.k === "drive" && !gdReady()) why = "يحتاج معرّف عميل جوجل في هذه النسخة";
+      else if(o.k === "account" && !supaReady()) why = "يحتاج مفاتيح مشروع — تُدخلها من هنا";
+      else if(o.k === "drive" && !gdReady()) why = "يحتاج معرّف عميل جوجل — تُدخله من هنا";
       if(why && o.k === "device") why = "";
       if(why){
         if(!full) return "";
+        /* وإن كان النقص مفتاحاً يملكه صاحبه، فالصفّ يفتح له باب التهيئة */
+        var fix = (o.k === "drive") ? '<button class="mini" data-conf="drive">هيّئه</button>'
+                : (o.k === "account") ? '<button class="mini" data-conf="account">هيّئه</button>'
+                : '<span class="pill">غير مهيّأ</span>';
+        if(!cloudAllowed()) fix = '<span class="pill">غير متاح</span>';
         return '<div class="mrow off"><span class="mn">' + esc(o.n)
           + '<span class="ms">' + o.d + '<br><b>' + esc(why) + '</b></span></span>'
-          + '<span class="pill">غير مهيّأ</span></div>';
+          + fix + '</div>';
       }
       var on = (o.k === cur);
       return '<div class="mrow"><span class="mn">' + esc(o.n)
@@ -9021,6 +9112,52 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
         + (on ? '<span class="pill">المُتَّبع الآن</span>' : o.act) + '</div>';
     }).join("");
   }
+  /* نافذة تهيئة: يلصق فيها ما نسخه من لوحة المزوّد، ويُختبر قبل الحفظ */
+  function confDlg(which){
+    var c = conf();
+    if(which === "drive"){
+      ask({ title: "هيّئ جوجل درايف",
+        msg: "من <b>Google Cloud Console</b> ← APIs &amp; Services ← Credentials "
+           + "← أنشئ <b>OAuth client ID</b> من نوع <b>Web application</b>، "
+           + "وأضف <b>" + esc(location.origin) + "</b> في Authorized JavaScript "
+           + "origins وفي redirect URIs. ثم فعّل <b>Google Drive API</b>.",
+        fields: [{ label: "Client ID", value: c.gdId || "",
+                   ph: "xxxx.apps.googleusercontent.com" }],
+        ok: "احفظ",
+        onOk: function(v){
+          var id = String(v[0] || "").trim();
+          if(id && id.indexOf(".apps.googleusercontent.com") < 0){
+            toast("المعرّف ينتهي بـ.apps.googleusercontent.com"); return;
+          }
+          confSet({ gdId: id });
+          toast(id ? "هُيّئ درايف — تستطيع الدخول الآن" : "أُلغيت تهيئة درايف");
+          render();
+        },
+        cancel: "إلغاء" });
+      return;
+    }
+    ask({ title: "هيّئ الحساب",
+      msg: "أنشئ مشروعاً مجّانياً في <b>supabase.com</b>، ونفّذ محتوى "
+         + "<b>schema.sql</b> في SQL Editor، ثم من Settings ← API انسخ "
+         + "<b>Project URL</b> و<b>anon public</b>.",
+      fields: [
+        { label: "Project URL", value: c.supaUrl || "", ph: "https://xxxx.supabase.co" },
+        { label: "anon public key", value: c.supaKey || "" }
+      ],
+      ok: "احفظ",
+      onOk: function(v){
+        var u = String(v[0] || "").trim().replace(/\/+$/, "");
+        var k = String(v[1] || "").trim();
+        if(!u && !k){ confSet({ supaUrl: "", supaKey: "" }); toast("أُلغيت التهيئة"); render(); return; }
+        if(!/^https:\/\//.test(u)){ toast("الرابط يبدأ بـhttps://"); return; }
+        if(k.length < 30){ toast("المفتاح أقصر ممّا ينبغي"); return; }
+        confSet({ supaUrl: u, supaKey: k });
+        toast("هُيّئ الحساب — تستطيع تسجيل الدخول الآن");
+        render();
+      },
+      cancel: "إلغاء" });
+  }
+
   function storageDlg(){
     ask({ title: "أين تُحفظ بياناتك؟",
       msg: "اختر ما يناسبك — وغيّره متى شئت من الإعدادات. لا شيء يضيع بالتبديل.",
@@ -9036,7 +9173,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   var GD_FILE = "masrouf.json";
 
   function gdReady(){
-    return GD_ID.indexOf(".apps.googleusercontent.com") > 0;
+    return gdClient().indexOf(".apps.googleusercontent.com") > 0;
   }
   function gdSess(){
     try{ var r = localStorage.getItem(GDKEY); return r ? JSON.parse(r) : null; }
@@ -9058,7 +9195,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   function gdLogin(){
     var back = location.href.replace(/[#?].*$/, "");
     location.href = "https://accounts.google.com/o/oauth2/v2/auth"
-      + "?client_id=" + encodeURIComponent(GD_ID)
+      + "?client_id=" + encodeURIComponent(gdClient())
       + "&redirect_uri=" + encodeURIComponent(back)
       + "&response_type=token"
       + "&scope=" + encodeURIComponent("https://www.googleapis.com/auth/drive.appdata")
@@ -9220,7 +9357,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     if(signedIn()){
       withTok(function(a, err){
         if(err){ then(null, err); return; }
-        then({ url: SUPA_URL.replace(/\/+$/, "") + "/rest/v1/budget",
+        then({ url: supaUrl().replace(/\/+$/, "") + "/rest/v1/budget",
                head: supaHead(a.access_token), uid: a.uid }, null);
       });
       return;
@@ -9364,11 +9501,132 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     var d = new Date();
     return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
   }
-  function backupName(){ return "masrouf-" + stamp() + ".json"; }
-  function backupText(){ return JSON.stringify(state); }
-  /* يرجع true إن نزل الملفّ فعلاً */
+  function backupName(ext){ return "masrouf-" + stamp() + "." + (ext || "json"); }
+  /* منسَّق لا مضغوط: النسخة الاحتياطية تُقرأ أحياناً، ولا يضرّ الحجم */
+  function backupText(){ return JSON.stringify(state, null, 2); }
+
+  /* تقريرٌ يُقرأ — لا يُستعاد منه، وإنما يُطمئن صاحبه أن ما فيه ماله */
+  function reportText(){
+    var L = [], i;
+    function line(t){ L.push(t == null ? "" : String(t)); }
+    function rule(){ line("──────────────────────────────────────────"); }
+    function money(n){ return fmt(num(n)) + " " + cur(); }
+
+    line("مصروف — خلاصة بياناتك");
+    line("حُفظت في " + stamp() + " · النسخة " + APP_VERSION);
+    rule();
+    line("");
+    line("الدخل الافتراضي: " + money((state.income || {}).salary)
+         + (num((state.income || {}).extra) ? "  ودخل إضافي "
+            + money(state.income.extra) : ""));
+    line("بداية الشهر المالي: يوم " + monthStart());
+    line("العملة: " + cur());
+    line("");
+
+    var cats = (state.cats || []).filter(function(c){ return !c.hidden; });
+    line("البنود (" + cats.length + ")");
+    rule();
+    cats.forEach(function(c){
+      var kind = { fix: "ثابت", var: "متغيّر", inst: "قسط" }[c.t] || "";
+      line("  " + (c.e || "•") + " " + c.n
+           + " — خطة " + money(c.p) + (kind ? "  (" + kind + ")" : ""));
+    });
+    line("");
+
+    var goals = (state.goals || []).filter(function(g){ return !g.arch; });
+    if(goals.length){
+      line("الأهداف (" + goals.length + ")");
+      rule();
+      goals.forEach(function(g){
+        var pct = num(g.target) ? Math.round(num(g.saved) / num(g.target) * 100) : 0;
+        line("  " + (g.e || "•") + " " + g.n + " — " + money(g.saved)
+             + " من " + money(g.target) + " (" + pct + "٪)"
+             + (num(g.m) ? "  · شهرياً " + money(g.m) : ""));
+      });
+      line("");
+    }
+
+    if((state.invest || []).length){
+      line("الاستثمار (" + state.invest.length + ")");
+      rule();
+      state.invest.forEach(function(x){
+        line("  " + x.n + " — أُودع " + money(x["in"]) + " · القيمة "
+             + money(x.val) + (num(x.m) ? "  · شهرياً " + money(x.m) : ""));
+      });
+      line("");
+    }
+
+    var accts = state.accts || [];
+    if(accts.length){
+      var tot = 0;
+      line("المحافظ (" + accts.length + ")");
+      rule();
+      accts.forEach(function(a){
+        tot += num(a.bal);
+        line("  " + a.n + (a.bank ? " — " + a.bank : "") + " · " + money(a.bal));
+      });
+      line("  المجموع: " + money(tot));
+      line("");
+    }
+
+    var mks = Object.keys(state.months || {}).sort();
+    line("الأشهر (" + mks.length + ")");
+    rule();
+    mks.forEach(function(mk){
+      var items = (state.months[mk].items || []);
+      var sum = 0;
+      items.forEach(function(x){ sum += num(x.a); });
+      line("  " + mk + " — " + items.length + " حركة · " + money(sum));
+    });
+    var all = 0, n = 0;
+    mks.forEach(function(mk){
+      (state.months[mk].items || []).forEach(function(x){ all += num(x.a); n++; });
+    });
+    line("");
+    rule();
+    line("الإجمالي: " + n + " حركة · " + money(all));
+    line("");
+    line("هذا الملفّ للقراءة. الاستعادة تكون من ملفّ JSON.");
+    return L.join("\r\n");
+  }
+
+  /* أفضل ما تتيحه البيئة: حوار النظام · فمنتقي الملفّات · فالتنزيل.
+     يُعيد وصف ما وقع كي تصدق الرسالة. */
+  function saveText(name, text, mime, then){
+    if(window.masrouf && typeof window.masrouf.saveAs === "function"){
+      window.masrouf.saveAs(name, text)
+        .then(function(ok){ then(ok ? "dialog" : "cancel"); })
+        ["catch"](function(){ then(downloadFile(name, text, mime) ? "download" : "fail"); });
+      return;
+    }
+    if(window.showSaveFilePicker){
+      var ext = "." + name.split(".").pop();
+      window.showSaveFilePicker({
+        suggestedName: name,
+        types: [{ description: ext.slice(1).toUpperCase(), accept: (function(){
+          var o = {}; o[mime] = [ext]; return o; })() }]
+      }).then(function(h){ return h.createWritable(); })
+        .then(function(w){ return w.write(text).then(function(){ return w.close(); }); })
+        .then(function(){ then("picker"); })
+        ["catch"](function(e){
+          if(e && e.name === "AbortError"){ then("cancel"); return; }
+          then(downloadFile(name, text, mime) ? "download" : "fail");
+        });
+      return;
+    }
+    then(downloadFile(name, text, mime) ? "download" : "fail");
+  }
+
+  function saveWord(how){
+    return how === "dialog" || how === "picker" ? "حُفظ حيث اخترت"
+         : how === "download" ? "نزل إلى مجلّد تنزيلاتك"
+         : how === "cancel" ? "أُلغي الحفظ"
+         : "تعذّر الحفظ هنا — انسخ النصّ";
+  }
+
+  /* يرجع true إن نزل الملفّ فعلاً (يُستعمل قبل التحديث) */
   function backupNow(){
-    return downloadFile(backupName(), backupText(), "application/json");
+    return downloadFile(backupName("json"), backupText(), "application/json");
   }
 
   /* ── تصدير الحركات ──
@@ -9395,6 +9653,60 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       return r.map(csvCell).join(",");
     }).join("\r\n");
   }
+  function restoreDlg(){
+    ask({ title: "استعادة من نسخة",
+      msg: "اختر ملفّ النسخة (<b>.json</b>) — أو الصق نصّها إن كان عندك نصّاً.",
+      fields: [{ label: "أو الصق النصّ هنا", type: "area", value: "",
+                 ph: '{ "v": 15, "income": { … } }' }],
+      html: function(){
+        return dgroup("من ملفّ",
+          '<button class="mini on" data-rfile="1">اختر ملفّاً…</button>');
+      },
+      ok: "افحص النصّ",
+      onOk: function(v){
+        var t = String(v[0] || "").trim();
+        if(!t){ toast("اختر ملفّاً أو الصق نصّاً"); return; }
+        restorePreview(t, "");
+      },
+      cancel: "إلغاء" });
+  }
+
+  /* لا تحلّ نسخةٌ محلّ بياناتٍ قبل أن يرى صاحبها ما فيها */
+  function restorePreview(text, fname){
+    var d;
+    try{ d = JSON.parse(text); }catch(e){ d = null; }
+    if(!d || typeof d !== "object" || !d.months){
+      toast(fname ? "الملفّ ليس نسخةً صالحة" : "النصّ غير صالح");
+      return;
+    }
+    var mks = Object.keys(d.months || {}), n = 0, sum = 0;
+    mks.forEach(function(k){
+      ((d.months[k].items) || []).forEach(function(x){ n++; sum += num(x.a); });
+    });
+    var cur0 = 0;
+    for(var k2 in (state.months || {})) cur0 += ((state.months[k2].items) || []).length;
+
+    confirmDlg("أتستعيد هذه النسخة؟",
+      (fname ? "<b>" + esc(fname) + "</b><br>" : "")
+      + "فيها <b>" + mks.length + " شهراً</b> · <b>" + n + " حركة</b> بمجموع "
+      + "<b>" + fmt(sum) + "</b> · راتب <b>"
+      + fmt(num((d.income || {}).salary)) + "</b>"
+      + (d.savedAt ? ("<br>حُفظت: <b>"
+          + esc(new Date(+d.savedAt).toISOString().slice(0, 16).replace("T", " "))
+          + "</b>") : "")
+      + "<br><br><b>ستحلّ محلّ ما في جهازك الآن</b> ("
+      + cur0 + " حركة). ولا رجعة.",
+      "استعدها", function(){
+        try{
+          for(var k in state) if(!(k in d)) delete state[k];
+          for(var k2 in d) state[k2] = d[k2];
+          migrate();
+          toast("تمت الاستعادة · " + n + " حركة");
+          save(); render();
+        }catch(e){ toast("تعذّرت الاستعادة"); }
+      }, true);
+  }
+
   function csvDlg(){
     var txt = csvExport(), lines = txt.split("\r\n").length - 1;
     ask({ title: "تصدير الحركات",
