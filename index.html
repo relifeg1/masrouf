@@ -7246,7 +7246,9 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
             + '<button class="mini" data-unify="1">وحِّدها</button></div>';
         })()
       + '</div>';
-h += '<div class="sec"><h2>الشروح</h2>'
+    /* عدد الشروح المخفيّة — كان يُحسب في القسم المحذوف فذهب معه */
+    var HN = hiddenNotes(null);
+    h += '<div class="sec"><h2>الشروح</h2>'
       + '<span class="hint">' + (HN ? HN + " مخفيّاً" : "لا شرح مخفيّ") + '</span></div>'
       + '<div class="card"><div class="mrow"><span class="mn">شروح أغلقتَها'
       + '<span class="ms">الشرح يُقرأ مرة ثم تُغلقه بعلامة ✕. ولا يعود إلا إن تغيّر '
@@ -8909,7 +8911,7 @@ h += '<div class="sec"><h2>الشروح</h2>'
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "32";
+  var APP_VERSION = "33";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return "#" + APP_VERSION; }
