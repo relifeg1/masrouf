@@ -3090,6 +3090,113 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
      عند عشر سنوات — وهو الشيء الوحيد الذي ينمو مع تاريخك.
      صار يؤجَّل ٤٠٠ms: عشرة حقول تُملأ متتابعةً تُكتب مرّة لا عشراً.
      ويُفرَغ فوراً عند مغادرة الصفحة، فلا يضيع تعديلٌ أخير. */
+  /* ═══ المخزن ═══
+     IndexedDB أصلاً، وlocalStorage مرآةً للإقلاع السريع وللارتداد. */
+  var IDB_NAME = "masrouf", IDB_VER = 1, IDB_STORE = "kv";
+  var idb = null, idbState = "?";      /* ? · ok · off */
+  var idbLast = {};                    /* ما كُتب فعلاً، لئلا يُعاد */
+
+  function idbOpen(then){
+    if(idb) return then(idb);
+    if(idbState === "off") return then(null);
+    var req;
+    try{ req = indexedDB.open(IDB_NAME, IDB_VER); }
+    catch(e){ idbState = "off"; return then(null); }
+    req.onupgradeneeded = function(){
+      var d = req.result;
+      if(!d.objectStoreNames.contains(IDB_STORE)) d.createObjectStore(IDB_STORE);
+    };
+    req.onsuccess = function(){ idb = req.result; idbState = "ok"; then(idb); };
+    req.onerror = function(){ idbState = "off"; then(null); };
+    req.onblocked = function(){ idbState = "off"; then(null); };
+  }
+
+  /* الحالة تُقسَّم: نواةٌ بلا أشهر، وسجلٌّ لكل شهر. فتعديل شهرٍ يكتب
+     سجلّه وحده — لا أربعمئة كيلوبايت في كل ضغطة. */
+  function idbSplit(){
+    var core = {}, k;
+    for(k in state) if(k !== "months") core[k] = state[k];
+    var out = [["core", core]];
+    for(k in (state.months || {})) out.push(["m:" + k, state.months[k]]);
+    return out;
+  }
+
+  function idbWrite(then){
+    idbOpen(function(d){
+      if(!d) return then && then(false);
+      var parts = idbSplit(), seen = {};
+      var tx, st;
+      try{
+        tx = d.transaction(IDB_STORE, "readwrite");
+        st = tx.objectStore(IDB_STORE);
+      }catch(e){ idbState = "off"; return then && then(false); }
+
+      parts.forEach(function(p){
+        seen[p[0]] = 1;
+        var sig = JSON.stringify(p[1]);
+        if(idbLast[p[0]] === sig) return;      /* لم يتغيّر: لا يُكتب */
+        idbLast[p[0]] = sig;
+        try{ st.put(p[1], p[0]); }catch(e){}
+      });
+      /* شهرٌ حُذف من الحالة يُحذف سجلّه — وإلا عاد عند القراءة */
+      for(var key in idbLast){
+        if(key !== "core" && !seen[key]){
+          delete idbLast[key];
+          try{ st["delete"](key); }catch(e){}
+        }
+      }
+      tx.oncomplete = function(){ then && then(true); };
+      tx.onerror = function(){ then && then(false); };
+      tx.onabort = function(){ then && then(false); };
+    });
+  }
+
+  function idbRead(then){
+    idbOpen(function(d){
+      if(!d) return then(null);
+      var out = null, tx, st;
+      try{
+        tx = d.transaction(IDB_STORE, "readonly");
+        st = tx.objectStore(IDB_STORE);
+      }catch(e){ return then(null); }
+      var keys = st.getAllKeys ? st.getAllKeys() : null;
+      var vals = st.getAll ? st.getAll() : null;
+      if(!keys || !vals) return then(null);     /* متصفّحٌ قديم: المرآة تكفي */
+      tx.oncomplete = function(){
+        var K = keys.result || [], V = vals.result || [];
+        if(!K.length) return then(null);
+        out = { months: {} };
+        for(var i = 0; i < K.length; i++){
+          var k = String(K[i]);
+          idbLast[k] = JSON.stringify(V[i]);
+          if(k === "core"){ for(var c in V[i]) out[c] = V[i][c]; }
+          else if(k.indexOf("m:") === 0) out.months[k.slice(2)] = V[i];
+        }
+        then(out);
+      };
+      tx.onerror = function(){ then(null); };
+    });
+  }
+
+  /* الديمومة: يُطلب من المتصفّح ألّا يمحو البيانات عند ضيق المساحة.
+     يُمنح غالباً لمن ثبّت التطبيق أو أكثر زيارته. */
+  var persisted = null, quota = null;
+  function storageFacts(){
+    try{
+      if(navigator.storage && navigator.storage.persisted)
+        navigator.storage.persisted().then(function(p){
+          if(p) { persisted = true; return; }
+          if(navigator.storage.persist)
+            navigator.storage.persist().then(function(g){ persisted = !!g; });
+          else persisted = false;
+        })["catch"](function(){});
+      if(navigator.storage && navigator.storage.estimate)
+        navigator.storage.estimate().then(function(e){
+          quota = { used: e.usage || 0, all: e.quota || 0 };
+        })["catch"](function(){});
+    }catch(e){}
+  }
+
   var _lsT = null, _lsDirty = false;
   /* سببُ تعذّر الحفظ، إن تعذّر. "" يعني أنّه يعمل. */
   var saveBlocked = "";
@@ -3106,11 +3213,17 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
          يسرق التركيز من الحقل الذي تكتب فيه. */
       footProof();
       if(saveBlocked === "store"){ saveBlocked = ""; render(); }
+      idbWrite();                        /* المخزن الأصل — غير حاجزٍ للخيط */
     }catch(e){
       /* قد تكون المساحة امتلأت، وقد يكون التخزين ممنوعاً أصلاً.
          الفرق يهمّ المستخدم: الأولى يعالجها، والثانية ليست بيده. */
       var full = /quota|exceed/i.test(String(e && (e.name + " " + e.message)));
       var was = saveBlocked;
+      /* امتلأت المرآة أو مُنعت: القاعدة قد تقبل، فتُجرَّب قبل الحكم */
+      idbWrite(function(ok){
+        var now = ok ? "" : (full ? "full" : "store");
+        if(saveBlocked !== now){ saveBlocked = now; render(); }
+      });
       saveBlocked = full ? "full" : "store";
       if(was !== saveBlocked) render();
     }
@@ -6702,7 +6815,29 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
             + (raw ? (' — ' + kb(raw.length) + ' في متصفّح هذا الجهاز') : '')
             + (lastSave ? (' · آخر كتابة ' + clock(lastSave)) : '')
             + '</span></span>'
-            + '<button class="mini" data-backup="1">انسخها</button></div>';
+            + '<button class="mini" data-backup="1">انسخها</button></div>'
+            + '<div class="mrow"><span class="mn">مخزن الجهاز'
+            + '<span class="ms">'
+            + (idbState === "ok"
+                ? 'قاعدة <b>IndexedDB</b> — بلا حدٍّ عمليّ، ومعاملاتها ذرّية، '
+                  + 'وتُكتب الأشهر سجلّاتٍ منفصلة فلا يُعاد كتابة الكلّ.'
+                : idbState === "off"
+                  ? 'القاعدة غير متاحة هنا — الحفظ في تخزين المتصفّح البسيط '
+                    + '(حدّه نحو 5MB).'
+                  : 'جارٍ فتح القاعدة…')
+            + (quota && quota.all
+                ? ('<br>المستعمَل ' + kb(quota.used) + ' من '
+                   + kb(quota.all) + ' متاحة')
+                : '')
+            + (persisted === true
+                ? '<br><b>ديمومة ممنوحة</b> — لن يمحوها المتصفّح عند ضيق مساحة الجهاز.'
+                : persisted === false
+                  ? '<br>الديمومة غير ممنوحة بعد — تُمنح غالباً بعد تثبيت التطبيق.'
+                  : '')
+            + '</span></span>'
+            + '<span class="pill' + (idbState === "ok" ? " ok" : "") + '">'
+            + (idbState === "ok" ? "IndexedDB" : idbState === "off" ? "بسيط" : "…")
+            + '</span></div>';
         })()
       + storageHTML(true);
     var SNP = snapInfo();
@@ -8560,7 +8695,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "2026.08.31+8eebe6";
+  var APP_VERSION = "2026.08.31+b8818d";
   /* بيت التطبيق. يُذكر حيث يحتاجه من فتحه في مكانٍ لا يُحفظ فيه. */
   var HOME = "relifeg1.github.io/masrouf";
   var installPrompt = null, swReady = false, swWaiting = null;
@@ -9944,7 +10079,8 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
 
   /* ═══ إقلاع ═══ */
   storeProbe();           /* قبل كل شيء: أيُحفظ العمل أصلاً؟ */
-  localLoad();
+  localLoad();            /* المرآة: الشاشة لا تنتظر فتحَ قاعدة */
+  storageFacts();
   snapBeforeUpdate();     /* قبل migrate — اللقطة للبنية القديمة لا المرقّاة */
   migrate();
   try{
@@ -9964,11 +10100,33 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   render();
   /* أول مرة: المعالج بعد الرسم لا قبله — فيرى الشاشة خلفه ويعرف أين هو */
   /* لو كان الحفظ متعذّراً لعاد المعالج مع كل تحديثٍ للصفحة — وهو ما
-     شكا منه المستخدم. التنبيه أصدق منه هنا. */
-  if(needOnboard() && !backFromAuth && !saveBlocked)
-    setTimeout(function(){ onboardDlg(); }, 120);
+     شكا منه المستخدم. التنبيه أصدق منه هنا.
+     ولا يُقرّر قبل أن تُقرأ القاعدة: المرآة قد تكون فارغةً والبيانات
+     في المخزن — فيستقبل المعالجُ من عنده سنتان من العمل. */
+  function maybeOnboard(){
+    if(needOnboard() && !backFromAuth && !saveBlocked)
+      setTimeout(function(){ onboardDlg(); }, 120);
+  }
   /* جلسةٌ قائمة من زيارةٍ سابقة: تُنزَّل نسخةُ الحساب إن كان الجهاز خالياً */
   if(!backFromAuth && signedIn()) setTimeout(cloudFirstPull, 400);
+
+  /* ثم القاعدة: إن كانت أحدث من المرآة حلّت محلّها. ويقع هذا حين
+     تُمسح المرآة وحدها، أو تمتلئ فتتوقّف عن مجاراة القاعدة. */
+  idbRead(function(d){
+    if(!d || !d.months){
+      if(idbState === "ok") idbWrite();
+      maybeOnboard(); return;
+    }
+    var mine = +d.savedAt || 0, here = +state.savedAt || 0;
+    if(mine <= here){ idbWrite(); maybeOnboard(); return; }
+    for(var k in state) if(!(k in d)) delete state[k];
+    for(var k2 in d) state[k2] = d[k2];
+    migrate();
+    localWrite();
+    toast("استُعيدت بياناتك من مخزن الجهاز");
+    render();
+    maybeOnboard();       /* بعد الاستعادة: قد لا يحتاجه أصلاً */
+  });
 
   if(window.claude && typeof window.claude.use === "function"){
     window.claude.use("artifact").then(function(api){ pubApi = api; })["catch"](function(){});
