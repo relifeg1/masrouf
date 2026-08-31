@@ -3086,6 +3086,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   function localWrite(){
     _lsDirty = false;
     try{
+      state.savedAt = Date.now();
       localStorage.setItem(LSKEY, JSON.stringify(state));
       if(saveBlocked === "store"){ saveBlocked = ""; render(); }
     }catch(e){
@@ -3123,14 +3124,19 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     try{
       var raw = localStorage.getItem(LSKEY); if(!raw) return;
       var d = JSON.parse(raw);
-      if(d && d.months && countItems(d.months) > countItems(state.months)){
-        state.months = d.months;
-        if(d.income) state.income = d.income;
-        if(d.goals) state.goals = d.goals;
-        if(d.invest) state.invest = d.invest;
-        if(d.cats) state.cats = d.cats;
-        if(d.accts) state.accts = d.accts;
-      }
+      if(!d || typeof d !== "object" || !d.months) return;
+
+      /* أيّهما أحدث: ما في الجهاز أم ما جاء مضمَّناً في الصفحة؟
+         الختم يحسم حين يوجد. وإلا فالعدّ — و«أكبر أو يساوي» لا «أكبر»،
+         وإلا لم تُحمَّل حالةٌ بلا حركاتٍ بعد. */
+      var mine = +d.savedAt || 0, emb = +state.savedAt || 0;
+      var take = (mine || emb)
+               ? (mine >= emb)
+               : (countItems(d.months) >= countItems(state.months));
+      if(!take) return;
+
+      /* الحالة كلّها لا ستّة مفاتيح منها — الإعدادات جزءٌ من عمل صاحبها */
+      for(var k in d) state[k] = d[k];
     }catch(e){}
   }
   function buildDoc(){
@@ -8426,7 +8432,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "2026.08.31+62ecc4";
+  var APP_VERSION = "2026.08.31+b438cf";
   /* بيت التطبيق. يُذكر حيث يحتاجه من فتحه في مكانٍ لا يُحفظ فيه. */
   var HOME = "relifeg1.github.io/masrouf";
   var installPrompt = null, swReady = false, swWaiting = null;
