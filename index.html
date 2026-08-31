@@ -344,6 +344,9 @@ input,select,button,textarea{font-family:inherit;font-size:16px;min-width:0;max-
 .vtag{opacity:.55;font-size:11px;font-family:var(--mono, monospace);
       letter-spacing:.2px;white-space:nowrap}
 .savebar{margin:12px 0}
+.snvfam{font-size:10px;letter-spacing:.09em;color:var(--ink-3);
+  padding:14px 12px 5px;font-weight:600}
+.setnav .snvfam:first-child{padding-top:4px}
 .navupd{margin-top:auto;position:relative;opacity:.72}
 .navupd .nvv{margin-inline-start:auto;font-size:10px;opacity:.7;
   font-family:var(--mono,monospace);letter-spacing:0}
@@ -4152,10 +4155,10 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     if(window.claude && window.claude.use) return "";   /* لا تحديث داخل أرتفاكت */
     var waiting = !!swWaiting;
     return '<button class="navupd' + (waiting ? " has" : "") + '" data-navupd="1"'
-      + ' title="' + esc(waiting ? "نسخة جديدة جاهزة" : "النسخة " + APP_VERSION) + '">'
+      + ' title="' + esc(waiting ? "نسخة جديدة جاهزة" : "النسخة " + verLabel()) + '">'
       + '<span class="g">' + (waiting ? "⬆" : "◷") + '</span>'
       + (waiting ? 'تحديث جاهز' : 'النسخة')
-      + '<span class="nvv">' + esc(waiting ? "جديد" : APP_VERSION.slice(0, 10)) + '</span>'
+      + '<span class="nvv">' + esc(waiting ? "جديد" : verLabel()) + '</span>'
       + (waiting ? '<span class="nvdot"></span>' : "") + '</button>';
   }
   /* مؤشّر: أيقونة · تسمية · رقم · مقارنة بالشهر الماضي */
@@ -6990,9 +6993,9 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     }
 
     h += '<div class="sec"><h2>عن التطبيق</h2>'
-      + '<span class="hint">' + esc(APP_VERSION) + '</span></div>'
+      + '<span class="hint">' + esc(verLabel()) + '</span></div>'
       + '<div class="card"><div class="mrow"><span class="mn">النسخة'
-      + '<span class="ms">' + esc(APP_VERSION)
+      + '<span class="ms">' + esc(verLabel())
       + (swReady ? ' · يعمل بلا إنترنت' : '') + '</span></span>'
       + (swWaiting ? '<button class="mini on" data-update="1">حدّث الآن</button>'
                    : '<span class="pill">أحدث نسخة</span>') + '</div>'
@@ -7141,11 +7144,6 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
             + '" data-ardigits="' + x[0] + '">' + x[1] + '</button>';
         }).join("") + '</span></div></div>';
 
-    h += '<div class="sec"><h2>تصدير الحركات</h2>'
-      + '<span class="hint">CSV لـExcel</span></div><div class="card">'
-      + mrow("كل حركاتك في ملف", nItems2 + " حركة · تاريخ وبند وفرع ومبلغ وملاحظة وحساب",
-             '<button class="mini" data-csv="1">صدّرها</button>')
-      + '</div>';
 
     h += '<div class="sec"><h2>التقويم والزكاة</h2>'
       + '<span class="hint">' + (hijriOn() ? "الهجري ظاهر" : "ميلادي فقط") + '</span></div>'
@@ -7228,34 +7226,27 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       + '<div class="mrow"><span class="mn">ما الذي ينتقل'
       + '<span class="ms">رصيد البند = خطته ناقص ما صُرف. وما يتبقّى منه — أو يزيد '
       + 'عليه — إلى أين يذهب؟</span></span>'
-      + '<span class="cmodes">' + '<button class="chip sm' + (carryMode() === "all" ? " on" : "") + '" data-carrymode="all" title="الفائض والعجز كلاهما ينتقل">الكل</button>' + '<button class="chip sm' + (carryMode() === "neg" ? " on" : "") + '" data-carrymode="neg" title="التجاوز يلاحقك والفائض لا يغريك">السالب وحده</button>' + '<button class="chip sm' + (carryMode() === "none" ? " on" : "") + '" data-carrymode="none" title="كل شهر يبدأ نظيفاً من خطته">لا شيء</button>' + '</span></div></div>';
+      + '<span class="cmodes">' + '<button class="chip sm' + (carryMode() === "all" ? " on" : "") + '" data-carrymode="all" title="الفائض والعجز كلاهما ينتقل">الكل</button>' + '<button class="chip sm' + (carryMode() === "neg" ? " on" : "") + '" data-carrymode="neg" title="التجاوز يلاحقك والفائض لا يغريك">السالب وحده</button>' + '<button class="chip sm' + (carryMode() === "none" ? " on" : "") + '" data-carrymode="none" title="كل شهر يبدأ نظيفاً من خطته">لا شيء</button>' + '</span></div>'
 
-    /* نطاق الإعدادات: ما في هذه الشاشة يسري على الشهور كلها */
-    var OW = ownMonths();
-    h += '<div class="sec"><h2>نطاق الإعدادات</h2>'
-      + '<span class="hint">' + (OW.length ? OW.length + " شهراً يخالف" : "الكلّ على العامّ")
-      + '</span></div><div class="card">'
-      + mrow("كل ما في هذه الشاشة عامّ",
-             "الدخل والبنود والأهداف والاستثمار والحسابات والقواعد — تسري على الشهور كلها",
-             '<span class="pill">لا إعداد خاصّ بشهر هنا</span>')
-      + mrow("خطة واحدة لكل الشهور",
-             onePlan() ? "مفعّل — تعديلاتك تُكتب في الأساسية"
-                       : "معطّل — التعديل قد يُنشئ خطة تخصّ الشهر المعروض",
-             '<button class="mini' + (onePlan() ? " on" : "") + '" data-oneplan="1">'
-             + (onePlan() ? "مفعّل" : "فعّله") + '</button>');
-    if(OW.length){
-      h += mrow("شهور تخالف العامّ",
-             OW.map(function(x){ return mName(x.k).split(" ")[0] + " (" + x.w.join("+") + ")"; })
-               .join(" · "),
-             '<button class="mini bad" data-unify="1">وحِّدها على العامّ</button>');
-    }
-    h += '</div>';
-    h += '<div class="hintnote">الماضي يبقى محفوظاً في شهره حتى مع المفتاح — كتابة رقم '
-      + 'اليوم في خطة الأساس تعيد كتابة تاريخٍ لم يحدث هكذا، فتفسد تقاريرك.</div>';
-
-    /* الشروح المخفية: عدّها هنا ثم أعِدها كلها بضغطة */
-    var HN = hiddenNotes(null);
-    h += '<div class="sec"><h2>الشروح</h2>'
+      /* ما يخصّ الشهر وما يعمّ — كان قسماً قائماً بذاته، وهو صفّان */
+      + '<div class="mrow"><span class="mn">خطةٌ واحدة لكل الشهور'
+      + '<span class="ms">حين تُطفأ يستطيع كل شهرٍ أن يخالف الخطة العامّة '
+      + 'بدخلٍ وخطةٍ خاصّين به.</span></span>'
+      + '<button class="mini' + (onePlan() ? " on" : "") + '" data-oneplan="1">'
+      + (onePlan() ? "مفعّلة" : "مطفأة") + '</button></div>'
+      + (function(){
+          var OW = ownMonths();
+          if(!OW.length)
+            return '<div class="mrow"><span class="mn">شهورٌ تخالف العامّ'
+              + '<span class="ms">لا شهر يخالف — كلّها تقرأ الإعداد العامّ.'
+              + '</span></span><span class="pill">الكلّ على العامّ</span></div>';
+          return '<div class="mrow"><span class="mn">شهورٌ تخالف العامّ'
+            + '<span class="ms"><b>' + OW.length + ' شهراً</b> لها دخلٌ أو خطةٌ خاصّة. '
+            + 'توحيدها يجعلها تقرأ العامّ — ولا يمسّ حركات مصروفها.</span></span>'
+            + '<button class="mini" data-unify="1">وحِّدها</button></div>';
+        })()
+      + '</div>';
+h += '<div class="sec"><h2>الشروح</h2>'
       + '<span class="hint">' + (HN ? HN + " مخفيّاً" : "لا شرح مخفيّ") + '</span></div>'
       + '<div class="card"><div class="mrow"><span class="mn">شروح أغلقتَها'
       + '<span class="ms">الشرح يُقرأ مرة ثم تُغلقه بعلامة ✕. ولا يعود إلا إن تغيّر '
@@ -7349,7 +7340,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       '<div class="wrap v-' + (ui.tab || "dash") + '">'
       + topbar() + saveBar() + updateBar() + body
       + '<footer>' + (saveBlocked ? 'الحفظ متعذّر — اقرأ التنبيه أعلاه' : saveProof())
-      + ' <span class="vtag">مصروف ' + esc(APP_VERSION) + '</span></footer></div>'
+      + ' <span class="vtag">مصروف ' + esc(verLabel()) + '</span></footer></div>'
       + navbar() + dlgHTML();
     applyNotes();
     wire(); if(!setNav()) colLayout(); wire(); dlgWire(); restoreFocus();
@@ -7365,7 +7356,9 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     if(/\bnospan\b/.test(c)) return false;
     /* جسد الصفحة: بطاقة الجهة وزرّ الإضافة وما أُعلِن عابراً */
     if(/\b(invcard|addbtn|spanall)\b/.test(c)) return true;
-    if(/\b(topbar|mstrip2|kpis|spendbar|autobar|grid|dcols|modesw)\b/.test(c)) return true;
+    /* wiz تمتدّ في اللوحة: تحتها صفُّ المؤشّرات الممتدّ، وضيقُها عنه
+       يكسر الحافّة. وشاشةُ الخطة تستثنيها في السطر الأعلى. */
+    if(/\b(topbar|mstrip2|kpis|spendbar|autobar|grid|dcols|modesw|wiz)\b/.test(c)) return true;
     if(el.tagName === "FOOTER") return true;
     if(el.classList.contains("card") &&
        (el.querySelector(".ygrid") || el.querySelector(".yrow") || el.querySelector(".qtab"))) return true;
@@ -7390,6 +7383,22 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     }
     return null;
   }
+  /* خمس عائلات. والترتيب داخل كلٍّ هو ترتيب ورودها في الشاشة. */
+  var SET_FAM = [
+    { n: "بياناتك", of: ["أين تُحفظ بياناتك", "النسخة الاحتياطية", "منطقة الخطر"] },
+    { n: "خطتك", of: ["الدخل الافتراضي", "بنود المصروف", "الأهداف",
+                      "جهات الاستثمار", "الحسابات", "قواعدك النسبية"] },
+    { n: "شهرك", of: ["الشهر المالي", "الترحيل بين الشهور", "التقويم والزكاة"] },
+    { n: "العرض", of: ["العملة والأرقام", "المظهر والإقلاع", "التبويبات",
+                       "التنبيه والتسجيل", "الشروح"] },
+    { n: "التطبيق", of: ["عن التطبيق", "التطبيق على جهازك", "البداية"] }
+  ];
+  function famOf(name){
+    for(var i = 0; i < SET_FAM.length; i++)
+      if(SET_FAM[i].of.indexOf(name) >= 0) return i;
+    return SET_FAM.length;          /* «أخرى» — لا يختفي قسمٌ صامتاً */
+  }
+
   /* الإعدادات: قائمة أقسام + لوحة القسم المختار */
   function setNav(){
     var wrap = document.querySelector("#root > .wrap");
@@ -7417,17 +7426,28 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     /* القائمة في العمود الضيّق الأول (اليمين) والمحتوى في العريض */
     var nav = document.createElement("div");
     nav.className = "card setnav";
-    nav.innerHTML = units.map(function(u, i){
+    /* تُصنَّف أوّلاً ثم تُرسم عائلةً عائلة — فالفهرس يُقرأ لا يُمسح */
+    var bins = [];
+    for(var f = 0; f <= SET_FAM.length; f++) bins.push([]);
+    units.forEach(function(u, i){
       var h2 = u.h.querySelector("h2"), hint = u.h.querySelector(".hint");
       var name = h2 ? h2.textContent : "قسم";
-      var danger = /خطر/.test(name);
-      /* الشرح الطويل لا مكان له في القائمة — العدد وحده يفيد */
       var ht = hint ? hint.textContent.trim() : "";
       if(ht.length > 12 || !/[0-9٠-٩]/.test(ht)) ht = "";
-      return '<button class="snv' + (i === pick ? " on" : "") + (danger ? " bad" : "")
-        + '" data-setsec="' + i + '">' + esc(name)
-        + (ht ? '<s>' + esc(ht) + '</s>' : "") + '</button>';
-    }).join("");
+      bins[famOf(name)].push({ i: i, name: name, ht: ht, bad: /خطر/.test(name) });
+    });
+    var html = "";
+    bins.forEach(function(list, f){
+      if(!list.length) return;
+      var fam = SET_FAM[f] ? SET_FAM[f].n : "أخرى";
+      html += '<div class="snvfam">' + esc(fam) + '</div>'
+        + list.map(function(x){
+            return '<button class="snv' + (x.i === pick ? " on" : "") + (x.bad ? " bad" : "")
+              + '" data-setsec="' + x.i + '">' + esc(x.name)
+              + (x.ht ? '<s>' + esc(x.ht) + '</s>' : "") + '</button>';
+          }).join("");
+    });
+    nav.innerHTML = html;
     a.appendChild(nav);
 
     units[pick].els.forEach(function(el){ b.appendChild(el); });
@@ -8538,7 +8558,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     on("[data-navupd]", function(){
       if(swWaiting) return askUpdate();
       ask({ title: "النسخة", fields: [],
-        msg: "أنت على <b>" + esc(APP_VERSION) + "</b>."
+        msg: "أنت على التحديث <b>" + esc(verLabel()) + "</b>."
            + "<br>يسأل التطبيق عن جديدٍ في كل فتحة، وإن وُجد ظهر هنا "
            + "ولم يُفرض عليك.",
         html: function(){
@@ -8659,7 +8679,6 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       state.arDigits = b.getAttribute("data-ardigits") === "ar";
       save(); render();
     });
-    on("[data-csv]", function(){ csvDlg(); });
     on("[data-hijri]", function(){
       state.hijri = !state.hijri;
       toast(state.hijri ? "ظهر التقويم الهجري" : "أُخفي الهجري");
@@ -8890,7 +8909,10 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "2026.09.01+91b454";
+  var APP_VERSION = "32";
+  /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
+     لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
+  function verLabel(){ return "#" + APP_VERSION; }
   /* بيت التطبيق. يُذكر حيث يحتاجه من فتحه في مكانٍ لا يُحفظ فيه. */
   var HOME = "relifeg1.github.io/masrouf";
   var installPrompt = null, swReady = false, swWaiting = null;
@@ -8997,7 +9019,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       var f = document.querySelector("footer");
       if(!f) return;
       f.innerHTML = (saveBlocked ? "الحفظ متعذّر — اقرأ التنبيه أعلاه" : saveProof())
-        + ' <span class="vtag">مصروف ' + esc(APP_VERSION) + '</span>';
+        + ' <span class="vtag">مصروف ' + esc(verLabel()) + '</span>';
     }catch(e){}
   }
   function saveBar(){
@@ -9909,7 +9931,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     function money(n){ return fmt(num(n)) + " " + cur(); }
 
     line("مصروف — خلاصة بياناتك");
-    line("حُفظت في " + stamp() + " · النسخة " + APP_VERSION);
+    line("حُفظت في " + stamp() + " · التحديث " + verLabel());
     rule();
     line("");
     line("الدخل الافتراضي: " + money((state.income || {}).salary)
@@ -10103,21 +10125,6 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       }, true);
   }
 
-  function csvDlg(){
-    var txt = csvExport(), lines = txt.split("\r\n").length - 1;
-    ask({ title: "تصدير الحركات",
-      msg: "<b>" + lines + " حركة</b> بصيغة CSV. انسخها والصقها في ملفٍ باسم "
-         + "<b>masrouf.csv</b> ثم افتحه في Excel.",
-      fields: [{ label: "المحتوى", type: "area", value: txt }],
-      ok: "انسخ",
-      onOk: function(){
-        try{
-          var el = document.getElementById("df0");
-          if(el){ el.select(); document.execCommand("copy"); }
-          toast("نُسخ إلى الحافظة");
-        }catch(e){ toast("حدّد النصّ وانسخه يدوياً"); }
-      } });
-  }
 
   /* ── التقويم الهجري ──
      من Intl لا من جدولٍ أكتبه: أم القرى فيه أدقّ ويتحدّث مع النظام. */
