@@ -52,10 +52,12 @@
 
 ### مثبِّتات جاهزة
 
+**كلّها في [صفحة الإصدارات](https://github.com/relifeg1/masrouf/releases/latest).**
+
 | النظام | الملفّ | ماذا يفعل |
 |---|---|---|
-| **ويندوز** | [`masrouf-setup.exe`](tools/masrouf-setup.exe) · ٢١KB | نافذة تثبيتٍ واحدة ← أيقونة على سطح المكتب وفي قائمة ابدأ ← ويظهر في «إضافة أو إزالة البرامج» فتُزيله كأيّ برنامج |
-| **ماك** | [`Masrouf-mac.zip`](tools/Masrouf-mac.zip) · ٣KB | فُكّ الضغط واسحب `Masrouf.app` إلى Applications |
+| **ويندوز** | [`masrouf-setup.exe`](https://github.com/relifeg1/masrouf/releases/latest/download/masrouf-setup.exe) · ٢١KB | نافذة تثبيتٍ واحدة ← أيقونة على سطح المكتب وفي قائمة ابدأ ← ويظهر في «إضافة أو إزالة البرامج» فتُزيله كأيّ برنامج |
+| **ماك** | [`Masrouf-mac.zip`](https://github.com/relifeg1/masrouf/releases/latest/download/Masrouf-mac.zip) · ٣KB | فُكّ الضغط واسحب `Masrouf.app` إلى Applications |
 
 **ويندوز** لا يطلب صلاحية مسؤول — يُثبَّت في مجلّدك أنت
 (`%LOCALAPPDATA%\Masrouf`)، ولا يمسّ النظام.
