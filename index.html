@@ -6646,12 +6646,13 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       + '<button class="mini" data-onbstart="1">شغّله</button></div></div>';
 
     h += '<div class="sec"><h2>أين تُحفظ بياناتك</h2>'
-      + '<span class="hint">' + (signedIn() ? "جهازك وحسابك"
-                                 : cloudOn() ? "جهازك وسحابتك" : "جهازك وحده") + '</span></div>'
+      + '<span class="hint">' + esc(storageName(storageMode())) + '</span></div>'
       + '<div class="card">'
-      + '<div class="mrow"><span class="mn">في جهازك — دائماً'
-      + '<span class="ms">تُحفظ في متصفّحك أوّلاً وتعمل بلا إنترنت. لا تغادره إلا إن '
-      + 'ربطتَ سحابة.</span></span><span class="pill">مفعّل</span></div>';
+      + '<div class="mrow"><span class="mn">نسخةٌ في جهازك — دائماً'
+      + '<span class="ms">مهما اخترتَ، تُكتب في متصفّحك أوّلاً فيعمل التطبيق '
+      + 'بلا إنترنت. وما يزيد على ذلك هو اختيارك أدناه.</span></span>'
+      + '<span class="pill">مفعّل</span></div>'
+      + storageHTML();
     var SNP = snapInfo();
     if(SNP){
       h += '<div class="mrow"><span class="mn">لقطة ما قبل التحديث'
@@ -8106,6 +8107,10 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
         "لن تستطيع الرجوع إلى ما قبل هذا التحديث بعدها.",
         "احذفها", function(){ snapDrop(); toast("حُذفت"); render(); }, true);
     });
+    on("[data-stordev]", function(){
+      closeDlg();
+      toast("بياناتك في هذا الجهاز — لا تنسَ نسخةً احتياطية");
+    });
     on("[data-authin]", function(){
       ask({ title: "سجّل الدخول",
         msg: "اكتب بريدك، فيصلك رمزٌ من ستة أرقام ورابط. استعمل أيّهما شئت — "
@@ -8421,7 +8426,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "2026.08.31+65260c";
+  var APP_VERSION = "2026.08.31+62ecc4";
   /* بيت التطبيق. يُذكر حيث يحتاجه من فتحه في مكانٍ لا يُحفظ فيه. */
   var HOME = "relifeg1.github.io/masrouf";
   var installPrompt = null, swReady = false, swWaiting = null;
@@ -8544,14 +8549,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
         var inc = num(v && v[0]);
         var n = 0;
         for(var k in onbSel){ if(onbSel[k]) n++; }
-        return (supaReady() && !signedIn()
-            ? '<div class="f2"><label>ليتبعك دفترك بين أجهزتك</label>'
-              + '<div class="dbtns"><button class="mini on" data-authin="1">'
-              + 'سجّل الدخول</button></div>'
-              + '<div class="ms" style="margin-top:4px">اختياريّ — بلا دخولٍ يعمل '
-              + 'التطبيق كاملاً على هذا الجهاز وحده.</div></div>'
-            : "")
-          + '<div class="f2"><label>أهمّ بنود صرفك — اختر ما ينطبق عليك</label>'
+        return '<div class="f2"><label>أهمّ بنود صرفك — اختر ما ينطبق عليك</label>'
           + '<div class="chips onbchips">' + ONB_PICK.map(function(ck){
               var c = catOf(ck);
               if(!c || c.n === "بند محذوف") return "";
@@ -8591,6 +8589,8 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
         onbSel = null;
         toast("بُنيت خطتك — عدّلها من شاشة الخطة");
         save();
+        /* السؤال بعد أن يرى خطته: صار له ما يخاف عليه فيهمّه أين يُحفظ */
+        setTimeout(storageDlg, 700);
       },
       cancel: "أبدأ فارغاً",
       onCancel: function(){ state.onboard = true; onbSel = null; save(); } });
@@ -8750,6 +8750,49 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     }catch(e){ return false; }
   }
   function snapDrop(){ try{ localStorage.removeItem(SNAPKEY); }catch(e){} }
+
+  /* ثلاثة أوضاع، ويُقرأ الجاري من الواقع لا من علَمٍ مخزَّن */
+  function storageMode(){
+    if(signedIn()) return "account";
+    if(cloudOn()) return "own";
+    return "device";
+  }
+  function storageName(m){
+    return m === "account" ? "حسابك" : m === "own" ? "سحابتك أنت" : "هذا الجهاز";
+  }
+  var STOR_OPTS = [
+    { k: "device", n: "هذا الجهاز وحده",
+      d: "بياناتك في متصفّحك، لا تغادره. يعمل بلا إنترنت وبلا تسجيل. "
+       + "لكن لو ضاع الجهاز أو مُسحت بيانات المتصفّح ضاعت معه — "
+       + "فخذ نسخة احتياطية بين حين وآخر.",
+      act: '<button class="mini" data-stordev="1">اتركها هنا</button>' },
+    { k: "account", n: "حسابك — تتبعك بين أجهزتك",
+      d: "تدخل ببريدك أو بحساب Google، فتجد بياناتك في هاتفك وحاسوبك معاً، "
+       + "وتعود إليك لو بدّلت الجهاز. لا كلمة مرور تُنشأ ولا تُحفظ.",
+      act: '<button class="mini on" data-authin="1">سجّل الدخول</button>' },
+    { k: "own", n: "قاعدةٌ تملكها أنت",
+      d: "لمن يريد بياناته في مشروعٍ باسمه هو — تربطه برابطه ومفتاحه. "
+       + "لا يمرّ شيء بخادمٍ لنا.",
+      act: '<button class="mini" data-cloudcfg="1">اربطها</button>' }
+  ];
+  function storageHTML(){
+    var cur = storageMode();
+    return STOR_OPTS.map(function(o){
+      if(o.k === "account" && !(cloudAllowed() && supaReady())) return "";
+      if(o.k === "own" && !cloudAllowed()) return "";
+      var on = (o.k === cur);
+      return '<div class="mrow"><span class="mn">' + esc(o.n)
+        + '<span class="ms">' + o.d + '</span></span>'
+        + (on ? '<span class="pill">المُتَّبع الآن</span>' : o.act) + '</div>';
+    }).join("");
+  }
+  function storageDlg(){
+    ask({ title: "أين تُحفظ بياناتك؟",
+      msg: "اختر ما يناسبك — وغيّره متى شئت من الإعدادات. لا شيء يضيع بالتبديل.",
+      fields: [],
+      html: function(){ return '<div class="card">' + storageHTML() + '</div>'; },
+      ok: "تمّ", cancel: false });
+  }
 
   var CKEY = "kh_cloud";
   function cloudCfg(){
