@@ -70,6 +70,10 @@ static class Setup
         try
         {
             string lnk = Path.Combine(folder, name + ".lnk");
+            /* يُحذف الموجود أوّلاً: الاختصار يخزّن بصمة الملفّ لا مساره
+               وحده، فلو أُبقي على القديم بعد ترقيةٍ قال ويندوز «تغيّر
+               أو نُقل» وعرض حذفه. */
+            try { if (File.Exists(lnk)) File.Delete(lnk); } catch { }
             Type t = Type.GetTypeFromProgID("WScript.Shell");
             if (t == null) return false;
             object sh = Activator.CreateInstance(t);
@@ -99,7 +103,10 @@ static class Setup
 
     static void DropShortcuts()
     {
-        foreach (string folder in new string[] { Desktop, Programs })
+        /* StartMenu (الجذر) موضعٌ قديم كان المشغّل يكتب فيه — يُنظَّف
+           وإن لم يعد أحدٌ يكتبه، فمن رقّى من نسخةٍ قديمة عنده واحد. */
+        string root = Environment.GetFolderPath(Environment.SpecialFolder.StartMenu);
+        foreach (string folder in new string[] { Desktop, Programs, root })
             foreach (string n in new string[] { NAME, ID })
                 try { File.Delete(Path.Combine(folder, n + ".lnk")); }
                 catch { }
@@ -117,6 +124,19 @@ static class Setup
         Extract("app", app);
         Extract("icon", ico);
         File.Copy(Application.ExecutablePath, unins, true);
+
+        /* اختصارٌ خلّفه المشغّل في جذر «ابدأ» قبل أن تُنزع منه هذه
+           المهمّة — يُنظَّف عند التثبيت لا عند الإزالة وحدها. */
+        try {
+            File.Delete(Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.StartMenu),
+                "Masrouf.lnk"));
+        } catch { }
+        try {
+            File.Delete(Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.StartMenu),
+                NAME + ".lnk"));
+        } catch { }
 
         MakeShortcuts(app, ico);
 

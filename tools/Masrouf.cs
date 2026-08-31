@@ -3,8 +3,9 @@
 // لماذا مشغّلٌ لا تطبيقٌ مُحزَّم: لأن التطبيق يُحدَّث من الموقع نفسه.
 // لو حُزِمت الشيفرة داخل الملفّ التنفيذي لتجمّدت النسخة عند من حمّلها،
 // ولعاد كلّ تحديثٍ يحتاج تنزيلاً جديداً — وهو نقيض ما بُني من أجله.
-// فهذا الملفّ يفتح التطبيق في نافذةٍ مستقلّة بلا شريط متصفّح، ويضع
-// أيقونةً على سطح المكتب وفي قائمة ابدأ. والتحديث يبقى تلقائياً.
+// فهذا الملفّ يفتح التطبيق في نافذةٍ مستقلّة بلا شريط متصفّح، ولا
+// يفعل غير ذلك: الاختصارات عملُ المثبِّت وحده. كان ينشئها في كل
+// تشغيل فاجتمع للاختصارات صانعان في مواضع مختلفة.
 //
 // يُبنى بلا مكتبات خارجية:
 //   csc /target:winexe /win32icon:masrouf.ico /out:masrouf.exe Masrouf.cs
@@ -35,51 +36,9 @@ static class Masrouf
         return null;
     }
 
-    // الاختصارات تُنشأ بربطٍ متأخّر — كي لا يحتاج البناء مرجعاً لـCOM.
-    //
-    // والاسم يُجرَّب عربياً ثم لاتينياً: على نظامٍ لغتُه غير العربية يفشل
-    // WScript.Shell في حفظ اسمٍ خارج ترميز النظام — يحوّله إلى «؟؟؟؟؟»
-    // وهي محرَّمةٌ في أسماء الملفّات. قِيس ذلك، ولا يُكتفى بافتراضه.
-    static void MakeShortcut(string folder)
-    {
-        if (!TryShortcut(folder, NAME)) TryShortcut(folder, "Masrouf");
-    }
-
-    static bool TryShortcut(string folder, string name)
-    {
-        try
-        {
-            string lnk = Path.Combine(folder, name + ".lnk");
-            if (File.Exists(lnk)) return true;
-            Type t = Type.GetTypeFromProgID("WScript.Shell");
-            if (t == null) return false;
-            object shell = Activator.CreateInstance(t);
-            object sc = t.InvokeMember("CreateShortcut",
-                System.Reflection.BindingFlags.InvokeMethod, null, shell,
-                new object[] { lnk });
-            Type st = sc.GetType();
-            string exe = Application.ExecutablePath;
-            st.InvokeMember("TargetPath", System.Reflection.BindingFlags.SetProperty,
-                null, sc, new object[] { exe });
-            st.InvokeMember("WorkingDirectory", System.Reflection.BindingFlags.SetProperty,
-                null, sc, new object[] { Path.GetDirectoryName(exe) });
-            st.InvokeMember("IconLocation", System.Reflection.BindingFlags.SetProperty,
-                null, sc, new object[] { exe + ",0" });
-            st.InvokeMember("Description", System.Reflection.BindingFlags.SetProperty,
-                null, sc, new object[] { "خطتك الشهرية" });
-            st.InvokeMember("Save", System.Reflection.BindingFlags.InvokeMethod,
-                null, sc, null);
-            return File.Exists(lnk);
-        }
-        catch { return false; }   /* تعذّر اختصار لا يمنع فتح التطبيق */
-    }
-
     [STAThread]
     static void Main()
     {
-        MakeShortcut(Environment.GetFolderPath(Environment.SpecialFolder.Desktop));
-        MakeShortcut(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu));
-
         string br = FindBrowser();
         try
         {
