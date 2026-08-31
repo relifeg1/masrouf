@@ -2,6 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://www.googleapis.com https://accounts.google.com https://*.supabase.co; form-action 'none'; base-uri 'self'; object-src 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#4C3AE3" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0D0F14" media="(prefers-color-scheme: dark)">
@@ -1033,7 +1034,15 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     color:#fff;display:flex;align-items:center;justify-content:center;
     font-size:15px;flex:none}
   .navbrand b{font-family:"Alexandria",sans-serif;font-size:15px;font-weight:700;
-    letter-spacing:-.01em;color:var(--ink)}
+    letter-spacing:-.01em;color:var(--ink);display:block}
+  /* شعار البيتا تحت الاسم: يقول لصاحبه إنه على نسخةٍ تُجرَّب — ومعه
+     رقمها، فلا يحتاج أن ينزل إلى الإعدادات ليعرف أين هو. */
+  .navbrand .nbt{display:flex;flex-direction:column;gap:1px;min-width:0}
+  .navbrand .beta{display:inline-flex;align-items:center;gap:4px;
+    text-decoration:none;font-size:9.5px;letter-spacing:.02em;
+    color:var(--gold);white-space:nowrap}
+  .navbrand .beta::before{content:"";width:5px;height:5px;border-radius:99px;
+    background:var(--gold);flex:none}
   .topbar{align-items:flex-start}
   .brand{font-size:21px;line-height:1.25}
   .hsub{font-size:13px}
@@ -4146,7 +4155,9 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
                 ["accts","🏦","الحسابات"],["inv","📈","الاستثمار"]]
                 .filter(function(t){ return tabShown(t[0]); });
     return '<div class="nav"><div class="nav-in">'
-      + '<div class="navbrand"><span class="nbm">◈</span><b>خطتي الشهرية</b></div>'
+      + '<div class="navbrand"><span class="nbm">◈</span>'
+      + '<span class="nbt"><b>خطتي الشهرية</b>'
+      + '<s class="beta">إصدار تجريبي · ' + esc(verLabel()) + '</s></span></div>'
       + tabs.map(function(t){
           return '<button data-tab="' + t[0] + '" class="' + (ui.tab === t[0] ? "on" : "") + '">'
             + '<span class="g">' + t[1] + '</span>' + t[2] + '</button>';
@@ -8865,7 +8876,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.4.0+13";
+  var APP_VERSION = "1.4.0+14";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
