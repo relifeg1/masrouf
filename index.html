@@ -6634,7 +6634,10 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       + '<span class="ms">' + esc(APP_VERSION)
       + (swReady ? ' · يعمل بلا إنترنت' : '') + '</span></span>'
       + (swWaiting ? '<button class="mini on" data-update="1">حدّث الآن</button>'
-                   : '<span class="pill">أحدث نسخة</span>') + '</div></div>';
+                   : '<span class="pill">أحدث نسخة</span>') + '</div>'
+      + '<div class="mrow"><span class="mn">من أين يأتي التحديث'
+      + '<span class="ms">' + esc(HOME) + ' — كلّ فتحةٍ يسأل عن جديد، '
+      + 'وإن وُجد ظهر لك شريطٌ ولا يُفرض عليك.</span></span></div></div>';
 
     h += '<div class="sec"><h2>البداية</h2>'
       + '<span class="hint">' + (state.onboard ? "أُنجزت" : "لم تبدأ بعد") + '</span></div>'
@@ -8418,7 +8421,9 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "2026.08.31+4eda14";
+  var APP_VERSION = "2026.08.31+65260c";
+  /* بيت التطبيق. يُذكر حيث يحتاجه من فتحه في مكانٍ لا يُحفظ فيه. */
+  var HOME = "relifeg1.github.io/masrouf";
   var installPrompt = null, swReady = false, swWaiting = null;
   function pwaInit(){
     try{
@@ -8486,8 +8491,8 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     var msg, act = "";
     if(saveBlocked === "store")
       msg = '<b>لا يُحفظ شيء في هذا العرض.</b> متصفّحك يمنع التخزين هنا — '
-          + 'كلّ ما تكتبه يضيع عند تحديث الصفحة. افتح التطبيق من رابطه '
-          + 'المستضاف، أو اسحب نسخة احتياطية قبل أن تغادر.';
+          + 'كلّ ما تكتبه يضيع عند تحديث الصفحة. افتح التطبيق من '
+          + '<b>' + HOME + '</b>، أو اسحب نسخة احتياطية قبل أن تغادر.';
     else if(saveBlocked === "full")
       msg = '<b>امتلأت مساحة التخزين.</b> بياناتك القديمة سليمة، لكن الجديد '
           + 'لا يُكتب. احذف لقطة ما قبل التحديث من الأسفل أو صدّر نسخة.';
