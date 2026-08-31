@@ -7792,9 +7792,17 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     });
     on("[data-rewiz]", function(){ month(ui.month).setup = null; save(); ui.tab = "dash"; render(); });
     on("[data-backup]", function(){
+      var ok = backupNow();
       ask({ title: "نسخة احتياطية",
-        msg: "انسخ هذا النص واحفظه عندك. تستطيع استعادته لاحقاً من زر «استعادة».",
-        fields: [{ label: "بياناتك", type: "area", value: JSON.stringify(state) }],
+        msg: ok
+          ? ("نزل الملفّ <b>" + esc(backupName()) + "</b> إلى مجلّد تنزيلاتك. "
+             + "تستعيده لاحقاً من زرّ «استعادة». والنصّ تحته إن أردت نسخه.")
+          : ("تعذّر تنزيل الملفّ في هذا العرض — انسخ النصّ واحفظه عندك."),
+        fields: [{ label: "بياناتك", type: "area", value: backupText() }],
+        html: function(){
+          return dgroup("الملفّ",
+            '<button class="mini" data-bkdl="1">نزّله مرّة أخرى</button>');
+        },
         ok: "تمام", cancel: "إغلاق", onOk: function(){} });
       setTimeout(function(){
         var el = document.getElementById("df0");
@@ -8090,7 +8098,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       }
     });
     on("[data-onbstart]", function(){ onboardDlg(); });
-    on("[data-update]", function(){ applyUpdate(); });
+    on("[data-update]", function(){ askUpdate(); });
     on("[data-updlater]", function(){ swWaiting = null; render(); });
     on("[data-install]", function(){
       if(!installPrompt){ toast("غير متاح الآن"); return; }
@@ -8171,6 +8179,9 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
           });
         },
         cancel: "إلغاء" });
+    });
+    on("[data-bkdl]", function(){
+      toast(backupNow() ? ("نزل " + backupName()) : "تعذّر التنزيل هنا");
     });
     on("[data-cloudpush]", function(){
       cloudPush(function(err){ toast(err ? "تعذّر: " + cloudErr(err) : "رُفعت"); render(); });
@@ -8432,7 +8443,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "2026.08.31+b438cf";
+  var APP_VERSION = "2026.08.31+5d838f";
   /* بيت التطبيق. يُذكر حيث يحتاجه من فتحه في مكانٍ لا يُحفظ فيه. */
   var HOME = "relifeg1.github.io/masrouf";
   var installPrompt = null, swReady = false, swWaiting = null;
@@ -8489,6 +8500,25 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
         render();
       });
     }catch(e){}
+  }
+  /* التحديث يُستبدل به الشيفرة كلّها. فقبل ذلك تُعرض النسخة الاحتياطية
+     — تُطلب ولا تُفرض: من رفضها مضى، ومن قبلها نزل ملفّه أوّلاً. */
+  function askUpdate(){
+    if(!swWaiting) return;
+    ask({ title: "نسخة جديدة جاهزة",
+      msg: "خذ نسخةً احتياطية قبل التحديث — دقيقةٌ تقيك يوماً. "
+         + "وبياناتك لا تُمسّ بالتحديث، ولك فوقها لقطةٌ تُحفظ تلقائياً "
+         + "قبل أي تغييرٍ في بنيتها.",
+      fields: [],
+      ok: "انسخ ثم حدّث",
+      onOk: function(){
+        var ok = backupNow();
+        toast(ok ? ("نزل " + backupName() + " · جارٍ التحديث…") : "جارٍ التحديث…");
+        /* مهلةٌ يبدأ فيها التنزيل قبل أن تُستبدل الصفحة تحته */
+        setTimeout(applyUpdate, ok ? 1200 : 0);
+      },
+      cancel: "حدّث بلا نسخة",
+      onCancel: applyUpdate });
   }
   function applyUpdate(){
     if(!swWaiting) return;
@@ -8960,6 +8990,34 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     cloudPending = setTimeout(function(){
       cloudPush(function(err){ if(err) toast("تعذّر الرفع: " + cloudErr(err)); render(); });
     }, 2500);
+  }
+
+  /* ينزّل نصّاً ملفّاً. يرجع false حيث تمنع البيئةُ التنزيل — كعرض
+     الأرتفاكت — فيعرف المتّصل أن عليه إبقاء النصّ ظاهراً. */
+  function downloadFile(name, text, mime){
+    try{
+      var blob = new Blob([text], { type: (mime || "text/plain") + ";charset=utf-8" });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url; a.download = name;
+      a.style.display = "none";
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function(){
+        try{ document.body.removeChild(a); URL.revokeObjectURL(url); }catch(e){}
+      }, 4000);
+      return true;
+    }catch(e){ return false; }
+  }
+  function stamp(){
+    var d = new Date();
+    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  }
+  function backupName(){ return "masrouf-" + stamp() + ".json"; }
+  function backupText(){ return JSON.stringify(state); }
+  /* يرجع true إن نزل الملفّ فعلاً */
+  function backupNow(){
+    return downloadFile(backupName(), backupText(), "application/json");
   }
 
   /* ── تصدير الحركات ──
