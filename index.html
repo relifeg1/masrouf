@@ -7012,123 +7012,91 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     h += '<div class="sec"><h2>أين تُحفظ بياناتك</h2>'
       + '<span class="hint">' + esc(storageName(storageMode())) + '</span></div>'
       + '<div class="card">'
-      + '<div class="mrow"><span class="mn">نسخةٌ في جهازك — دائماً'
-      + '<span class="ms">مهما اخترتَ، تُكتب في متصفّحك أوّلاً فيعمل التطبيق '
-      + 'بلا إنترنت. وما يزيد على ذلك هو اختيارك أدناه.</span></span>'
-      + '<span class="pill">مفعّل</span></div>'
+
+      /* خبرٌ واحد في صفٍّ واحد: أين هي، وكم حجمها، وبأيّ محرّك */
       + (function(){
           var raw = "";
           try{ raw = localStorage.getItem(LSKEY) || ""; }catch(e){}
           var n = 0, mk;
           for(mk in (state.months || {})) n += ((state.months[mk].items) || []).length;
-          return '<div class="mrow"><span class="mn">ما هو محفوظ الآن'
-            + '<span class="ms">' + Object.keys(state.months || {}).length + ' شهراً · '
-            + n + ' حركة · ' + (state.cats || []).length + ' بنداً · '
-            + ((state.goals || []).length) + ' هدفاً · '
-            + ((state.accts || []).length) + ' محفظة'
-            + (raw ? (' — ' + kb(raw.length) + ' في متصفّح هذا الجهاز') : '')
-            + (lastSave ? (' · آخر كتابة ' + clock(lastSave)) : '')
-            + '</span></span>'
-            + '<button class="mini" data-backup="1">انسخها</button></div>'
-            + '<div class="mrow"><span class="mn">مخزن الجهاز'
+          var eng = idbState === "ok" ? "IndexedDB" : idbState === "off" ? "تخزين المتصفّح" : "…";
+          return '<div class="mrow"><span class="mn">محفوظةٌ في هذا الجهاز'
             + '<span class="ms">'
-            + (idbState === "ok"
-                ? 'قاعدة <b>IndexedDB</b> — بلا حدٍّ عمليّ، ومعاملاتها ذرّية، '
-                  + 'وتُكتب الأشهر سجلّاتٍ منفصلة فلا يُعاد كتابة الكلّ.'
-                : idbState === "off"
-                  ? 'القاعدة غير متاحة هنا — الحفظ في تخزين المتصفّح البسيط '
-                    + '(حدّه نحو 5MB).'
-                  : 'جارٍ فتح القاعدة…')
-            + (quota && quota.all
-                ? ('<br>المستعمَل ' + kb(quota.used) + ' من '
-                   + kb(quota.all) + ' متاحة')
-                : '')
-            + (persisted === true
-                ? '<br><b>ديمومة ممنوحة</b> — لن يمحوها المتصفّح عند ضيق مساحة الجهاز.'
-                : persisted === false
-                  ? '<br>الديمومة غير ممنوحة بعد — تُمنح غالباً بعد تثبيت التطبيق.'
-                  : '')
+            + Object.keys(state.months || {}).length + ' شهراً · ' + n + ' حركة · '
+            + ((state.cats || []).length) + ' بنداً · '
+            + ((state.goals || []).length) + ' هدفاً · '
+            + ((state.accts || []).length) + ' حساباً'
+            + (raw ? (' — ' + kb(raw.length)) : '')
+            + (lastSave ? (' · آخر كتابة ' + clock(lastSave)) : '')
+            + '<br>' + esc(eng)
+            + (quota && quota.all ? (' · ' + kb(quota.used) + ' من ' + kb(quota.all)) : '')
+            + (persisted === true ? ' · ديمومة ممنوحة' : '')
+            + '. وتُكتب هنا أوّلاً مهما اخترتَ، فيعمل التطبيق بلا إنترنت.'
             + '</span></span>'
-            + '<span class="pill' + (idbState === "ok" ? " ok" : "") + '">'
-            + (idbState === "ok" ? "IndexedDB" : idbState === "off" ? "بسيط" : "…")
-            + '</span></div>';
+            + '<button class="mini" data-backup="1">انسخها</button></div>';
         })()
-      + storageHTML(true);
+
+      /* الخيارات العاملة وحدها */
+      + storageHTML(true)
+
+      /* الرفع والتنزيل يدوياً — لمن يريد أن يبدأها بنفسه */
+      + (syncOn()
+          ? ('<div class="mrow"><span class="mn">مزامنة الآن'
+             + '<span class="ms">تقع تلقائياً بعد كل تعديل: تنزل ما هناك، وتدمجه '
+             + 'بما هنا سجلّاً سجلّاً، وترفع الناتج. ولا يُستبدل شيء.'
+             + (cloudMsg ? (' · ' + esc(cloudMsg)) : '') + '</span></span>'
+             + (cloudBusy ? '<span class="pill">جارٍ…</span>'
+                : '<span class="cmodes">'
+                  + '<button class="mini" data-cloudpush="1">ارفع</button>'
+                  + '<button class="mini" data-cloudpull="1">زامن</button></span>')
+             + '</div>')
+          : "")
+
+      /* الخروج من الوجه المتَّبع */
+      + (signedIn()
+          ? ('<div class="mrow"><span class="mn">حسابك'
+             + '<span class="ms">' + esc(cloudWho()) + '</span></span>'
+             + '<button class="mini" data-authout="1">اخرج</button></div>')
+          : "")
+      + (gdOn()
+          ? ('<div class="mrow"><span class="mn">درايفك'
+             + '<span class="ms">ملفّك في مجلَّدٍ خفيّ داخل درايفك</span></span>'
+             + '<button class="mini" data-gdout="1">اخرج</button></div>')
+          : gdStale()
+            ? ('<div class="mrow"><span class="mn">جوجل درايف'
+               + '<span class="ms">انتهت الجلسة — إذن درايف يعيش ساعة، وهذا حدُّ '
+               + 'جوجل</span></span>'
+               + '<button class="mini on" data-gdin="1">ادخل ثانيةً</button></div>')
+            : "");
+
     var SNP = snapInfo();
     if(SNP){
       h += '<div class="mrow"><span class="mn">لقطة ما قبل التحديث'
-        + '<span class="ms">حُفظت بياناتك كما كانت على النسخة '
-        + esc(String(SNP.ver || "")) + ' قبل أن يصلك التحديث'
-        + (SNP.at ? (' · ' + esc(String(SNP.at).slice(0, 16).replace("T", " "))) : "")
-        + '. إن بدا شيءٌ في غير موضعه بعد تحديث، ارجع إليها.</span></span>'
+        + '<span class="ms">حُفظت بياناتك كما كانت قبل التحديث '
+        + esc(String(SNP.ver || "")) + '. إن بدا شيءٌ في غير موضعه بعده، '
+        + 'ارجع إليها.</span></span>'
         + '<span class="cmodes"><button class="mini" data-snapback="1">ارجع إليها</button>'
         + '<button class="mini" data-snapdrop="1">احذفها</button></span></div>';
     }
+
+    /* ما لم يُهيَّأ ليس خياراً أمام المستخدم — هو عملُ صاحب النسخة مرّةً */
     if(!cloudAllowed()){
-      h += '<div class="mrow"><span class="mn">مزامنة سحابية'
-        + '<span class="ms">غير متاحة داخل أرتفاكت كلود — سياسة الأمان تمنع الاتّصال '
-        + 'بمضيف خارجي. تعمل في النسخة المستقلّة.</span></span>'
+      h += '<div class="mrow off"><span class="mn">المزامنة بين الأجهزة'
+        + '<span class="ms">غير متاحة داخل أرتفاكت كلود — سياسة الأمان تمنع '
+        + 'الاتّصال بمضيف خارجي. وتعمل في النسخة المستقلّة.</span></span>'
         + '<span class="pill">غير متاحة هنا</span></div>';
-    } else if(gdOn() || gdStale()){
-      h += '<div class="mrow"><span class="mn">جوجل درايف'
-        + '<span class="ms">' + (gdOn()
-            ? ('ملفّك في مجلَّدٍ خفيّ داخل درايفك'
-               + (cloudMsg ? " · " + esc(cloudMsg) : ""))
-            : 'انتهت الجلسة — إذن درايف يعيش ساعة، وهذا حدُّ جوجل')
-        + '</span></span>'
-        + (cloudBusy ? '<span class="pill">جارٍ…</span>'
-           : (gdOn() ? '<button class="mini" data-gdout="1">اخرج</button>'
-                     : '<button class="mini on" data-gdin="1">ادخل ثانيةً</button>'))
-        + '</div>'
-        + (gdOn() ? ('<div class="mrow"><span class="mn">مزامنة يدوية'
-            + '<span class="ms">الرفع تلقائيّ بعد كل تعديل. وهذان لحين تريد '
-            + 'أن تقرّر بنفسك.</span></span>'
-            + '<span class="cmodes"><button class="mini" data-cloudpush="1">ارفع الآن</button>'
-            + '<button class="mini" data-cloudpull="1">زامن الآن</button></span></div>') : "");
-    } else if(signedIn()){
-      h += '<div class="mrow"><span class="mn">حسابك'
-        + '<span class="ms">' + esc(cloudWho())
-        + ' · بياناتك تتبعك إلى أيّ جهاز تدخل منه'
-        + (cloudMsg ? " · " + esc(cloudMsg) : "") + '</span></span>'
-        + (cloudBusy ? '<span class="pill">جارٍ…</span>'
-                     : '<button class="mini" data-authout="1">اخرج</button>') + '</div>'
-        + '<div class="mrow"><span class="mn">مزامنة يدوية'
-        + '<span class="ms">المزامنة تلقائية بعد كل تعديل: تنزل ما هناك، وتدمجه '
-        + 'بما هنا سجلّاً سجلّاً، وترفع الناتج. ولا يُستبدل شيء.</span></span>'
-        + '<span class="cmodes"><button class="mini" data-cloudpush="1">ارفع الآن</button>'
-        + '<button class="mini" data-cloudpull="1">زامن الآن</button></span></div>';
-    } else if(supaReady()){
-      h += '<div class="mrow"><span class="mn">مزامنة سحابية'
-        + '<span class="ms">سجّل دخولك ببريدك أو بحساب Google، فتصل بياناتك إلى '
-        + 'هاتفك وحاسوبك معاً. لا مفاتيح تُلصق ولا كلمة مرور تُحفظ.</span></span>'
-        + (cloudBusy ? '<span class="pill">جارٍ…</span>'
-                     : '<button class="mini on" data-authin="1">سجّل الدخول</button>') + '</div>'
-        + '<div class="mrow"><span class="mn">أو قاعدتك أنت'
-        + '<span class="ms">إن أردت بياناتك في مشروعٍ تملكه — تربطه برابطه ومفتاحه'
-        + (cloudOn() ? (" · مربوطة: " + esc(String(CC.uid || ""))) : "") + '</span></span>'
-        + '<button class="mini' + (cloudOn() ? " on" : "") + '" data-cloudcfg="1">'
-        + (cloudOn() ? "غيّر" : "اربط") + '</button></div>';
-    } else {
-      h += '<div class="mrow"><span class="mn">مزامنة سحابية — سحابتك أنت'
-        + '<span class="ms">' + (cloudOn()
-            ? ("مربوطة · " + esc(String(CC.uid || "")) + (cloudMsg ? " · " + esc(cloudMsg) : ""))
-            : "أنشئ مشروع Supabase مجاني والصق رابطه ومفتاحه العلني. بياناتك في قاعدتك "
-              + "أنت — لا خادم لنا يحملها.") + '</span></span>'
-        + (cloudBusy ? '<span class="pill">جارٍ…</span>'
-                     : '<button class="mini' + (cloudOn() ? " on" : "") + '" data-cloudcfg="1">'
-                       + (cloudOn() ? "غيّر الربط" : "اربط") + '</button>') + '</div>';
-      if(cloudOn()){
-        h += '<div class="mrow"><span class="mn">مزامنة يدوية'
-          + '<span class="ms">الرفع تلقائيّ بعد كل تعديل. وهذان للحالات التي تريد فيها '
-          + 'أن تقرّر بنفسك — الدمج التلقائي في بيانات مالية يخطئ بصمت.</span></span>'
-          + '<span class="cmodes"><button class="mini" data-cloudpush="1">ارفع الآن</button>'
-          + '<button class="mini" data-cloudpull="1">زامن الآن</button></span></div>';
-      }
+    } else if(!supaReady() || !gdReady() || !cloudOn()){
+      h += '<div class="mrow off"><span class="mn">إعدادٌ للمطوّر'
+        + '<span class="ms">المزامنة بين الأجهزة تحتاج مفتاحاً يُسجَّل مرّةً '
+        + 'واحدة عند مزوّدها — وهذا عملُ من يوزّع النسخة لا من يستعملها.'
+        + '</span></span><span class="cmodes">'
+        + (!gdReady() ? '<button class="mini" data-conf="drive">درايف</button>' : "")
+        + (!supaReady() ? '<button class="mini" data-conf="account">حساب</button>' : "")
+        + (!cloudOn() ? '<button class="mini" data-cloudcfg="1">قاعدة يدوية</button>' : "")
+        + '</span></div>';
     }
     h += '</div>';
 
-    var nItems2 = 0;
-    for(var kx in state.months) nItems2 += (state.months[kx].items || []).length;
     h += '<div class="sec"><h2>العملة والأرقام</h2>'
       + '<span class="hint">' + esc(cur()) + ' · '
       + (state.arDigits ? "أرقام عربية" : "أرقام إنجليزية") + '</span></div><div class="card">'
@@ -8911,7 +8879,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "34";
+  var APP_VERSION = "35";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return "#" + APP_VERSION; }
@@ -9495,18 +9463,12 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       if(!cloudAllowed()) why = "غير متاح داخل أرتفاكت كلود";
       else if(o.k === "account" && !supaReady()) why = "يحتاج مفاتيح مشروع — تُدخلها من هنا";
       else if(o.k === "drive" && !gdReady()) why = "يحتاج معرّف عميل جوجل — تُدخله من هنا";
+      /* الربط اليدويّ طريقٌ لمن ربط فعلاً — لا خيارٌ يُعرض على من لم يربط،
+         فهو وأصلُ «حسابك» مزوّدٌ واحد، وعرضهما معاً يُوهم أنهما شيئان. */
+      else if(o.k === "own" && !cloudOn()) why = "ربطٌ يدويّ — من سطر الإعداد أدناه";
       if(why && o.k === "device") why = "";
-      if(why){
-        if(!full) return "";
-        /* وإن كان النقص مفتاحاً يملكه صاحبه، فالصفّ يفتح له باب التهيئة */
-        var fix = (o.k === "drive") ? '<button class="mini" data-conf="drive">هيّئه</button>'
-                : (o.k === "account") ? '<button class="mini" data-conf="account">هيّئه</button>'
-                : '<span class="pill">غير مهيّأ</span>';
-        if(!cloudAllowed()) fix = '<span class="pill">غير متاح</span>';
-        return '<div class="mrow off"><span class="mn">' + esc(o.n)
-          + '<span class="ms">' + o.d + '<br><b>' + esc(why) + '</b></span></span>'
-          + fix + '</div>';
-      }
+      /* ما لا يعمل لا يُعرض خياراً — تهيئتُه في سطرٍ أسفل البطاقة */
+      if(why) return "";
       var on = (o.k === cur);
       return '<div class="mrow"><span class="mn">' + esc(o.n)
         + '<span class="ms">' + o.d + '</span></span>'
@@ -9517,9 +9479,13 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   function confDlg(which){
     var c = conf();
     if(which === "drive"){
-      ask({ title: "هيّئ جوجل درايف",
-        msg: "من <b>Google Cloud Console</b> ← APIs &amp; Services ← Credentials "
-           + "← أنشئ <b>OAuth client ID</b> من نوع <b>Web application</b>، "
+      ask({ title: "هيّئ جوجل درايف — مرّةً واحدة",
+        msg: "<b>لماذا لا يظهر «دخول بجوجل» مباشرةً؟</b> لأن جوجل لا تأذن "
+           + "لتطبيقٍ بالوصول إلى حسابات الناس حتى يُسجَّل عندها ويأخذ "
+           + "<b>معرّف عميل</b>. وهذا يفعله <b>من يوزّع النسخة مرّةً واحدة</b>، "
+           + "لا كلُّ من يستعملها — وبعدها يرى الناسُ زرّ الدخول وحده."
+           + "<br><br><b>الخطوات:</b> Google Cloud Console ← APIs &amp; Services "
+           + "← Credentials ← OAuth client ID من نوع Web application. "
            + "وأضف <b>" + esc(location.origin) + "</b> في Authorized JavaScript "
            + "origins وفي redirect URIs. ثم فعّل <b>Google Drive API</b>.",
         fields: [{ label: "Client ID", value: c.gdId || "",
@@ -9537,10 +9503,13 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
         cancel: "إلغاء" });
       return;
     }
-    ask({ title: "هيّئ الحساب",
-      msg: "أنشئ مشروعاً مجّانياً في <b>supabase.com</b>، ونفّذ محتوى "
-         + "<b>schema.sql</b> في SQL Editor، ثم من Settings ← API انسخ "
-         + "<b>Project URL</b> و<b>anon public</b>.",
+    ask({ title: "هيّئ الحساب — مرّةً واحدة",
+      msg: "<b>لماذا مفاتيح؟</b> المزامنة تحتاج خادماً، والتطبيق لا يملك "
+         + "واحداً — فيُعطى عنوانَ خادمٍ تملكه أنت. يفعلها <b>من يوزّع "
+         + "النسخة مرّةً</b>، ثم يدخل الناس ببريدهم لا أكثر."
+         + "<br><br><b>الخطوات:</b> أنشئ مشروعاً مجّانياً في "
+         + "<b>supabase.com</b>، ونفّذ محتوى <b>schema.sql</b> في SQL Editor، "
+         + "ثم من Settings ← API انسخ <b>Project URL</b> و<b>anon public</b>.",
       fields: [
         { label: "Project URL", value: c.supaUrl || "", ph: "https://xxxx.supabase.co" },
         { label: "anon public key", value: c.supaKey || "" }
