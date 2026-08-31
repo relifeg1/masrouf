@@ -47,3 +47,22 @@ if r.returncode != 0:
     raise SystemExit(1)
 
 print('بُني: %s · %d بايت' % (EXE, os.path.getsize(EXE)))
+
+# ── المثبِّت: يحمل المشغّل والأيقونة داخله موردَين ──
+SETUP_CS = os.path.join(HERE, 'Setup.cs')
+SETUP = os.path.join(HERE, 'masrouf-setup.exe')
+
+r2 = subprocess.run(
+    [CSC, '/nologo', '/target:winexe', '/optimize+', '/codepage:65001',
+     '/win32icon:' + ICO, '/out:' + SETUP,
+     '/resource:' + EXE + ',app', '/resource:' + ICO + ',icon',
+     '/reference:System.dll', '/reference:System.Windows.Forms.dll',
+     '/reference:System.Drawing.dll', SETUP_CS],
+    capture_output=True, text=True, encoding='utf-8', errors='replace')
+
+if r2.returncode != 0:
+    print('فشل بناء المثبِّت:')
+    print((r2.stdout or '') + (r2.stderr or ''))
+    raise SystemExit(1)
+
+print('المثبِّت: %s · %d بايت' % (SETUP, os.path.getsize(SETUP)))
