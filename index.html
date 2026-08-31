@@ -341,7 +341,10 @@ input,select,button,textarea{font-family:inherit;font-size:16px;min-width:0;max-
   border-inline-start:2px solid var(--line-2);padding-inline-start:12px}
 .hintnote b{color:var(--ink-2);font-weight:600}
 .flag b{font-weight:700}
+.vtag{opacity:.55;font-size:11px;font-family:var(--mono, monospace);
+      letter-spacing:.2px;white-space:nowrap}
 .savebar{margin:12px 0}
+.mrow.off{opacity:.62}
 .flag .acts{margin-top:9px}
 
 .nav{position:fixed;inset-inline:0;bottom:0;z-index:40;background:var(--navbg);
@@ -6658,7 +6661,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       + '<span class="ms">مهما اخترتَ، تُكتب في متصفّحك أوّلاً فيعمل التطبيق '
       + 'بلا إنترنت. وما يزيد على ذلك هو اختيارك أدناه.</span></span>'
       + '<span class="pill">مفعّل</span></div>'
-      + storageHTML();
+      + storageHTML(true);
     var SNP = snapInfo();
     if(SNP){
       h += '<div class="mrow"><span class="mn">لقطة ما قبل التحديث'
@@ -6957,7 +6960,8 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       '<div class="wrap v-' + (ui.tab || "dash") + '">'
       + topbar() + saveBar() + updateBar() + body
       + '<footer>' + (saveBlocked ? 'الحفظ متعذّر — اقرأ التنبيه أعلاه'
-                                  : 'بياناتك تُحفظ تلقائياً') + '</footer></div>'
+                                  : 'بياناتك تُحفظ تلقائياً')
+      + ' <span class="vtag">مصروف ' + esc(APP_VERSION) + '</span></footer></div>'
       + navbar() + dlgHTML();
     applyNotes();
     wire(); if(!setNav()) colLayout(); wire(); dlgWire(); restoreFocus();
@@ -8473,7 +8477,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "2026.08.31+371f2f";
+  var APP_VERSION = "2026.08.31+c29cd4";
   /* بيت التطبيق. يُذكر حيث يحتاجه من فتحه في مكانٍ لا يُحفظ فيه. */
   var HOME = "relifeg1.github.io/masrouf";
   var installPrompt = null, swReady = false, swWaiting = null;
@@ -8761,7 +8765,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     ask({ title: "أين تُحفظ بياناتك؟",
       msg: onbHead("٥") + " · اختر ما يناسبك، وغيّره متى شئت من الإعدادات.",
       fields: [],
-      html: function(){ return '<div class="card">' + storageHTML() + '</div>'; },
+      html: function(){ return '<div class="card">' + storageHTML(false) + '</div>'; },
       ok: "ابْنِ خطتي",
       onOk: onbFinish,
       cancel: false });
@@ -8995,12 +8999,22 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
        + "لا يمرّ شيء بخادمٍ لنا.",
       act: '<button class="mini" data-cloudcfg="1">اربطها</button>' }
   ];
-  function storageHTML(){
+  /* full=true في الإعدادات: يُعرض ما ليس مهيّأً وسببُه.
+     full=false في معالج البدء: من يفتح أوّل مرة لا يعنيه ما لا يعمل. */
+  function storageHTML(full){
     var cur = storageMode();
     return STOR_OPTS.map(function(o){
-      if(o.k === "account" && !(cloudAllowed() && supaReady())) return "";
-      if(o.k === "drive" && !(cloudAllowed() && gdReady())) return "";
-      if(o.k === "own" && !cloudAllowed()) return "";
+      var why = "";
+      if(!cloudAllowed()) why = "غير متاح داخل أرتفاكت كلود";
+      else if(o.k === "account" && !supaReady()) why = "يحتاج مفاتيح مشروع في هذه النسخة";
+      else if(o.k === "drive" && !gdReady()) why = "يحتاج معرّف عميل جوجل في هذه النسخة";
+      if(why && o.k === "device") why = "";
+      if(why){
+        if(!full) return "";
+        return '<div class="mrow off"><span class="mn">' + esc(o.n)
+          + '<span class="ms">' + o.d + '<br><b>' + esc(why) + '</b></span></span>'
+          + '<span class="pill">غير مهيّأ</span></div>';
+      }
       var on = (o.k === cur);
       return '<div class="mrow"><span class="mn">' + esc(o.n)
         + '<span class="ms">' + o.d + '</span></span>'
@@ -9011,7 +9025,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     ask({ title: "أين تُحفظ بياناتك؟",
       msg: "اختر ما يناسبك — وغيّره متى شئت من الإعدادات. لا شيء يضيع بالتبديل.",
       fields: [],
-      html: function(){ return '<div class="card">' + storageHTML() + '</div>'; },
+      html: function(){ return '<div class="card">' + storageHTML(false) + '</div>'; },
       ok: "تمّ", cancel: false });
   }
 
