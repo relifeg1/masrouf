@@ -6674,6 +6674,22 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
         + '<span class="ms">غير متاحة داخل أرتفاكت كلود — سياسة الأمان تمنع الاتّصال '
         + 'بمضيف خارجي. تعمل في النسخة المستقلّة.</span></span>'
         + '<span class="pill">غير متاحة هنا</span></div>';
+    } else if(gdOn() || gdStale()){
+      h += '<div class="mrow"><span class="mn">جوجل درايف'
+        + '<span class="ms">' + (gdOn()
+            ? ('ملفّك في مجلَّدٍ خفيّ داخل درايفك'
+               + (cloudMsg ? " · " + esc(cloudMsg) : ""))
+            : 'انتهت الجلسة — إذن درايف يعيش ساعة، وهذا حدُّ جوجل')
+        + '</span></span>'
+        + (cloudBusy ? '<span class="pill">جارٍ…</span>'
+           : (gdOn() ? '<button class="mini" data-gdout="1">اخرج</button>'
+                     : '<button class="mini on" data-gdin="1">ادخل ثانيةً</button>'))
+        + '</div>'
+        + (gdOn() ? ('<div class="mrow"><span class="mn">مزامنة يدوية'
+            + '<span class="ms">الرفع تلقائيّ بعد كل تعديل. وهذان لحين تريد '
+            + 'أن تقرّر بنفسك.</span></span>'
+            + '<span class="cmodes"><button class="mini" data-cloudpush="1">ارفع الآن</button>'
+            + '<button class="mini" data-cloudpull="1">أنزِل الآن</button></span></div>') : "");
     } else if(signedIn()){
       h += '<div class="mrow"><span class="mn">حسابك'
         + '<span class="ms">' + esc(cloudWho())
@@ -8125,6 +8141,20 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       closeDlg();
       toast("بياناتك في هذا الجهاز — لا تنسَ نسخةً احتياطية");
     });
+    on("[data-gdin]", function(){
+      if(!gdReady()){ toast("درايف غير مهيّأ في هذه النسخة"); return; }
+      confirmDlg("الدخول بجوجل درايف",
+        "ستنتقل إلى جوجل لتأذن للتطبيق بمجلَّدٍ خفيّ خاصّ به داخل درايفك. "
+        + "لا يصل إلى بقيّة ملفّاتك.<br><br>"
+        + "<b>وتنبيه:</b> إذنُ درايف في المتصفّح يعيش ساعةً ثم يُطلب منك "
+        + "الدخول ثانيةً — هذا حدُّ جوجل لا حدُّنا.",
+        "أكمل", function(){ gdLogin(); });
+    });
+    on("[data-gdout]", function(){
+      confirmDlg("اخرج من درايف",
+        "بياناتك تبقى في هذا الجهاز، ويبقى ملفّك في درايفك.",
+        "اخرج", function(){ gdOut(); toast("خرجت من درايف"); render(); });
+    });
     on("[data-authin]", function(){
       ask({ title: "سجّل الدخول",
         msg: "اكتب بريدك، فيصلك رمزٌ من ستة أرقام ورابط. استعمل أيّهما شئت — "
@@ -8184,10 +8214,10 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       toast(backupNow() ? ("نزل " + backupName()) : "تعذّر التنزيل هنا");
     });
     on("[data-cloudpush]", function(){
-      cloudPush(function(err){ toast(err ? "تعذّر: " + cloudErr(err) : "رُفعت"); render(); });
+      syncPush(function(err){ toast(err ? "تعذّر: " + cloudErr(err) : "رُفعت"); render(); });
     });
     on("[data-cloudpull]", function(){
-      cloudPull(function(row, err){
+      syncPull(function(row, err){
         if(err || !row){ toast(cloudErr(err) || "لا نسخة"); render(); return; }
         confirmDlg("أنزِل نسخة سحابتك",
           "ستحلّ محلّ ما في جهازك. آخر رفع: <b>"
@@ -8443,7 +8473,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "2026.08.31+5d838f";
+  var APP_VERSION = "2026.08.31+3f1e6f";
   /* بيت التطبيق. يُذكر حيث يحتاجه من فتحه في مكانٍ لا يُحفظ فيه. */
   var HOME = "relifeg1.github.io/masrouf";
   var installPrompt = null, swReady = false, swWaiting = null;
@@ -8724,7 +8754,10 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* العودة من Google أو من رابط البريد: الرمز في الجزء بعد #.
      يُقرأ ثم يُمحى من الشريط — كي لا يبقى في التاريخ ولا يُشارَك. */
   function authFromHash(){
-    if(!supaReady() || !location.hash || location.hash.indexOf("access_token") < 0) return false;
+    if(!location.hash || location.hash.indexOf("access_token") < 0) return false;
+    /* جوجل ترجع state=gd — فيُفرَّق ردّها عن ردّ الحساب */
+    if(location.hash.indexOf("state=gd") >= 0) return gdFromHash();
+    if(!supaReady()) return false;
     var q = {}, h = location.hash.replace(/^#/, "");
     h.split("&").forEach(function(p){
       var i = p.indexOf("="); if(i < 0) return;
@@ -8789,12 +8822,25 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
 
   /* ثلاثة أوضاع، ويُقرأ الجاري من الواقع لا من علَمٍ مخزَّن */
   function storageMode(){
+    if(gdOn()) return "drive";
     if(signedIn()) return "account";
     if(cloudOn()) return "own";
     return "device";
   }
   function storageName(m){
-    return m === "account" ? "حسابك" : m === "own" ? "سحابتك أنت" : "هذا الجهاز";
+    return m === "drive" ? "جوجل درايف"
+         : m === "account" ? "حسابك"
+         : m === "own" ? "سحابتك أنت" : "هذا الجهاز";
+  }
+  /* مُوزِّع: الرفع والتنزيل يذهبان حيث اختار صاحبه لا حيث كُتب أوّلاً */
+  function syncOn(){ return gdOn() || cloudOn(); }
+  function syncPush(then){
+    if(gdOn()) return gdPush(then);
+    return cloudPush(then);
+  }
+  function syncPull(then){
+    if(gdOn()) return gdPull(then);
+    return cloudPull(then);
   }
   var STOR_OPTS = [
     { k: "device", n: "هذا الجهاز وحده",
@@ -8806,6 +8852,11 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       d: "تدخل ببريدك أو بحساب Google، فتجد بياناتك في هاتفك وحاسوبك معاً، "
        + "وتعود إليك لو بدّلت الجهاز. لا كلمة مرور تُنشأ ولا تُحفظ.",
       act: '<button class="mini on" data-authin="1">سجّل الدخول</button>' },
+    { k: "drive", n: "جوجل درايف — في حسابك أنت",
+      d: "يُحفظ ملفٌّ واحد في مجلَّدٍ خفيّ خاصّ بالتطبيق داخل درايفك. "
+       + "لا نرى شيئاً، ولا يصل التطبيق إلى بقيّة ملفّاتك — الصلاحية "
+       + "المطلوبة هي appdata وحدها.",
+      act: '<button class="mini" data-gdin="1">ادخل بدرايف</button>' },
     { k: "own", n: "قاعدةٌ تملكها أنت",
       d: "لمن يريد بياناته في مشروعٍ باسمه هو — تربطه برابطه ومفتاحه. "
        + "لا يمرّ شيء بخادمٍ لنا.",
@@ -8815,6 +8866,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     var cur = storageMode();
     return STOR_OPTS.map(function(o){
       if(o.k === "account" && !(cloudAllowed() && supaReady())) return "";
+      if(o.k === "drive" && !(cloudAllowed() && gdReady())) return "";
       if(o.k === "own" && !cloudAllowed()) return "";
       var on = (o.k === cur);
       return '<div class="mrow"><span class="mn">' + esc(o.n)
@@ -8828,6 +8880,158 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       fields: [],
       html: function(){ return '<div class="card">' + storageHTML() + '</div>'; },
       ok: "تمّ", cancel: false });
+  }
+
+  /* ═══ جوجل درايف ═══ */
+  var GD_ID = "";      /* يُحقن عند البناء */
+  var GDKEY = "kh_gd";
+  var GD_API = "https://www.googleapis.com";
+  var GD_FILE = "masrouf.json";
+
+  function gdReady(){
+    return GD_ID.indexOf(".apps.googleusercontent.com") > 0;
+  }
+  function gdSess(){
+    try{ var r = localStorage.getItem(GDKEY); return r ? JSON.parse(r) : null; }
+    catch(e){ return null; }
+  }
+  function gdSet(o){
+    try{ if(o) localStorage.setItem(GDKEY, JSON.stringify(o));
+         else localStorage.removeItem(GDKEY); }catch(e){}
+  }
+  function gdOn(){
+    var g = gdSess();
+    return cloudAllowed() && gdReady() && !!(g && g.token && g.exp > Date.now());
+  }
+  /* رمزٌ انتهى ليس كمن لم يدخل: الأوّل يُطلب منه التجديد لا التعريف */
+  function gdStale(){
+    var g = gdSess();
+    return !!(g && g.token && g.exp <= Date.now());
+  }
+  function gdLogin(){
+    var back = location.href.replace(/[#?].*$/, "");
+    location.href = "https://accounts.google.com/o/oauth2/v2/auth"
+      + "?client_id=" + encodeURIComponent(GD_ID)
+      + "&redirect_uri=" + encodeURIComponent(back)
+      + "&response_type=token"
+      + "&scope=" + encodeURIComponent("https://www.googleapis.com/auth/drive.appdata")
+      + "&include_granted_scopes=true"
+      + "&prompt=consent"
+      + "&state=gd";
+  }
+  function gdOut(){ gdSet(null); }
+  function gdHead(extra){
+    var h = { "Authorization": "Bearer " + (gdSess() || {}).token };
+    for(var k in (extra || {})) h[k] = extra[k];
+    return h;
+  }
+  function gdErr(r){
+    if(r.status === 401 || r.status === 403) return "انتهت جلسة درايف — ادخل ثانيةً";
+    return "درايف ردّ HTTP " + r.status;
+  }
+  /* معرّف الملفّ في المجلّد الخفيّ — أو null إن لم يُنشأ بعد */
+  function gdFind(then){
+    fetch(GD_API + "/drive/v3/files?spaces=appDataFolder"
+          + "&q=" + encodeURIComponent("name='" + GD_FILE + "'")
+          + "&fields=" + encodeURIComponent("files(id,modifiedTime)"),
+          { headers: gdHead() })
+      .then(function(r){
+        if(!r.ok) throw new Error(gdErr(r));
+        return r.json();
+      })
+      .then(function(j){
+        var f = (j.files || [])[0];
+        then(f ? f.id : null, f ? f.modifiedTime : null, null);
+      })["catch"](function(e){ then(null, null, String(e.message || e)); });
+  }
+  function gdPull(then){
+    if(!gdOn()){ then(null, gdStale() ? "انتهت جلسة درايف — ادخل ثانيةً"
+                                      : "لم تدخل درايف"); return; }
+    cloudBusy = true; render();
+    gdFind(function(id, mtime, err){
+      if(err){ cloudBusy = false; then(null, err); render(); return; }
+      if(!id){ cloudBusy = false; then(null, "EMPTY"); return; }
+      fetch(GD_API + "/drive/v3/files/" + id + "?alt=media", { headers: gdHead() })
+        .then(function(r){ if(!r.ok) throw new Error(gdErr(r)); return r.json(); })
+        .then(function(data){
+          cloudBusy = false;
+          then({ data: data, updated_at: mtime }, null);
+        })["catch"](function(e){
+          cloudBusy = false; then(null, String(e.message || e));
+        });
+    });
+  }
+  function gdPush(then){
+    if(!gdOn()){ then(gdStale() ? "انتهت جلسة درايف — ادخل ثانيةً"
+                                : "لم تدخل درايف"); return; }
+    cloudBusy = true; render();
+    var body = JSON.stringify(state);
+    gdFind(function(id, mtime, err){
+      if(err){ cloudBusy = false; then(err); render(); return; }
+      var url, opt;
+      if(id){
+        /* موجود: يُستبدل محتواه وحده */
+        url = GD_API + "/upload/drive/v3/files/" + id + "?uploadType=media";
+        opt = { method: "PATCH",
+                headers: gdHead({ "Content-Type": "application/json" }),
+                body: body };
+      } else {
+        /* أوّل مرة: وصفٌ ومحتوى في طلبٍ واحد متعدّد الأجزاء */
+        var B = "kh" + Date.now().toString(36);
+        var meta = JSON.stringify({ name: GD_FILE, parents: ["appDataFolder"] });
+        var multi = "--" + B + "\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n"
+                  + meta
+                  + "\r\n--" + B + "\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n"
+                  + body
+                  + "\r\n--" + B + "--";
+        url = GD_API + "/upload/drive/v3/files?uploadType=multipart";
+        opt = { method: "POST",
+                headers: gdHead({ "Content-Type": "multipart/related; boundary=" + B }),
+                body: multi };
+      }
+      fetch(url, opt).then(function(r){
+        cloudBusy = false;
+        if(!r.ok) throw new Error(gdErr(r));
+        cloudMsg = "رُفعت " + new Date().toLocaleTimeString("en-GB").slice(0, 5);
+        then(null);
+      })["catch"](function(e){ cloudBusy = false; then(String(e.message || e)); });
+    });
+  }
+
+  function gdFromHash(){
+    var q = {}, h = location.hash.replace(/^#/, "");
+    h.split("&").forEach(function(p){
+      var i = p.indexOf("="); if(i < 0) return;
+      q[decodeURIComponent(p.slice(0, i))] = decodeURIComponent(p.slice(i + 1));
+    });
+    try{ history.replaceState(null, "", location.pathname + location.search); }catch(e){}
+    if(!q.access_token) return false;
+    gdSet({ token: q.access_token,
+            exp: Date.now() + ((+q.expires_in || 3600) * 1000) });
+    toast("دخلتَ درايف");
+    setTimeout(gdFirstPull, 200);
+    return true;
+  }
+  /* أوّل دخول: إن لم يكن له ملفٌّ في درايف أُنشئ الآن بما عنده */
+  function gdFirstPull(){
+    gdPull(function(row, err){
+      if(err === "EMPTY"){
+        gdPush(function(e2){
+          toast(e2 ? ("تعذّر التجهيز: " + e2) : "جُهّز درايفك — بياناتك تُحفظ فيه");
+          render();
+        });
+        return;
+      }
+      if(err){ toast(err); render(); return; }
+      if(!row || !row.data){ render(); return; }
+      var mine = 0;
+      for(var k in state.months) mine += (state.months[k].items || []).length;
+      if(mine === 0 && !state.onboard){ applyCloud(row); return; }
+      confirmDlg("في درايفك نسخة",
+        "آخر رفع: <b>" + esc(String(row.updated_at || "").slice(0, 16).replace("T", " "))
+        + "</b>. أتُنزِلها بدل ما في هذا الجهاز؟",
+        "أنزِلها", function(){ applyCloud(row); });
+    });
   }
 
   var CKEY = "kh_cloud";
@@ -8985,10 +9189,10 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   }
   var cloudPending = null;
   function cloudQueue(){
-    if(!cloudOn()) return;
+    if(!syncOn()) return;
     clearTimeout(cloudPending);
     cloudPending = setTimeout(function(){
-      cloudPush(function(err){ if(err) toast("تعذّر الرفع: " + cloudErr(err)); render(); });
+      syncPush(function(err){ if(err) toast("تعذّر الرفع: " + cloudErr(err)); render(); });
     }, 2500);
   }
 
