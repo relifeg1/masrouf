@@ -8890,7 +8890,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "2026.09.01+791228";
+  var APP_VERSION = "2026.09.01+91b454";
   /* بيت التطبيق. يُذكر حيث يحتاجه من فتحه في مكانٍ لا يُحفظ فيه. */
   var HOME = "relifeg1.github.io/masrouf";
   var installPrompt = null, swReady = false, swWaiting = null;
@@ -10322,7 +10322,10 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       setTimeout(function(){ onboardDlg(); }, 120);
   }
   /* جلسةٌ قائمة من زيارةٍ سابقة: تُنزَّل نسخةُ الحساب إن كان الجهاز خالياً */
-  if(!backFromAuth && signedIn()) setTimeout(cloudFirstPull, 400);
+  /* المزامنة عند الفتح لأيّ وجهٍ اختاره — لا للحساب وحده.
+     كانت مشروطة بـsignedIn، فمن اختار درايف لم يزامن عند الفتح قطّ:
+     يرفع ما يكتبه، ولا ينزل ما كتبه جهازه الآخر. */
+  if(!backFromAuth && syncOn()) setTimeout(function(){ syncNow(true); }, 500);
 
   /* ثم القاعدة: إن كانت أحدث من المرآة حلّت محلّها. ويقع هذا حين
      تُمسح المرآة وحدها، أو تمتلئ فتتوقّف عن مجاراة القاعدة. */
