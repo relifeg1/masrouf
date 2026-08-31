@@ -1,0 +1,71 @@
+# يبني تطبيق سطح المكتب لويندوز وماك عند كل وسم، ويرفعهما إلى الإصدار.
+#
+# ولماذا هنا لا على جهاز التطوير: نسخة الماك تحتاج macOS لبنائها
+# (hdiutil وcodesign)، ولا ماك عندنا. وGitHub يوفّر أجهزة macOS
+# مجّاناً للمستودعات العامّة — فيصير بناء الماك حقيقياً لا تخميناً.
+
+name: تطبيق سطح المكتب
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            name: ويندوز
+          - os: macos-latest
+            name: ماك
+    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.name }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+
+      # النسخة المضمَّنة تُنسخ من التطبيق المبنيّ لا تُحفظ مكرّرة في
+      # المستودع — فلا تتخلّف عنه إن نُسي تحديثها.
+      - name: تجهيز النسخة الاحتياطية للعمل بلا إنترنت
+        shell: bash
+        run: |
+          mkdir -p desktop/offline
+          cp index.html desktop/offline/index.html
+          cp icon-192.png icon-512.png manifest.webmanifest desktop/offline/ || true
+          ls -l desktop/offline
+
+      - name: تثبيت الحزم
+        working-directory: desktop
+        run: npm ci
+
+      - name: البناء والرفع إلى الإصدار
+        working-directory: desktop
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # بلا شهادة توقيع — وإلا فشل البناء بحثاً عن هويّة غير موجودة
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: npx electron-builder --publish always
+
+      - name: أثرٌ يبقى للفحص
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: masrouf-${{ matrix.os }}
+          path: |
+            desktop/out/*.exe
+            desktop/out/*.dmg
+            desktop/out/*.zip
+            desktop/out/*.yml
+          if-no-files-found: ignore

@@ -4,3 +4,8 @@
 app-state*.json
 backup/
 supabase.json
+
+# تطبيق سطح المكتب: تُبنى ولا تُحفظ
+desktop/node_modules/
+desktop/out/
+desktop/offline/
