@@ -8922,7 +8922,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.4.0+18";
+  var APP_VERSION = "1.4.0+19";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
@@ -9622,7 +9622,11 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
              + (g.fails > 1 ? (' · ' + g.fails + ' محاولةً متتاليةً') : ''))
           : "")
       + '</span></span>'
-      + '<span class="pill">' + (g.okAt && g.ok ? "سليم" : "متوقّف") + '</span></div>';
+      + (g.ok
+          ? '<span class="pill">سليم</span>'
+          : '<span class="cmodes">'
+            + '<button class="mini on" data-gdin="1">ادخل</button></span>')
+      + '</div>';
   }
   var GD_API = "https://www.googleapis.com";
   var GD_FILE = "masrouf.json";
@@ -9667,7 +9671,8 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       + "&response_type=token"
       + "&scope=" + encodeURIComponent("https://www.googleapis.com/auth/drive.appdata")
       + "&include_granted_scopes=true"
-      + "&prompt=consent"
+      /* لا prompt: من سبق أن أذن يُعاد إليه بلا شاشةٍ ولا ضغطة.
+         وإجبارُ الموافقة كان يجعل كلَّ تجديدٍ حدثاً مرئيّاً. */
       + "&state=gd";
   }
   function gdOut(){ gdSet(null); gdTok = null; }
