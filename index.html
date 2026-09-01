@@ -7455,7 +7455,13 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   }
 
   /* ═══ العرض والربط ═══ */
+  /* موضعُ التمرير يُحفظ للشاشة الواحدة: استبدالُ root يُفرغ الصفحة
+     فيصفّر المتصفّحُ التمرير، ثمّ تطول ويبقى الصفر. */
+  var _scTab = null;
   function render(){
+    var sameTab = (_scTab === ui.tab);
+    var keepY = sameTab
+      ? (window.pageYOffset || document.documentElement.scrollTop || 0) : 0;
     var body = ui.tab === "set" ? viewSet()
              : ui.tab === "year" ? viewYear()
              : ui.tab === "env" ? viewEnv()
@@ -7473,6 +7479,19 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       + navbar() + dlgHTML();
     applyNotes();
     wire(); if(!setNav()) colLayout(); wire(); dlgWire(); restoreFocus();
+
+    _scTab = ui.tab;
+    if(keepY > 0){
+      /* مرّتين: مرّةً الآن، ومرّةً بعد أن يستقرّ طولُ الصفحة — إذ
+         يعيد colLayout ترتيب العمودين فيتغيّر الطول، ووضعُ التمرير
+         قبل استقراره يُقصّ إلى ما دونه. */
+      try{ window.scrollTo(0, keepY); }catch(e){}
+      try{
+        (window.requestAnimationFrame || setTimeout)(function(){
+          try{ window.scrollTo(0, keepY); }catch(e2){}
+        }, 0);
+      }catch(e3){}
+    }
   }
   /* ── عمودان بعد الرسم ──
      يعبر العمودين: الترويسة · شريط الشهور · المؤشرات · اللافتات
@@ -7656,7 +7675,14 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     var el = document.querySelector(focusSel);
     focusSel = null;
     if(!el) return;
-    try{ el.focus(); var v = el.value; el.value = ""; el.value = v; }catch(e){}
+    /* preventScroll: التركيز وحده كان يسحب الشاشة إلى الحقل. فمن كتب
+       في بندٍ أسفل الخطة قُذف إلى أعلاها بعد كلّ رقم — لا لأنّ المحتوى
+       استُبدل، بل لأنّ المتصفّح يُظهر ما يُركَّز عليه. والحقل حاضرٌ
+       أمامه أصلاً، فلا حاجة إلى إظهاره. */
+    try{ el.focus({ preventScroll: true }); }
+    catch(e){ try{ el.focus(); }catch(e2){} }
+    /* المؤشّر إلى آخر النصّ: كتابةٌ تُستأنف لا تُستبدل */
+    try{ var v = el.value; el.value = ""; el.value = v; }catch(e3){}
   }
 
   function wire(){
@@ -8356,12 +8382,15 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       ask({ title: "نسخة احتياطية",
         msg: "<b>" + mks + " شهراً · " + n + " حركة · "
            + ((state.cats || []).length) + " بنداً</b>."
-           + "<br>اختر الصيغة — و<b>JSON</b> وحده هو الذي تُستعاد منه.",
+           + "<br>النسخة الكاملة تحمل كلَّ ما في التطبيق: بنودك وفروعها، "
+           + "حساباتك وسجلّاتها، أهدافك وجهاتك وسجلّاتها، قواعدك، وكلَّ "
+           + "شهرٍ بحركاته وتوزيعه، وكلَّ إعدادٍ غيّرته."
+           + "<br>ولا تحمل رمزَ دخولك — يُطلب مرّةً بعد الاستعادة.",
         fields: [],
         html: function(){
-          return dgroup("للاستعادة",
-              '<button class="mini on" data-bk="json">JSON منسَّق</button>')
-            + dgroup("للقراءة والمراجعة",
+          return dgroup("النسخة الكاملة — وهي وحدها التي تُستعاد",
+              '<button class="mini on" data-bk="json">خذ النسخة الكاملة</button>')
+            + dgroup("تصديرٌ للقراءة — ناقصٌ عمداً، لا يُستعاد منه",
               '<button class="mini" data-bk="txt">تقرير نصّي</button>'
             + '<button class="mini" data-bk="csv">حركاتك CSV</button>')
             + dgroup("أو انسخه نصّاً",
@@ -9048,7 +9077,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.4.2";
+  var APP_VERSION = "1.4.3";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
@@ -10329,7 +10358,57 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   }
   function backupName(ext){ return "masrouf-" + stamp() + "." + (ext || "json"); }
   /* منسَّق لا مضغوط: النسخة الاحتياطية تُقرأ أحياناً، ولا يضرّ الحجم */
-  function backupText(){ return JSON.stringify(state, null, 2); }
+  /* يَعدّ ما في النسخة قسماً قسماً — فتُعَدّ ولا تُصدَّق */
+  function backupCount(){
+    var s = state, mk = Object.keys(s.months || {}), i;
+    var o = { "شهور": mk.length, "حركات": 0,
+              "بنود": (s.cats || []).length, "فروع": 0,
+              "حسابات": (s.accts || []).length, "سطور الحسابات": 0,
+              "أهداف": (s.goals || []).length,
+              "جهات الاستثمار": (s.invest || []).length, "سطور الجهات": 0,
+              "قواعد": (s.rules || []).length,
+              "شهور فيها توزيع": 0, "شهور مقفلة": 0,
+              "آثار محذوفة": (s.gone || []).length,
+              "مفاتيح الحالة": Object.keys(s).length };
+    mk.forEach(function(k){
+      var m = s.months[k] || {};
+      o["حركات"] += ((m.items) || []).length;
+      if(m.dist && Object.keys(m.dist).length) o["شهور فيها توزيع"]++;
+      if(m.locked) o["شهور مقفلة"]++;
+    });
+    (s.cats || []).forEach(function(c){ o["فروع"] += ((c.subs) || []).length; });
+    (s.accts || []).forEach(function(a){ o["سطور الحسابات"] += ((a.log) || []).length; });
+    (s.invest || []).forEach(function(x){ o["سطور الجهات"] += ((x.log) || []).length; });
+    return o;
+  }
+
+  /* مغلَّفٌ لا حالةٌ عارية: يدخل فيه ما كان خارج state، وتصير للملفّ
+     هويّةٌ وإصدارٌ تُمكّنان الهجرة حين تتغيّر البنية. */
+  function backupText(){
+    return JSON.stringify({
+      kind: "masrouf-backup",
+      appVer: APP_VERSION,
+      schema: state.v,
+      at: new Date().toISOString(),
+      "ملحوظة": "نسخةٌ كاملة. ولا تحوي رموز الدخول (درايف والحساب) عمداً — "
+              + "فهذا الملفّ يُرسَل ويُحفظ، ومن وضع فيه مفتاحه سلّمه لمن يجده. "
+              + "تُطلب مرّةً واحدة بعد الاستعادة.",
+      "بيان": backupCount(),
+      extras: {
+        conf: conf(),
+        dev: devTag(),
+        snap: snapInfo()
+      },
+      state: state
+    }, null, 2);
+  }
+
+  /* يقبل الشكلين: المغلَّف الجديد، والحالة العارية التي أُخذت بالأمس */
+  function backupUnwrap(d){
+    if(d && d.kind === "masrouf-backup" && d.state && typeof d.state === "object")
+      return { st: d.state, ex: d.extras || {}, meta: d };
+    return { st: d, ex: {}, meta: null };
+  }
 
   /* تقريرٌ يُقرأ — لا يُستعاد منه، وإنما يُطمئن صاحبه أن ما فيه ماله */
   function reportText(){
@@ -10499,8 +10578,9 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
 
   /* لا تحلّ نسخةٌ محلّ بياناتٍ قبل أن يرى صاحبها ما فيها */
   function restorePreview(text, fname){
-    var d;
-    try{ d = JSON.parse(text); }catch(e){ d = null; }
+    var raw;
+    try{ raw = JSON.parse(text); }catch(e){ raw = null; }
+    var un = backupUnwrap(raw), d = un.st, ex = un.ex;
     if(!d || typeof d !== "object" || !d.months){
       toast(fname ? "الملفّ ليس نسخةً صالحة" : "النصّ غير صالح");
       return;
@@ -10520,13 +10600,46 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       + (d.savedAt ? ("<br>حُفظت: <b>"
           + esc(new Date(+d.savedAt).toISOString().slice(0, 16).replace("T", " "))
           + "</b>") : "")
-      + "<br><br><b>ستحلّ محلّ ما في جهازك الآن</b> ("
+      /* كلُّ قسمٍ بعدده: من رأى «شهوراً وحركات» وحدها ظنّ أنّ ذلك
+         كلُّ ما يعود — والباقي يعود معه ولا يُذكر. */
+      + "<br><br>" + (function(){
+          var sub = 0, alg = 0, ilg = 0, i;
+          (d.cats || []).forEach(function(c){ sub += ((c.subs) || []).length; });
+          (d.accts || []).forEach(function(a){ alg += ((a.log) || []).length; });
+          (d.invest || []).forEach(function(x){ ilg += ((x.log) || []).length; });
+          var rows = [
+            ["بنود", (d.cats || []).length + (sub ? (" · " + sub + " فرعاً") : "")],
+            ["حسابات", (d.accts || []).length + (alg ? (" · " + alg + " سطراً") : "")],
+            ["أهداف", (d.goals || []).length],
+            ["جهات استثمار", (d.invest || []).length + (ilg ? (" · " + ilg + " سطراً") : "")],
+            ["قواعد", (d.rules || []).length],
+            ["إعدادات", Object.keys(d).length + " مفتاحاً"]
+          ];
+          return '<div class="gdvals">' + rows.map(function(r){
+            return '<div><s>' + r[0] + '</s><code>' + esc(String(r[1])) + '</code></div>';
+          }).join("") + '</div>'
+          + (ex && (ex.conf || ex.dev || ex.snap)
+              ? "ومعها إعدادُ التطبيق"
+                + (ex.snap ? " ولقطةُ ما قبل التحديث" : "") + "."
+              : "");
+        })()
+      + "<br><b>ستحلّ محلّ ما في جهازك الآن</b> ("
       + cur0 + " حركة). ولا رجعة.",
       "استعدها", function(){
         try{
           for(var k in state) if(!(k in d)) delete state[k];
           for(var k2 in d) state[k2] = d[k2];
           migrate();
+          /* الملحقات: يُدمج الإعداد، وتُستعاد اللقطة إن لم تكن، وهويّةُ
+             الجهاز لمن لا هويّة له وحده — فلو أخذها جهازٌ ثانٍ صار
+             للاثنين هويّةٌ واحدة، فتتصادم المعرّفات وتضيع حركات. */
+          try{
+            if(ex.conf) confSet(ex.conf);
+            if(ex.snap && !snapInfo())
+              localStorage.setItem(SNAPKEY, JSON.stringify(ex.snap));
+            if(ex.dev && !localStorage.getItem("kh_dev"))
+              localStorage.setItem("kh_dev", String(ex.dev));
+          }catch(e3){}
           toast("تمت الاستعادة · " + n + " حركة");
           save(); render();
         }catch(e){ toast("تعذّرت الاستعادة"); }
