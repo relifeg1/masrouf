@@ -7067,6 +7067,18 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
              + '</div>' + syncLogHTML())
           : "")
 
+      /* ما يجب أن يكون في مشروع جوجل — يُقرأ ولا يُخمَّن */
+      + (gdReady()
+          ? ('<div class="mrow"><span class="mn">إعداد مشروع جوجل'
+             + '<span class="ms">إن تعذّر الدخول، فهذان السطران يجب أن يكونا '
+             + 'في بيانات العميل عندك — حرفاً بحرف:<br>'
+             + '<b>Authorized JavaScript origins</b><br><code>'
+             + esc(location.origin) + '</code><br>'
+             + '<b>Authorized redirect URIs</b><br><code>'
+             + esc(gdRedirect()) + '</code>'
+             + '</span></span></div>')
+          : "")
+
       /* الخروج من الوجه المتَّبع */
       + (signedIn()
           ? ('<div class="mrow"><span class="mn">حسابك'
@@ -8644,7 +8656,14 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
         + "<b>وتنبيه:</b> إذنُ درايف يعيش ساعةً — وهذا حدُّ جوجل لا حدُّنا. "
         + "ويجدّده التطبيق صامتاً حين تحتاجه، فلا تشعر به غالباً. وإن رفضت "
         + "جوجلُ التجديد طُلب منك الدخول من هنا.",
-        "أكمل", function(){ gdLogin(); });
+        "أكمل", function(){
+          /* النافذة أوّلاً — وإن تعذّرت سُلك طريق التوجيه كما كان */
+          gdPopupLogin(function(ok, why){
+            if(ok) return;
+            toast("تعذّرت النافذة (" + why + ") — نجرّب الطريق الآخر");
+            setTimeout(gdLogin, 900);
+          });
+        });
     });
     on("[data-gdout]", function(){
       confirmDlg("اخرج من درايف",
@@ -8922,7 +8941,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.4.0+19";
+  var APP_VERSION = "1.4.0+20";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
@@ -9663,6 +9682,37 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ما يُرسل إلى جوجل حرفاً بحرف — تُبنى منه النافذة والطلب معاً،
      فلا يعرض التطبيق شيئاً ويرسل غيره. */
   function gdRedirect(){ return location.href.replace(/[#?].*$/, ""); }
+  /* الدخول بنافذةٍ منبثقة: لا تغادر الصفحة، ولا تحتاج عنوانَ عودةٍ
+     مسجَّلاً — تتحقّق جوجل من أصل الموقع وحده. */
+  function gdPopupLogin(then){
+    gdLoadGis(function(ok){
+      if(!ok) return then(false, "لم تُحمَّل مكتبة جوجل");
+      try{
+        var cl = google.accounts.oauth2.initTokenClient({
+          client_id: gdClient(),
+          scope: "https://www.googleapis.com/auth/drive.appdata",
+          callback: function(r){
+            if(r && r.access_token){
+              gdSet({ token: r.access_token,
+                      exp: Date.now() + ((+r.expires_in || 3600) * 1000) });
+              gdTok = null;           /* يُعاد بناؤه عند أوّل تجديد */
+              toast("دخلتَ درايف");
+              setTimeout(gdFirstPull, 200);
+              then(true, "");
+            } else then(false, "لم يصل رمز");
+          },
+          error_callback: function(e){
+            var t = (e && e.type) || "";
+            then(false, t === "popup_closed" ? "أُغلقت النافذة"
+                      : t === "popup_failed_to_open" ? "منع المتصفّح النافذة"
+                      : "تعذّر الدخول");
+          }
+        });
+        cl.requestAccessToken({ prompt: "consent" });
+      }catch(e){ then(false, String(e.message || e)); }
+    });
+  }
+
   function gdLogin(){
     var back = gdRedirect();
     location.href = "https://accounts.google.com/o/oauth2/v2/auth"
