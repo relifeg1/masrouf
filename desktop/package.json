@@ -1,7 +1,7 @@
 {
   "name": "masrouf-desktop",
   "productName": "Masrouf",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "مصروف — خطتي الشهرية",
   "author": "relifeg1",
   "license": "MIT",
@@ -52,6 +52,8 @@
       ]
     },
     "nsis": {
+      "_ملحوظة": "اسمٌ بلا مسافات: البنّاء وlatest.yml وGitHub تكتب المسافة كلٌّ بطريقة، فينكسر التحديث بـ404",
+      "artifactName": "Masrouf-Setup-${version}.${ext}",
       "oneClick": false,
       "perMachine": false,
       "allowToChangeInstallationDirectory": true,

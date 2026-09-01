@@ -119,6 +119,8 @@ async function offerUpdate(info) {
   autoUpdater.quitAndInstall(false, true);
 }
 
+let lastUpdateError = '';
+
 function wireUpdater() {
   if (!app.isPackaged) return;                  /* لا تحديث في التطوير */
   autoUpdater.autoDownload = true;
@@ -127,7 +129,12 @@ function wireUpdater() {
     pendingUpdate = info;
     offerUpdate(info);
   });
-  autoUpdater.on('error', () => { /* انقطاع شبكةٍ لا يُزعج أحداً */ });
+  /* الخطأ يُحفظ لا يُبتلع: «انقطاع شبكةٍ لا يُزعج أحداً» أخفى عطلاً
+     دام إصدارين — كان latest.yml يشير إلى ملفٍّ اسمُه غير اسمِه على
+     الخادم، فيسقط التحديث بصمتٍ تامّ. */
+  autoUpdater.on('error', (e) => {
+    lastUpdateError = String((e && e.message) || e || '').slice(0, 300);
+  });
   autoUpdater.checkForUpdates().catch(() => {});
   setInterval(() => { autoUpdater.checkForUpdates().catch(() => {}); }, 6 * 3600 * 1000);
 }
@@ -146,9 +153,27 @@ function buildMenu() {
         { type: 'separator' },
         {
           label: 'ابحث عن تحديث',
-          click: () => {
+          click: async () => {
             if (pendingUpdate) return offerUpdate(pendingUpdate);
-            if (app.isPackaged) autoUpdater.checkForUpdates().catch(() => {});
+            if (!app.isPackaged) return;
+            lastUpdateError = '';
+            let r = null;
+            try { r = await autoUpdater.checkForUpdates(); }
+            catch (e) { lastUpdateError = String((e && e.message) || e).slice(0, 300); }
+            /* من طلب التحديث بنفسه يستحقّ جواباً — ولو كان الجواب عطلاً */
+            if (lastUpdateError) {
+              dialog.showMessageBox(win, {
+                type: 'warning', title: 'تعذّر البحث عن تحديث',
+                message: 'لم يصل جواب من الخادم.',
+                detail: lastUpdateError, buttons: ['حسناً'], noLink: true
+              });
+            } else if (!r || !r.updateInfo || r.updateInfo.version === app.getVersion()) {
+              dialog.showMessageBox(win, {
+                type: 'info', title: 'لا جديد',
+                message: 'نسختك هي الأحدث (' + app.getVersion() + ').',
+                buttons: ['حسناً'], noLink: true
+              });
+            }
           }
         },
         {
