@@ -10,7 +10,7 @@
  * ولا تُخزَّن بيانات المستخدم هنا إطلاقاً — هي في localStorage، ومسح
  * ذاكرة العامل لا يمسّها.
  */
-var VERSION = 'masrouf-1.4.0+17';
+var VERSION = 'masrouf-1.4.0+18';
 var SHELL = [
   './',
   './index.html',

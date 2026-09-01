@@ -7064,7 +7064,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
                 : '<span class="cmodes">'
                   + '<button class="mini" data-cloudpush="1">ارفع</button>'
                   + '<button class="mini" data-cloudpull="1">زامن</button></span>')
-             + '</div>')
+             + '</div>' + syncLogHTML())
           : "")
 
       /* الخروج من الوجه المتَّبع */
@@ -8922,7 +8922,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.4.0+17";
+  var APP_VERSION = "1.4.0+18";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
@@ -9585,6 +9585,45 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ جوجل درايف ═══ */
   var GD_ID = "218609276978-j09h44m13j4s3trqcjk5ckipt8ff1g9h.apps.googleusercontent.com";      /* يُحقن عند البناء */
   var GDKEY = "kh_gd";
+
+  /* سجلُّ الرفع: يبقى بعد الإغلاق، ويحمل ما وقع لا ما نرجوه. وهو
+     خارج state عمداً — فالمزامنة تدمج state، ولا يصحّ أن يُدمج سجلُّ
+     جهازٍ في جهازٍ آخر. */
+  var SYNCLOG = "kh_synclog";
+  function syncLogGet(){
+    try{ var r = localStorage.getItem(SYNCLOG); return r ? JSON.parse(r) : {}; }
+    catch(e){ return {}; }
+  }
+  function syncLogPut(ok, msg){
+    try{
+      var g = syncLogGet();
+      g.tryAt = Date.now();
+      g.tryMsg = String(msg || "");
+      g.ok = !!ok;
+      if(ok){ g.okAt = Date.now(); g.fails = 0; }
+      else { g.fails = (+g.fails || 0) + 1; }
+      localStorage.setItem(SYNCLOG, JSON.stringify(g));
+    }catch(e){}
+  }
+  function syncLogHTML(){
+    var g = syncLogGet();
+    if(!g.tryAt && !g.okAt) return "";
+    var bad = g.okAt ? "" : " off";
+    return '<div class="mrow' + (g.ok ? "" : " off") + '">'
+      + '<span class="mn">سجلّ الرفع'
+      + '<span class="ms">'
+      + (g.okAt
+          ? ('آخر رفعٍ <b>نجح</b> ' + clock(g.okAt) + ' — أي أنّ بياناتك '
+             + 'وصلت فعلاً إلى هناك.')
+          : '<b>لم ينجح رفعٌ قطّ من هذا الجهاز.</b> فما كتبتَه هنا لم '
+            + 'يغادره بعد.')
+      + (g.tryAt && !g.ok
+          ? ('<br>وآخر محاولة ' + clock(g.tryAt) + ' فشلت: ' + esc(g.tryMsg || "بلا سبب")
+             + (g.fails > 1 ? (' · ' + g.fails + ' محاولةً متتاليةً') : ''))
+          : "")
+      + '</span></span>'
+      + '<span class="pill">' + (g.okAt && g.ok ? "سليم" : "متوقّف") + '</span></div>';
+  }
   var GD_API = "https://www.googleapis.com";
   var GD_FILE = "masrouf.json";
 
@@ -9756,12 +9795,19 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     if(!retried && (gdStale() || (gdSess() && gdSess().exp - Date.now() < 300000))){
       return gdFresh(function(){ gdPush(then, true); });
     }
-    if(!gdOn()){ then(gdStale() ? "انتهت جلسة درايف — ادخل ثانيةً"
-                                : "لم تدخل درايف"); return; }
+    if(!gdOn()){
+      var m0 = gdStale() ? "انتهت جلسة درايف — ادخل ثانيةً" : "لم تدخل درايف";
+      syncLogPut(false, m0); then(m0); return;
+    }
     cloudBusy = true; render();
     var body = JSON.stringify(state);
     gdFind(function(id, mtime, err){
-      if(err){ cloudBusy = false; then(err); render(); return; }
+      if(err){
+        cloudBusy = false;
+        cloudMsg = "تعذّر الرفع: " + err;
+        syncLogPut(false, err);
+        then(err); render(); return;
+      }
       var url, opt;
       if(id){
         /* موجود: يُستبدل محتواه وحده */
@@ -9787,8 +9833,15 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
         cloudBusy = false;
         if(!r.ok) throw new Error(gdErr(r));
         cloudMsg = "رُفعت " + new Date().toLocaleTimeString("en-GB").slice(0, 5);
+        syncLogPut(true, "");
         then(null);
-      })["catch"](function(e){ cloudBusy = false; then(String(e.message || e)); });
+      })["catch"](function(e){
+        cloudBusy = false;
+        var m = String(e.message || e);
+        cloudMsg = "تعذّر الرفع: " + m;
+        syncLogPut(false, m);
+        then(m);
+      });
     });
   }
 
