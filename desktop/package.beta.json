@@ -1,88 +1,70 @@
 {
-  "name": "masrouf-desktop-beta",
+  "appId": "io.github.relifeg1.masrouf.beta",
   "productName": "Masrouf Beta",
-  "version": "1.5.0-beta.1",
-  "description": "مصروف — خطتي الشهرية",
-  "author": "relifeg1",
-  "license": "MIT",
-  "main": "main.js",
-  "private": true,
-  "scripts": {
-    "start": "electron .",
-    "dist": "electron-builder --publish never",
-    "dist:win": "electron-builder --win --publish never",
-    "dist:mac": "electron-builder --mac --publish never"
+  "copyright": "MIT · relifeg1",
+  "files": [
+    "main.js",
+    "preload.js",
+    "offline/**",
+    "build/**"
+  ],
+  "directories": {
+    "output": "out",
+    "buildResources": "build"
   },
-  "devDependencies": {
-    "electron": "^44.1.0",
-    "electron-builder": "^26.15.3"
-  },
-  "dependencies": {
-    "electron-updater": "^6.6.2"
-  },
-  "build": {
-    "appId": "io.github.relifeg1.masrouf.beta",
-    "productName": "Masrouf Beta",
-    "copyright": "MIT · relifeg1",
-    "files": [
-      "main.js",
-      "preload.js",
-      "offline/**",
-      "build/**"
-    ],
-    "directories": {
-      "output": "out",
-      "buildResources": "build"
-    },
-    "publish": [
+  "publish": [
+    {
+      "provider": "github",
+      "owner": "relifeg1",
+      "repo": "masrouf"
+    }
+  ],
+  "win": {
+    "target": [
       {
-        "provider": "github",
-        "owner": "relifeg1",
-        "repo": "masrouf"
+        "target": "nsis",
+        "arch": [
+          "x64"
+        ]
+      }
+    ]
+  },
+  "nsis": {
+    "artifactName": "Masrouf-Beta-Setup-${version}.${ext}",
+    "oneClick": false,
+    "perMachine": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "Masrouf Beta",
+    "deleteAppDataOnUninstall": false
+  },
+  "mac": {
+    "target": [
+      {
+        "target": "dmg",
+        "arch": [
+          "x64",
+          "arm64"
+        ]
+      },
+      {
+        "target": "zip",
+        "arch": [
+          "x64",
+          "arm64"
+        ]
       }
     ],
-    "win": {
-      "target": [
-        {
-          "target": "nsis",
-          "arch": [
-            "x64"
-          ]
-        }
-      ]
-    },
-    "nsis": {
-      "artifactName": "Masrouf-Beta-Setup-${version}.${ext}",
-      "oneClick": false,
-      "perMachine": false,
-      "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "shortcutName": "Masrouf Beta",
-      "deleteAppDataOnUninstall": false
-    },
-    "mac": {
-      "target": [
-        {
-          "target": "dmg",
-          "arch": [
-            "x64",
-            "arm64"
-          ]
-        },
-        {
-          "target": "zip",
-          "arch": [
-            "x64",
-            "arm64"
-          ]
-        }
-      ],
-      "category": "public.app-category.finance"
-    },
-    "dmg": {
-      "title": "مصروف"
-    }
+    "category": "public.app-category.finance"
   },
-  "masroufChannel": "beta"
+  "dmg": {
+    "title": "مصروف"
+  },
+  "extends": null,
+  "extraMetadata": {
+    "masroufChannel": "beta",
+    "name": "masrouf-beta",
+    "productName": "Masrouf Beta"
+  }
 }
