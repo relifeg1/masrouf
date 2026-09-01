@@ -194,8 +194,25 @@ function createWindow() {
   win.on('close', saveBounds);
   win.on('closed', () => { win = null; });
 
-  /* روابط خارجية تُفتح في المتصفّح لا داخل التطبيق */
+  /* نافذة إذن جوجل تُفتح هنا بالجلسة نفسها — وإلّا ذهب الجواب إلى
+     متصفّحٍ آخر ولم يعد. وما عداها يُفتح في المتصفّح كما ينبغي. */
   win.webContents.setWindowOpenHandler(({ url }) => {
+    if (/^https:\/\/accounts\.google\.com\//.test(url)) {
+      return {
+        action: 'allow',
+        overrideBrowserWindowOptions: {
+          width: 520, height: 700,
+          parent: win, modal: false,
+          autoHideMenuBar: true,
+          title: 'الدخول بجوجل',
+          webPreferences: {
+            nodeIntegration: false,
+            contextIsolation: true,
+            sandbox: true
+          }
+        }
+      };
+    }
     shell.openExternal(url);
     return { action: 'deny' };
   });
@@ -208,6 +225,13 @@ function createWindow() {
 
   win.loadURL(SITE);
 }
+
+/* جوجل ترفض الدخول من «متصفّحٍ مضمَّن»، وتعرفه بكلمة Electron في
+   الهويّة. فتُنقّى منها ومن اسم التطبيق، وتبقى هويّةَ كروم — وهي
+   الحقيقة، فالمحرّك كرومٌ فعلاً. */
+app.userAgentFallback = app.userAgentFallback
+  .replace(/\sMasrouf\/[\d.]+/g, '')
+  .replace(/\sElectron\/[\d.]+/g, '');
 
 app.whenReady().then(() => {
   buildMenu();
