@@ -52,7 +52,6 @@
       ]
     },
     "nsis": {
-      "_ملحوظة": "اسمٌ بلا مسافات: البنّاء وlatest.yml وGitHub تكتب المسافة كلٌّ بطريقة، فينكسر التحديث بـ404",
       "artifactName": "Masrouf-Setup-${version}.${ext}",
       "oneClick": false,
       "perMachine": false,
