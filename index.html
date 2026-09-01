@@ -8759,7 +8759,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
         "أكمل", function(){
           /* في اللحظة نفسها: النافذة تنبع من هذه الضغطة لا من ردّ
              تحميلٍ لاحق — وإلّا حجبها المتصفّح. */
-          if(gdTokReady){
+          if(gdTokReady && !gdNoPopup){
             try{ gdTokReady.requestAccessToken({ prompt: "consent" }); return; }
             catch(e){ diag("درايف", "طلب الرمز: " + (e.message || e)); }
           }
@@ -9043,7 +9043,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.4.0+22";
+  var APP_VERSION = "1.4.0+23";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
@@ -9813,7 +9813,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
      مسجَّلاً — تتحقّق جوجل من أصل الموقع وحده. */
   /* يُبنى عميلُ الرمز مقدَّماً حتى تكون الضغطةُ نفسها هي ما يفتح
      النافذة. وبناؤه بعد الضغطة يقطع صلتها بها، فيحجب المتصفّح. */
-  var gdTokReady = null;
+  var gdTokReady = null, gdNoPopup = false;
   function gdWarm(){
     if(gdTokReady || !gdReady() || !cloudAllowed()) return;
     gdLoadGis(function(ok){
@@ -9836,7 +9836,9 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
             var t = (e && e.type) || "";
             diag("درايف", "النافذة: " + (t || "تعذّرت"));
             if(t === "popup_failed_to_open"){
-              toast("منع المتصفّح النافذة — نجرّب الطريق الآخر");
+              /* تُعلَّم مرّةً: هذه البيئة لا تفتح نوافذ */
+              gdNoPopup = true;
+              toast("هذه النافذة ممنوعة هنا — ننتقل إلى جوجل مباشرةً");
               setTimeout(gdLogin, 700);
             }
           }
@@ -9916,6 +9918,9 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* يطلب رمزاً جديداً بلا شاشة. لا يعمل إلا لمن سبق أن أذن — ومن لم
      يأذن يبقى على الطريق الأوّل. */
   function gdSilentRenew(then){
+    /* حيث تُمنع النوافذ يسقط التجديد الصامت أيضاً — فلا يُملأ الأثر
+       بمحاولاتٍ متطابقةٍ تُخفي ما يهمّ. */
+    if(gdNoPopup) return then && then(false);
     if(gdRenewing) return then && then(false);
     gdRenewing = true;
     gdLoadGis(function(ok){
@@ -9979,7 +9984,8 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     }
     if(r.status === 403){
       /* ٤٠٣ ليس انتهاءً: أشهرُ أسبابه أنّ Drive API غير مفعَّل */
-      return "درايف رفض (403) — تحقّق أنّ Drive API مفعَّلٌ في مشروعك";
+      return "Drive API غير مفعَّل في مشروعك — فعّله من "
+           + "console.cloud.google.com/apis/library/drive.googleapis.com";
     }
     return "درايف ردّ HTTP " + r.status;
   }
