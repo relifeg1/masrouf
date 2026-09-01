@@ -19,7 +19,11 @@ const { autoUpdater } = require('electron-updater');
 const path = require('path');
 const fs = require('fs');
 
-const SITE = 'https://relifeg1.github.io/masrouf/';
+/* القناة تُقرأ من الحزمة: قشرةٌ واحدة تُبنى مرّتين، ولا يُنسى
+   تعديلُ نصٍّ في أحد الملفّين. */
+const CHANNEL = (require('./package.json').masroufChannel || '').trim();
+const SITE = 'https://relifeg1.github.io/masrouf/'
+           + (CHANNEL ? (CHANNEL + '/') : '');
 const OFFLINE = path.join(__dirname, 'offline', 'index.html');
 const LSKEY = 'khettati_v3';
 const STATE = path.join(app.getPath('userData'), 'window.json');

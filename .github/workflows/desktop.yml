@@ -43,11 +43,30 @@ jobs:
 
       # النسخة المضمَّنة تُنسخ من التطبيق المبنيّ لا تُحفظ مكرّرة في
       # المستودع — فلا تتخلّف عنه إن نُسي تحديثها.
+      # وسمٌ ينتهي بـ-beta يبني تطبيق التجارب وحده، وما سواه يبني
+      # الأصل وحده. فلا يصل الأصلَ بناءٌ لم يُطلب.
+      - name: تحديد القناة
+        id: ch
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF}" == *-beta ]]; then
+            echo "conf=package.beta.json" >> "$GITHUB_OUTPUT"
+            echo "src=beta/index.html"    >> "$GITHUB_OUTPUT"
+            echo "name=التجارب"           >> "$GITHUB_OUTPUT"
+          else
+            echo "conf=package.json"  >> "$GITHUB_OUTPUT"
+            echo "src=index.html"     >> "$GITHUB_OUTPUT"
+            echo "name=الأصل"          >> "$GITHUB_OUTPUT"
+          fi
+          echo "القناة: $(cat "$GITHUB_OUTPUT")"
+
+      # النسخة المضمَّنة تُنسخ من التطبيق المبنيّ لا تُحفظ مكرّرة في
+      # المستودع — فلا تتخلّف عنه إن نُسي تحديثها. ومن قناتها هي.
       - name: تجهيز النسخة الاحتياطية للعمل بلا إنترنت
         shell: bash
         run: |
           mkdir -p desktop/offline
-          cp index.html desktop/offline/index.html
+          cp "${{ steps.ch.outputs.src }}" desktop/offline/index.html
           cp icon-192.png icon-512.png manifest.webmanifest desktop/offline/ || true
           ls -l desktop/offline
 
@@ -60,7 +79,7 @@ jobs:
         env:
           # بلا شهادة توقيع — وإلا فشل البناء بحثاً عن هويّة غير موجودة
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
-        run: npx electron-builder --publish never
+        run: npx electron-builder --config ${{ steps.ch.outputs.conf }} --publish never
 
       - name: رفع الأثر
         uses: actions/upload-artifact@v4

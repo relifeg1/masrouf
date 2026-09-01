@@ -345,6 +345,30 @@ input,select,button,textarea{font-family:inherit;font-size:16px;min-width:0;max-
 .vtag{opacity:.55;font-size:11px;font-family:var(--mono, monospace);
       letter-spacing:.2px;white-space:nowrap}
 .savebar{margin:12px 0}
+.wok{color:var(--ok,#0F7355)}
+.wno{color:var(--warn,#C2407A)}
+.emopick{max-height:190px;overflow:auto;margin:2px 0 4px;
+padding:6px;border:1px solid var(--line);border-radius:9px;background:var(--bg2)}
+.emog{margin-bottom:7px}
+.emog>s{display:block;font-size:10.5px;color:var(--ink-3);text-decoration:none;
+margin:0 2px 3px;letter-spacing:.02em}
+.emor{display:flex;flex-wrap:wrap;gap:3px}
+.emopick .emo{font-size:18px;line-height:1;padding:5px;border-radius:7px;
+border:1px solid transparent;background:transparent;cursor:pointer}
+.emopick .emo:hover{background:var(--line)}
+.emopick .emo.on{border-color:var(--gold);background:var(--line)}
+.calcbtn{font-size:17px;padding:0 12px}
+.calchint{font-size:11.5px;color:var(--gold);min-height:14px;margin:3px 2px 0;
+text-align:left;direction:ltr;font-variant-numeric:tabular-nums}
+.calcres{font:600 20px/1.5 ui-monospace,Consolas,monospace;direction:ltr;
+text-align:left;min-height:30px;padding:2px 8px;color:var(--gold)}
+.calcpad{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px}
+.calcpad .ck{padding:13px 0;border-radius:9px;border:1px solid var(--line);
+background:var(--bg2);color:var(--ink);font-size:16px;font-weight:600;cursor:pointer}
+.calcpad .ck.op{color:var(--gold);background:transparent}
+.calcpad .ck.wide{grid-column:1/-1}
+.calcpad .ck:active{transform:scale(.97)}
+button.qi{border:0;cursor:pointer;font:inherit}
 .diagbox{font:11px/1.55 ui-monospace,Consolas,monospace;direction:ltr;
 text-align:left;white-space:pre-wrap;word-break:break-word;max-height:340px;
 overflow:auto;width:100%;margin:0;padding:10px;border-radius:8px;
@@ -1774,6 +1798,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   function idxOf(k){ for(var i=0;i<state.cats.length;i++) if(state.cats[i].k === k) return i; return -1; }
   function catExists(k){ return idxOf(k) >= 0; }
   function migrate(){
+    if(!state.wish) state.wish = [];
     state.cats.forEach(function(c){ if(!c.subs) c.subs = []; });
     state.goals.forEach(function(g){ if(g.arch === undefined) g.arch = false; });
     for(var k in state.months){
@@ -3780,6 +3805,110 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   }
 
   /* ═══ نوافذ التعديل ═══ */
+  /* الأهدافُ الجاهزة: ما يبدأ به أكثرُ الناس. ويُخفى منها ما أُخذ —
+     فعرضُ ما اتُّخذ دعوةٌ إلى التكرار لا إلى التيسير. */
+  var GTPL = [
+    { k: "emg", n: "صندوق الطوارئ", e: "🛟", c: "#0F7355",
+      mode: "months", mult: 6,
+      hint: "ستّة أشهرٍ من مصروفك — أوّل ما يُبنى قبل أيّ هدفٍ آخر" },
+    { k: "mrg", n: "الزواج", e: "💍", c: "#C2407A",
+      mode: "fixed", mult: 1,
+      hint: "هدفٌ بمبلغٍ محدَّد ينتهي ببلوغه" },
+    { k: "inv", n: "استثمار مستمر", e: "📈", c: "#4C3AE3",
+      mode: "endless", mult: 1,
+      hint: "يقتطع شهرياً بلا نهايةٍ حتى توقفه" }
+  ];
+  function goalTpls(){
+    var have = {};
+    (state.goals || []).forEach(function(g){ have[String(g.n || "").trim()] = 1; });
+    return GTPL.filter(function(t){ return !have[t.n]; });
+  }
+
+  /* ── لوحة الحاسبة ──
+     ليست آلةً ثانية: تكتب في حقلٍ نصّيّ، ويُقيّمه calcAmt نفسه الذي
+     يُقيّم بقيّة الحقول. فالسلوك واحدٌ أينما حسبتَ. */
+  var calcBack = null;
+  function calcPadHTML(){
+    var rows = [["7","8","9","÷"], ["4","5","6","×"],
+                ["1","2","3","-"], ["0",".","<","+"]];
+    return '<div class="calcres" id="calcres"></div>'
+      + '<div class="calcpad">'
+      + rows.map(function(r){
+          return r.map(function(k){
+            var cls = /[0-9.]/.test(k) ? "" : " op";
+            return '<button class="ck' + cls + '" data-calck="' + esc(k) + '">'
+              + (k === "<" ? "⌫" : esc(k)) + '</button>';
+          }).join("");
+        }).join("")
+      + '<button class="ck op wide" data-calck="C">مسح</button></div>';
+  }
+  function calcOpen(title, start, back){
+    calcBack = back;
+    ask({ title: title,
+      msg: "اكتب أو اضغط. ويقبل + − × ÷ والأقواس.",
+      fields: [{ label: "العملية", value: String(start || ""), ph: "120+45" }],
+      html: calcPadHTML(),
+      ok: "استخدم",
+      onOk: function(v){
+        var raw = String(v[0] || "").trim();
+        var r = calcAmt(raw);
+        if(r === null) r = num(raw);
+        var cb = calcBack; calcBack = null;
+        if(cb) cb(r);
+      },
+      cancel: "إلغاء" });
+  }
+
+  /* رموزٌ مبوَّبة: أبوابها أبوابُ المصروف نفسها، فيجد الباحث بابَه
+     قبل أن يجد رمزَه. */
+  var EMOJI = [
+    ["طعام", "🍽️🍔🍕🥗🍜🍞🥤☕🧃🍫🥩🐟🍎🥕🛒"],
+    ["بيت", "🏠🛋️🛏️🚿🧹🧺🔌💡🔧🪑🧴🪴"],
+    ["تنقّل", "🚗⛽🚌🚕🛵🅿️🛠️✈️🚉🚲"],
+    ["فواتير", "📄💧📶📱🌐📺🔥🧾"],
+    ["صحّة", "🏥💊🩺🦷👓🧴🏃"],
+    ["تعليم", "📚🎓✏️🏫💻🖨️"],
+    ["ملابس", "👕👗👟👜🧥🕶️💄"],
+    ["ترفيه", "🎮🎬🎧🎯🏖️🎁🎂🎪"],
+    ["أسرة", "👶🧒👨‍👩‍👧🐱🐶🎒"],
+    ["مال", "💰🏦📈🛟💍🎯🪙📊"]
+  ];
+  /* يكتب في الحقل الثاني — وهو «الرمز» في حواري البند والهدف معاً */
+  function emoPickHTML(){
+    return '<div class="emopick">'
+      + EMOJI.map(function(g){
+          return '<div class="emog"><s>' + esc(g[0]) + '</s><div class="emor">'
+            + Array.from(g[1]).filter(function(ch){
+                return ch.codePointAt(0) > 0x2000;
+              }).map(function(e){
+                return '<button class="emo" data-emo="' + e + '">' + e + '</button>';
+              }).join("")
+            + '</div></div>';
+        }).join("")
+      + '</div>';
+  }
+
+  /* ── الأمنيات ──
+     ما يبقى بعد الالتزامات، لا الدخل. فالخطةُ غير المصروفة مالٌ محجوز
+     لا فائض — ومن عدّها فائضاً اشترى أمنيته بمال بقالته. */
+  function wishRoom(k){
+    var inc = income(k), A = actuals(k);
+    var plan = 0, left = 0;
+    visibleCats().forEach(function(c){
+      var p = catPlan(c, k), sp = A.by[c.k] || 0;
+      plan += p;
+      left += Math.max(0, p - sp);
+    });
+    var save = 0;
+    (state.goals || []).forEach(function(g){ if(!g.arch) save += num(g.m); });
+    (state.invest || []).forEach(function(x){ save += num(x.m); });
+    return {
+      surplus: inc - plan - save,          /* فائض الشهر لو مضى كما خُطّط */
+      now: inc - A.sum - left - save       /* وما يبقى الآن بعد المحجوز */
+    };
+  }
+  function wishList(){ return state.wish || (state.wish = []); }
+
   function catOptions(){
     var o = [];
     state.cats.forEach(function(c){
@@ -3912,6 +4041,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     var c = catOf(ck), t = typeOf(c);
     ask({ title: "تعديل «" + c.n + "»",
       msg: "التصنيف والنوع للبند الأساسي فقط — البنود الفرعية تأخذ مبالغ لا أنواعاً.",
+      html: emoPickHTML(),
       fields: [
         { label: "اسم البند", value: c.n },
         { label: "الرمز", value: c.e, ph: "⛽" },
@@ -5408,6 +5538,55 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     return h;
   }
 
+  /* تُعرض في شاشة الخطة: موضعُ الموازنة بين ما تريد وما تملك */
+  function wishHTML(k){
+    var W = wishList(), R = wishRoom(k);
+    var live = W.filter(function(x){ return !x.bought; });
+    var done = W.filter(function(x){ return x.bought; });
+    var h = '<div class="sec"><h2>أمنياتك</h2><span class="hint">'
+      + (live.length ? (live.length + " في الانتظار") : "لا شيء") + '</span></div>'
+      + '<div class="card">';
+
+    h += '<div class="mrow"><span class="mn">ما يسعه شهرك'
+      + '<span class="ms">فائض الشهر لو مضى كما خُطّط: <b>' + fmt(R.surplus) + '</b> '
+      + esc(cur()) + ' · وما بقي الآن بعد المصروف والمحجوز للخطة والادخار: <b>'
+      + fmt(R.now) + '</b>. والثاني هو ما تشتري به اليوم.</span></span>'
+      + '<button class="mini on" data-addwish="1">+ أمنية</button></div>';
+
+    if(!W.length){
+      h += '<div class="mrow off"><span class="mn">لا أمنيات بعد'
+        + '<span class="ms">سجّل ما تريده بثمنه — شنطةً أو جهازاً أو رحلة — '
+        + 'فيُقال لك بالرقم أيسعه شهرك أم ينقصه كذا. وما لا يُسجَّل ينازع '
+        + 'خطّتك في رأسك بلا حساب.</span></span></div>';
+    }
+
+    live.sort(function(a, b){ return num(a.price) - num(b.price); });
+    live.forEach(function(x){
+      var p = num(x.price), gap = p - R.now, can = gap <= 0;
+      h += '<div class="mrow"><span class="mn">' + (x.e || "🎁") + ' ' + esc(x.n)
+        + '<span class="ms">' + fmt(p) + ' ' + esc(cur()) + ' — '
+        + (can
+            ? '<b class="wok">يسعها ما بقي الآن</b>'
+            : ('<b class="wno">ينقصك ' + fmt(gap) + '</b>'
+               + (p <= R.surplus
+                   ? ' — ويسعها فائض الشهر لو التزمت خطّتك'
+                   : ' — وأكبر من فائض الشهر كلِّه، فوزّعها على شهرين')))
+        + '</span></span>'
+        + '<span class="cmodes">'
+        + '<button class="mini' + (can ? ' on' : '') + '" data-wbuy="' + x.id + '">اشتريتها</button>'
+        + '<button class="mini" data-wdel="' + x.id + '">احذف</button></span></div>';
+    });
+
+    if(done.length){
+      h += '<div class="mrow off"><span class="mn">اشتريتَها'
+        + '<span class="ms">' + done.map(function(x){
+            return (x.e || "🎁") + " " + esc(x.n) + " · " + fmt(num(x.price));
+          }).join(" · ") + '</span></span>'
+        + '<button class="mini" data-wclear="1">امسحها</button></div>';
+    }
+    return h + '</div>';
+  }
+
   function viewPlan(){
     var k = ui.month, o = incObj(k), inc = income(k);
     var al = allocated(), un = inc - al;
@@ -5778,6 +5957,8 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     }).join("");
     h += '<div style="padding:0 15px 15px"><button class="addbtn" data-addgoal="1">+ أضف هدفاً</button></div></div>';
 
+    h += wishHTML(k);
+
     /* أفعال هذا الشهر — كانت في «الإعدادات» وهي شاشة عامّة، فعادت إلى
        شاشة الشهر حيث الإقفال والإرجاع للأساسية. */
     var MM = month(k);
@@ -5860,8 +6041,9 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       var subs = (c.subs || []).length;
       TA += avail; TS += sp;
       return '<div class="qtab' + (ui.flash === c.k ? " flash" : "") + '">'
-        + '<span class="qn"><span class="qi" style="background:' + c.c + '22;color:' + c.c + '">'
-        + c.e + '</span>'
+        + '<span class="qn"><button class="qi" data-calcq="' + c.k
+        + '" title="احسب في ' + esc(c.n) + '" style="background:' + c.c + '22;color:' + c.c + '">'
+        + c.e + '</button>'
         + '<span class="qt"><b>' + esc(c.n) + '</b>'
         + '<s>' + (dn ? dn + ' عملية مفصّلة (' + fmt(det) + ')'
               : (cry ? (cry > 0 ? "مُرحَّل +" : "مُرحَّل −") + fmt(Math.abs(cry))
@@ -5983,8 +6165,11 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     if(ui.spendMode === "quick") return h + viewQuick();
 
     h += '<div class="card p"><h3 style="font-size:14px;font-weight:600;color:var(--ink-2);margin-bottom:11px">أضف مصروفاً</h3>'
-      + '<div class="amt-row"><input id="amt" class="amt" type="number" inputmode="decimal" placeholder="0" step="any">'
+      + '<div class="amt-row">'
+      + '<input id="amt" class="amt" type="text" inputmode="decimal" placeholder="0">'
+      + '<button class="go calcbtn" data-calcamt="1" title="حاسبة">🧮</button>'
       + '<button id="go" class="go">إضافة</button></div>'
+      + '<div class="calchint" id="amthint"></div>'
       + '<div class="daterow"><label for="sdate">تاريخ العملية</label>'
       + '<input id="sdate" class="dinp" type="date" value="' + esc(defaultDate()) + '">'
       + '<span class="dhint" id="dhint"></span></div>'
@@ -7837,6 +8022,25 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     /* ── الحقل يحسب ──
        التقييم عند الكتابة لا عند الحفظ، فيرى المستخدم الناتج قبل أن
        يغادر الحقل. ويُترك النصّ كما هو ما دام تعبيراً ناقصاً. */
+    /* حقلُ الصرف: كان وحده بلا حاسب، فيكتب فيه صاحبُه عمليةً فيرى صفراً
+       ويظنّ الحاسبَ معطَّلاً — وهو يعمل في كلّ حقلٍ سواه. */
+    (function(){
+      var el = document.getElementById("amt");
+      if(!el) return;
+      var hint = document.getElementById("amthint");
+      var show = function(){
+        if(!hint) return;
+        var r = calcAmt(el.value);
+        hint.textContent = (r === null) ? "" : ("= " + fmt(r) + " " + cur());
+      };
+      el.oninput = show;
+      el.onblur = function(){
+        var r = calcAmt(el.value);
+        if(r !== null){ el.value = r; if(hint) hint.textContent = ""; }
+      };
+      show();
+    })();
+
     q("[data-quick],[data-plan],[data-gquick],[data-iquick],[data-minc]").forEach(function(el){
       if(el.tagName !== "INPUT") return;
       /* الحارس القديم كان «إن لم يكن رقمياً فاتركه» — فتخطّى كل حقلٍ
@@ -8072,14 +8276,116 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
         } });
     });
     on("[data-togglearch]", function(){ ui.showArch = !ui.showArch; render(); });
+    /* لوحة الحاسبة: تُحدَّث في مكانها بلا إعادة رسم — إعادةُ الرسم
+       تُفقد الحقلَ تركيزَه وتُبطئ الضغط المتتابع. */
+    on("[data-addwish]", function(){
+      ask({ title: "أمنية أو احتياج",
+        msg: "شيءٌ تريده ولم تشترِه بعد. يُقال لك أيسعه شهرك أم ينقصه كذا.",
+        html: emoPickHTML(),
+        fields: [{ label: "ما هو", value: "", ph: "شنطة" },
+                 { label: "الرمز", value: "🎁", ph: "🎁" },
+                 { label: "ثمنه التقريبي", type: "number", value: "" }],
+        ok: "سجّلها",
+        onOk: function(v){
+          if(!v[0]) return;
+          wishList().push({ id: uid(), n: String(v[0]), e: String(v[1] || "🎁"),
+                            price: num(v[2]), bought: false, at: Date.now() });
+          toast("سُجّلت — تجدها في شاشة الخطة");
+          save();
+        } });
+    });
+    on("[data-wbuy]", function(b){
+      var id = b.getAttribute("data-wbuy"), w = null;
+      wishList().forEach(function(x){ if(x.id === id) w = x; });
+      if(!w) return;
+      /* تصير مصروفاً في بندها: فلا تُكتب مرّتين ولا تُنسى */
+      ask({ title: "اشتريتَ «" + w.n + "»",
+        msg: "تُسجَّل مصروفاً في الشهر المفتوح. اختر بندها.",
+        fields: [{ label: "البند", type: "select", value: (state.cats[0] || {}).k || "",
+                   options: catOptions() },
+                 { label: "المبلغ المدفوع", type: "number", value: num(w.price) }],
+        ok: "سجّلها مصروفاً",
+        onOk: function(v){
+          var m = month(ui.month);
+          m.items.push({ id: uid(), c: v[0], a: num(v[1]), t: w.n,
+                         d: defaultDate(), at: Date.now() });
+          w.bought = true;
+          toast("سُجّلت مصروفاً في " + mName(ui.month));
+          save();
+        } });
+    });
+    on("[data-wdel]", function(b){
+      var id = b.getAttribute("data-wdel");
+      state.wish = wishList().filter(function(x){ return x.id !== id; });
+      save();
+    });
+    on("[data-wclear]", function(){
+      state.wish = wishList().filter(function(x){ return !x.bought; });
+      toast("مُسحت المشتراة"); save();
+    });
+    on("[data-emo]", function(b){
+      var el = document.getElementById("df1");
+      if(!el) return;
+      el.value = b.getAttribute("data-emo");
+      /* المختارُ يُعلَّم: من ضغط يريد أن يرى أنّ ضغطته وقعت */
+      var all = document.querySelectorAll("[data-emo]");
+      for(var i = 0; i < all.length; i++) all[i].classList.remove("on");
+      b.classList.add("on");
+      try{ el.focus({ preventScroll: true }); }catch(e){}
+    });
+    on("[data-calck]", function(b){
+      var k = b.getAttribute("data-calck");
+      var el = document.getElementById("df0");
+      if(!el) return;
+      if(k === "C") el.value = "";
+      else if(k === "<") el.value = String(el.value).slice(0, -1);
+      else el.value = String(el.value) + k;
+      var out = document.getElementById("calcres");
+      if(out){
+        var r = calcAmt(el.value);
+        out.textContent = (r === null)
+          ? (String(el.value).trim() ? "…" : "")
+          : ("= " + fmt(r));
+      }
+      try{ el.focus({ preventScroll: true }); }catch(e){}
+    });
+    on("[data-calcq]", function(b){
+      var ck = b.getAttribute("data-calcq"), c = catOf(ck);
+      /* القيمة الحاليّة هي المصروف المسجَّل في البند — لا قيمةٌ محفوظة
+         على حدة، فالإدخال السريع يعرض المجموع نفسه. */
+      /* يُفتح على المجموع متبوعاً بعلامة الجمع: من يفتح الحاسبة على
+         بندٍ فيه ١٦٥ يريد أن يضيف إليه لا أن يلصق أرقامَه به. */
+      var had = actuals(ui.month).by[ck] || 0;
+      calcOpen("احسب في «" + (c ? c.n : "") + "»", had ? (had + "+") : "",
+        function(r){
+          setQuick(ui.month, ck, r);
+          flashRow(ck); save(); render();
+        });
+    });
+    on("[data-calcamt]", function(){
+      var el = document.getElementById("amt");
+      calcOpen("احسب المبلغ", el ? el.value : "", function(r){
+        var a = document.getElementById("amt");
+        if(a){ a.value = r; }
+        var hint = document.getElementById("amthint");
+        if(hint) hint.textContent = "";
+      });
+    });
+
     on("[data-addgoal]", function(){
+      /* الجاهزات في جدولٍ واحد — فالزيادة سطرٌ لا تعديلٌ في ثلاثة مواضع */
+      var TPL = goalTpls();
+
       ask({ title: "هدف جديد",
         msg: "الهدف <b>محدَّد</b> ينتهي عند بلوغه · <b>محسوب</b> مستهدفه من راتبك أو مصروفك "
            + "· <b>بلا نهاية</b> يقتطع دائماً حتى توقفه.",
-        html: '<ul class="dlist"><li><span>🛟 صندوق طوارئ</span>'
-            + '<span class="dv"><button class="sugg" data-gtpl="emg">جاهز</button></span></li>'
-            + '<li><span>📈 استثمار مستمر</span>'
-            + '<span class="dv"><button class="sugg" data-gtpl="inv">جاهز</button></span></li></ul>',
+        html: (TPL.length
+          ? ('<ul class="dlist">' + TPL.map(function(t){
+               return '<li><span>' + t.e + ' ' + esc(t.n) + '</span>'
+                 + '<span class="dv"><button class="sugg" data-gtpl="' + t.k
+                 + '">جاهز</button></span></li>';
+             }).join("") + '</ul>')
+          : ""),
         fields: [{ label: "اسم الهدف", value: "", ph: "اكتب الاسم" },
                  { label: "النوع", type: "select", value: "fixed",
                    options: GMODES.map(function(y){ return { v: y.k, n: y.n }; }) },
@@ -8111,6 +8417,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       var md = gMode(g), derived = goalFromAccts(g);
       ask({ title: "تعديل «" + g.n + "»",
         msg: "النوع يحدّد كيف يُحسب المستهدف ومتى يتوقف الاقتطاع.",
+        html: emoPickHTML(),
         fields: [
           { label: "الاسم", value: g.n },
           { label: "الرمز", value: g.e, ph: "🎯" },
@@ -8136,17 +8443,14 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
         } });
     });
     on("[data-gtpl]", function(b){
-      var t = b.getAttribute("data-gtpl");
+      var key = b.getAttribute("data-gtpl"), t = null;
+      GTPL.forEach(function(x){ if(x.k === key) t = x; });
+      if(!t) return;
       dlg = null;
-      if(t === "emg")
-        state.goals.push({ id: uid(), n: "صندوق الطوارئ", e: "🛟", c: "#0F7355",
-                           mode: "months", mult: 6, target: 0, saved: 0,
-                           m: 0, date: "", arch: false });
-      else
-        state.goals.push({ id: uid(), n: "استثمار مستمر", e: "📈", c: "#4C3AE3",
-                           mode: "endless", mult: 1, target: 0, saved: 0,
-                           m: 0, date: "", arch: false });
-      toast("أُضيف — حدّد مبلغه الشهري");
+      state.goals.push({ id: uid(), n: t.n, e: t.e, c: t.c,
+                         mode: t.mode, mult: t.mult, target: 0, saved: 0,
+                         m: 0, date: "", arch: false });
+      toast("أُضيف «" + t.n + "» — حدّد مبلغه الشهري");
       save(); render();
     });
     on("[data-delgoal]", function(b){
@@ -9091,7 +9395,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.4.3+3-beta";
+  var APP_VERSION = "1.4.3+4-beta";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
@@ -10818,7 +11122,10 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     return moves;
   }
   function addItem(){
-    var el = document.getElementById("amt"), amt = parseFloat(el && el.value);
+    var el = document.getElementById("amt");
+    var _raw = el ? el.value : "";
+    var _c = calcAmt(_raw);
+    var amt = (_c === null) ? parseFloat(_raw) : _c;
     if(!(amt > 0)) return;
     if(!ui.cat){ toast("اختر التصنيف"); return; }
     var n = document.getElementById("note");
