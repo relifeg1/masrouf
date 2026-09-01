@@ -209,6 +209,8 @@ function createWindow() {
     show: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
+      /* رقمُ التطبيق يُمرَّر في الوسائط ليكون حاضراً لحظةَ الإقلاع */
+      additionalArguments: ['--masrouf-version=' + app.getVersion()],
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true

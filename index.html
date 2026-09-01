@@ -7095,7 +7095,12 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       + '<span class="hint">' + esc(verLabel()) + '</span></div>'
       + '<div class="card"><div class="mrow"><span class="mn">النسخة'
       + '<span class="ms">' + esc(verLabel())
-      + (swReady ? ' · يعمل بلا إنترنت' : '') + '</span></span>'
+      + (swReady ? ' · يعمل بلا إنترنت' : '')
+      /* رقمان لا واحد: الصفحةُ تُحدَّث وحدها، والتطبيقُ يُثبَّت. ومن
+         رأى رقماً واحداً ظنّ أنّ تثبيته لم يقع. */
+      + (deskVer() ? ('<br>وتطبيق سطح المكتب: <b>' + esc(deskVer()) + '</b>'
+                      + ' — يُحدَّث بتثبيت إصدارٍ جديد، لا مع الصفحة.') : '')
+      + '</span></span>'
       + (swWaiting ? '<button class="mini on" data-update="1">حدّث الآن</button>'
                    : '<span class="pill">أحدث نسخة</span>') + '</div>'
       + '<div class="mrow"><span class="mn">من أين يأتي التحديث'
@@ -9043,10 +9048,15 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.4.0+24";
+  var APP_VERSION = "1.4.2";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
+  /* رقمُ قشرة سطح المكتب — فارغٌ في المتصفّح، ولا يُدَّعى ما ليس هناك */
+  function deskVer(){
+    try{ return (window.masrouf && window.masrouf.version) || ""; }
+    catch(e){ return ""; }
+  }
   /* بيت التطبيق. يُذكر حيث يحتاجه من فتحه في مكانٍ لا يُحفظ فيه. */
   var HOME = "relifeg1.github.io/masrouf";
   var installPrompt = null, swReady = false, swWaiting = null;
@@ -9735,7 +9745,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     /* تطبيق سطح المكتب يُعرَف بجسره لا بهويّة متصفّحه — فالهويّة
        تُنقّى عمداً كي تقبلها جوجل، فلا تصلح دليلاً. */
     var deskApp = !!(window.masrouf && window.masrouf.backup);
-    out.push("البيئة: " + (deskApp ? "تطبيق سطح المكتب"
+    out.push("البيئة: " + (deskApp ? ("تطبيق سطح المكتب " + (deskVer() || "؟"))
                                    : (isInstalled() ? "مثبَّت (PWA)" : "متصفّح"))
            + " · بلا إنترنت: " + (swReady ? "جاهز" : "لا"));
     out.push("الوجه: " + storageMode()
