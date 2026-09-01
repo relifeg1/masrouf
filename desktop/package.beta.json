@@ -56,10 +56,12 @@
         ]
       }
     ],
-    "category": "public.app-category.finance"
+    "category": "public.app-category.finance",
+    "artifactName": "Masrouf-Beta-${version}-${arch}.${ext}"
   },
   "dmg": {
-    "title": "مصروف"
+    "title": "مصروف",
+    "artifactName": "Masrouf-Beta-${version}-${arch}.${ext}"
   },
   "extends": null,
   "extraMetadata": {
