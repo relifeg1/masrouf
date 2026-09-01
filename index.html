@@ -7075,8 +7075,11 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
           : "")
       + (gdOn()
           ? ('<div class="mrow"><span class="mn">درايفك'
-             + '<span class="ms">ملفّك في مجلَّدٍ خفيّ داخل درايفك</span></span>'
-             + '<button class="mini" data-gdout="1">اخرج</button></div>')
+             + '<span class="ms">ملفّك في مجلَّدٍ خفيّ داخل درايفك. وإن قيل لك '
+             + '«انتهت الجلسة» والإذن يبدو قائماً، فجدّده من هنا.</span></span>'
+             + '<span class="cmodes">'
+             + '<button class="mini" data-gdin="1">جدّد الإذن</button>'
+             + '<button class="mini" data-gdout="1">اخرج</button></span></div>')
           : gdStale()
             ? ('<div class="mrow"><span class="mn">جوجل درايف'
                + '<span class="ms">انتهت الجلسة — إذن درايف يعيش ساعة، وهذا حدُّ '
@@ -8638,8 +8641,9 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       confirmDlg("الدخول بجوجل درايف",
         "ستنتقل إلى جوجل لتأذن للتطبيق بمجلَّدٍ خفيّ خاصّ به داخل درايفك. "
         + "لا يصل إلى بقيّة ملفّاتك.<br><br>"
-        + "<b>وتنبيه:</b> إذنُ درايف في المتصفّح يعيش ساعةً ثم يُطلب منك "
-        + "الدخول ثانيةً — هذا حدُّ جوجل لا حدُّنا.",
+        + "<b>وتنبيه:</b> إذنُ درايف يعيش ساعةً — وهذا حدُّ جوجل لا حدُّنا. "
+        + "ويجدّده التطبيق صامتاً حين تحتاجه، فلا تشعر به غالباً. وإن رفضت "
+        + "جوجلُ التجديد طُلب منك الدخول من هنا.",
         "أكمل", function(){ gdLogin(); });
     });
     on("[data-gdout]", function(){
@@ -8918,7 +8922,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.4.0+16";
+  var APP_VERSION = "1.4.0+17";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
@@ -9695,8 +9699,18 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     for(var k in (extra || {})) h[k] = extra[k];
     return h;
   }
+  /* جوجل رفضت الرمز — فهو ميّتٌ مهما قالت ساعتُنا. ولولا تصريحُ ذلك
+     لبقيت البطاقة تعرض «درايفك» وزرَّ الخروج وحده، ولبقي صاحبُه
+     يُؤمَر بالدخول ولا يجد ما يضغطه. */
+  function gdKill(){
+    var g = gdSess();
+    if(g && g.token) gdSet({ token: g.token, exp: 0 });
+  }
   function gdErr(r){
-    if(r.status === 401 || r.status === 403) return "انتهت جلسة درايف — ادخل ثانيةً";
+    if(r.status === 401 || r.status === 403){
+      gdKill();
+      return "انتهت جلسة درايف — ادخل ثانيةً";
+    }
     return "درايف ردّ HTTP " + r.status;
   }
   /* معرّف الملفّ في المجلّد الخفيّ — أو null إن لم يُنشأ بعد */
