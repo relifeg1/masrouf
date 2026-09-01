@@ -8918,7 +8918,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.4.0+15";
+  var APP_VERSION = "1.4.0+16";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
@@ -9453,7 +9453,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
 
   /* ثلاثة أوضاع، ويُقرأ الجاري من الواقع لا من علَمٍ مخزَّن */
   function storageMode(){
-    if(gdOn()) return "drive";
+    if(gdLinked()) return "drive";
     if(signedIn()) return "account";
     if(cloudOn()) return "own";
     return "device";
@@ -9464,13 +9464,13 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
          : m === "own" ? "سحابتك أنت" : "هذا الجهاز";
   }
   /* مُوزِّع: الرفع والتنزيل يذهبان حيث اختار صاحبه لا حيث كُتب أوّلاً */
-  function syncOn(){ return gdOn() || cloudOn(); }
+  function syncOn(){ return gdLinked() || cloudOn(); }
   function syncPush(then){
-    if(gdOn()) return gdPush(then);
+    if(gdLinked()) return gdPush(then);
     return cloudPush(then);
   }
   function syncPull(then){
-    if(gdOn()) return gdPull(then);
+    if(gdLinked()) return gdPull(then);
     return cloudPull(then);
   }
   var STOR_OPTS = [
@@ -9599,6 +9599,15 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     var g = gdSess();
     return cloudAllowed() && gdReady() && !!(g && g.token && g.exp > Date.now());
   }
+
+  /* «مربوطٌ بدرايف» غير «إذنُه صالحٌ الآن». والإذن يعيش ساعةً ثمّ
+     ينتهي — والربط يبقى. وخلطُ المعنيين أقفل المزامنة على نفسها:
+     التجديد داخل gdPull، وgdPull خلف gdOn، وgdOn تكذب بعد الساعة.
+     فيُفتح الباب على الربط، ويحرس gdOn الطلب نفسه بعد التجديد. */
+  function gdLinked(){
+    var g = gdSess();
+    return cloudAllowed() && gdReady() && !!(g && g.token);
+  }
   /* رمزٌ انتهى ليس كمن لم يدخل: الأوّل يُطلب منه التجديد لا التعريف */
   function gdStale(){
     var g = gdSess();
@@ -9628,6 +9637,10 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     if(gisState === "ok") return then(true);
     if(gisState === "off") return then(false);
     if(!gdReady()) { gisState = "off"; return then(false); }
+    /* حاضرةٌ سلفاً: لا تُحقن ثانيةً */
+    if(window.google && google.accounts && google.accounts.oauth2){
+      gisState = "ok"; return then(true);
+    }
     var el = document.createElement("script");
     el.src = "https://accounts.google.com/gsi/client";
     el.async = true;
