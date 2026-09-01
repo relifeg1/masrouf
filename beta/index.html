@@ -347,6 +347,24 @@ input,select,button,textarea{font-family:inherit;font-size:16px;min-width:0;max-
 .savebar{margin:12px 0}
 .wok{color:var(--ok,#0F7355)}
 .wno{color:var(--warn,#C2407A)}
+/* DEV:START */
+.devbar{display:flex;flex-wrap:wrap;gap:2px 14px;align-items:center;
+padding:7px 13px;margin:0 0 8px;border-radius:10px;background:var(--bg2);
+border:1px dashed var(--gold);font-size:11px;position:relative}
+.devbar span{display:flex;gap:5px;align-items:baseline;white-space:nowrap}
+.devbar s{text-decoration:none;color:var(--ink-3)}
+.devbar b{color:var(--gold);font-variant-numeric:tabular-nums}
+.devx{position:absolute;left:6px;top:4px;border:0;background:transparent;
+color:var(--ink-3);cursor:pointer;font-size:14px;line-height:1}
+/* DEV:END */
+.emoav{display:flex;align-items:center;gap:11px;margin:2px 0 8px}
+.emoface{width:52px;height:52px;flex:none;border-radius:99px;font-size:26px;
+line-height:1;cursor:pointer;border:1px solid var(--line);background:var(--bg2);
+display:flex;align-items:center;justify-content:center;transition:transform .12s}
+.emoface:hover{border-color:var(--gold);transform:scale(1.04)}
+.emolab{display:flex;flex-direction:column;gap:2px;min-width:0}
+.emolab b{font-size:12.5px;color:var(--ink)}
+.emolab s{font-size:11px;color:var(--ink-3);text-decoration:none;line-height:1.5}
 .emopick{max-height:190px;overflow:auto;margin:2px 0 4px;
 padding:6px;border:1px solid var(--line);border-radius:9px;background:var(--bg2)}
 .emog{margin-bottom:7px}
@@ -3873,9 +3891,17 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     ["أسرة", "👶🧒👨‍👩‍👧🐱🐶🎒"],
     ["مال", "💰🏦📈🛟💍🎯🪙📊"]
   ];
-  /* يكتب في الحقل الثاني — وهو «الرمز» في حواري البند والهدف معاً */
-  function emoPickHTML(){
-    return '<div class="emopick">'
+  /* وجهٌ يحمل الرمز الحاليّ، والأبوابُ تحته مطويّة. ويكتب في الحقل
+     الثاني — وهو «الرمز» في حواري البند والهدف والأمنية معاً. */
+  function emoPickHTML(cur){
+    var face = cur || "🙂";
+    return '<div class="emoav">'
+      + '<button class="emoface" data-emoopen="1" title="اختر رمزاً">'
+      + face + '</button>'
+      + '<span class="emolab"><b>الرمز</b>'
+      + '<s>اضغط الوجه فتُعرض عليك الرموز · أو اكتبه في الحقل أسفله</s>'
+      + '</span></div>'
+      + '<div class="emopick" id="emopick" hidden>'
       + EMOJI.map(function(g){
           return '<div class="emog"><s>' + esc(g[0]) + '</s><div class="emor">'
             + Array.from(g[1]).filter(function(ch){
@@ -3908,6 +3934,115 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     };
   }
   function wishList(){ return state.wish || (state.wish = []); }
+
+/* DEV:START */
+  /* ── أدوات التجربة ──
+     لا تُبنى في النسخة الحيّة أصلاً: البنّاء يقصّ ما بين العلامتين. */
+  var DEVBAR = "kh_devbar";
+  function devBarOn(){
+    try{ return localStorage.getItem(DEVBAR) === "1"; }catch(e){ return false; }
+  }
+  function devBarSet(v){
+    try{ v ? localStorage.setItem(DEVBAR, "1") : localStorage.removeItem(DEVBAR); }
+    catch(e){}
+  }
+  /* الأرقام المحسوبة كلُّها في مكانٍ واحد: يُرى أثرُ التعديل فوراً */
+  function devNums(){
+    var k = ui.month, A = actuals(k), R = wishRoom(k);
+    var plan = 0;
+    visibleCats().forEach(function(c){ plan += catPlan(c, k); });
+    var gm = 0, im = 0;
+    (state.goals || []).forEach(function(g){ if(!g.arch) gm += num(g.m); });
+    (state.invest || []).forEach(function(x){ im += num(x.m); });
+    var raw = "";
+    try{ raw = localStorage.getItem(LSKEY) || ""; }catch(e){}
+    return [
+      ["الشهر", k],
+      ["الدخل", fmt(income(k))],
+      ["الخطة", fmt(plan)],
+      ["صُرف", fmt(A.sum)],
+      ["أهداف/شهر", fmt(gm)],
+      ["استثمار/شهر", fmt(im)],
+      ["فائض الشهر", fmt(R.surplus)],
+      ["بقي الآن", fmt(R.now)],
+      ["بنود", (state.cats || []).length],
+      ["حركات", (A.n != null ? A.n : ((month(k).items || []).length))],
+      ["أمنيات", (state.wish || []).length],
+      ["مفاتيح", Object.keys(state).length],
+      ["حجم", kb(raw.length)]
+    ];
+  }
+  function devBarHTML(){
+    if(!channel() || !devBarOn()) return "";
+    return '<div class="devbar">'
+      + devNums().map(function(r){
+          return '<span><s>' + esc(String(r[0])) + '</s><b>'
+            + esc(String(r[1])) + '</b></span>';
+        }).join("")
+      + '<button class="devx" data-devbar="0">×</button></div>';
+  }
+  /* بياناتٌ تُملأ بضغطة: ربعُ ساعةِ كتابةٍ قبل كل تجربةٍ ضريبةٌ تُدفع
+     مرّةً في الأداة لا كلَّ مرّة باليد. */
+  function devSeed(){
+    var k = ui.month;
+    state.income = { salary: 14000, extra: 800 };
+    var pl = [1800, 900, 600, 450, 350, 300, 250, 200];
+    visibleCats().forEach(function(c, i){ c.p = pl[i % pl.length]; });
+    var m = month(k);
+    m.items = [];
+    var names = ["بقالة الأسبوع", "بنزين", "مطعم", "صيدلية", "اشتراك",
+                 "هدية", "صيانة", "قهوة"];
+    visibleCats().slice(0, 8).forEach(function(c, i){
+      m.items.push({ id: uid(), c: c.k, a: [240, 180, 95, 60, 45, 120, 300, 25][i],
+                     t: names[i], d: defaultDate(), at: Date.now() });
+    });
+    if(!(state.goals || []).length){
+      state.goals.push({ id: uid(), n: "صندوق الطوارئ", e: "🛟", c: "#0F7355",
+                         mode: "months", mult: 6, target: 0, saved: 3200,
+                         m: 700, date: "", arch: false });
+    }
+    if(!(state.accts || []).length){
+      state.accts.push({ id: uid(), n: "الجاري", bank: "الراجحي", bal: 18400,
+                         link: "ops", log: [] });
+    }
+    if(!(state.wish || []).length){
+      state.wish = [
+        { id: uid(), n: "شنطة", e: "👜", price: 900, bought: false, at: Date.now() },
+        { id: uid(), n: "ساعة", e: "⌚", price: 4200, bought: false, at: Date.now() }
+      ];
+    }
+    toast("مُلئت ببياناتٍ تجريبية");
+    save();
+  }
+  function devHTML(){
+    if(!channel()) return "";
+    return '<div class="sec"><h2>أدوات التجربة</h2>'
+      + '<span class="hint">' + esc(channel()) + '</span></div><div class="card">'
+      + '<div class="mrow"><span class="mn">شريط الأرقام'
+      + '<span class="ms">يعرض المحسوبات في أعلى كلّ شاشة — الدخل والخطة '
+      + 'وما صُرف وفائض الشهر وما بقي — فيُرى أثرُ كلّ تعديلٍ وهو يقع، '
+      + 'بلا تنقّلٍ بين الشاشات.</span></span>'
+      + '<button class="mini' + (devBarOn() ? ' on' : '') + '" data-devbar="'
+      + (devBarOn() ? '0' : '1') + '">' + (devBarOn() ? 'أطفئه' : 'أشعله') + '</button></div>'
+
+      + '<div class="mrow"><span class="mn">املأ ببيانات تجريبية'
+      + '<span class="ms">دخلٌ وخططٌ وحركاتٌ وهدفٌ وحسابٌ وأمنيتان — دفعةً '
+      + 'واحدة. تُكتب فوق ما في هذه القناة، ولا تمسّ القناة الحيّة.'
+      + '</span></span>'
+      + '<button class="mini" data-devseed="1">املأ</button></div>'
+
+      + '<div class="mrow"><span class="mn">نصُّ الحالة'
+      + '<span class="ms">ينسخ ما في الذاكرة كما هو — للفحص أو لإرساله '
+      + 'عند عطل.</span></span>'
+      + '<button class="mini" data-devcopy="1">انسخه</button></div>'
+
+      + '<div class="mrow off"><span class="mn">تصفير القناة'
+      + '<span class="ms">يمسح بيانات التجربة وحدها. والقناة الحيّة '
+      + 'بمعزلٍ عنها لا تتأثّر.</span></span>'
+      + '<button class="mini bad" data-devwipe="1">صفّرها</button></div>'
+      + '</div>';
+  }
+/* DEV:END */
 
   function catOptions(){
     var o = [];
@@ -4041,7 +4176,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     var c = catOf(ck), t = typeOf(c);
     ask({ title: "تعديل «" + c.n + "»",
       msg: "التصنيف والنوع للبند الأساسي فقط — البنود الفرعية تأخذ مبالغ لا أنواعاً.",
-      html: emoPickHTML(),
+      html: emoPickHTML(c.e),
       fields: [
         { label: "اسم البند", value: c.n },
         { label: "الرمز", value: c.e, ph: "⛽" },
@@ -7263,6 +7398,10 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
 
     gdWarm();   /* قبل أن يضغط أحد — وإلّا حُجبت النافذة */
 
+/* DEV:START */
+    h += devHTML();
+/* DEV:END */
+
     h += '<div class="sec"><h2>القناة</h2>'
       + '<span class="hint">' + (channel() ? "تجربة" : "حيّة") + '</span></div>'
       + '<div class="card"><div class="mrow' + (channel() ? '' : ' off') + '">'
@@ -7671,7 +7810,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     /* صنف الشاشة على .wrap — مقبض تخطيطها في الأنماط */
     document.getElementById("root").innerHTML =
       '<div class="wrap v-' + (ui.tab || "dash") + '">'
-      + topbar() + saveBar() + updateBar() + body
+      + topbar() + /* DEV:INLINE */ devBarHTML() + saveBar() + updateBar() + body
       + '<footer>' + (saveBlocked ? 'الحفظ متعذّر — اقرأ التنبيه أعلاه' : saveProof())
       + ' <span class="vtag">مصروف ' + esc(verLabel()) + '</span></footer></div>'
       + navbar() + dlgHTML();
@@ -7740,7 +7879,8 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     { n: "العرض", of: ["العملة والأرقام", "المظهر والفتح", "التبويبات",
                        "التنبيه والتسجيل", "الشروح"] },
     { n: "التطبيق", of: ["عن التطبيق", "تثبيت التطبيق", "معالج البدء",
-                        "مراقب الأخطاء", "القناة", "إعدادٌ للمطوّر"] }
+                        "مراقب الأخطاء", "القناة", /* DEV:NAME */ "أدوات التجربة",
+                        "إعدادٌ للمطوّر"] }
   ];
   function famOf(name){
     for(var i = 0; i < SET_FAM.length; i++)
@@ -8281,7 +8421,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     on("[data-addwish]", function(){
       ask({ title: "أمنية أو احتياج",
         msg: "شيءٌ تريده ولم تشترِه بعد. يُقال لك أيسعه شهرك أم ينقصه كذا.",
-        html: emoPickHTML(),
+        html: emoPickHTML("🎁"),
         fields: [{ label: "ما هو", value: "", ph: "شنطة" },
                  { label: "الرمز", value: "🎁", ph: "🎁" },
                  { label: "ثمنه التقريبي", type: "number", value: "" }],
@@ -8323,15 +8463,52 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       state.wish = wishList().filter(function(x){ return !x.bought; });
       toast("مُسحت المشتراة"); save();
     });
+/* DEV:START */
+    on("[data-devbar]", function(b){
+      devBarSet(b.getAttribute("data-devbar") === "1");
+      render();
+    });
+    on("[data-devseed]", function(){ devSeed(); });
+    on("[data-devcopy]", function(){
+      try{
+        var a = document.createElement("textarea");
+        a.value = JSON.stringify(state, null, 2);
+        a.style.position = "fixed"; a.style.opacity = "0";
+        document.body.appendChild(a); a.select(); document.execCommand("copy");
+        document.body.removeChild(a);
+        toast("نُسخت الحالة");
+      }catch(e){ toast("تعذّر النسخ"); }
+    });
+    on("[data-devwipe]", function(){
+      confirmDlg("تصفير قناة التجربة؟",
+        "يُمسح كلُّ ما في هذه القناة. والقناة الحيّة بمعزلٍ عنها لا تتأثّر.",
+        "صفّرها", function(){
+          try{
+            localStorage.removeItem(LSKEY);
+            localStorage.removeItem(SYNCLOG);
+            localStorage.removeItem(DIAGKEY);
+          }catch(e){}
+          location.reload();
+        }, true);
+    });
+/* DEV:END */
+    on("[data-emoopen]", function(){
+      var p = document.getElementById("emopick");
+      if(p) p.hidden = !p.hidden;
+    });
     on("[data-emo]", function(b){
       var el = document.getElementById("df1");
       if(!el) return;
-      el.value = b.getAttribute("data-emo");
-      /* المختارُ يُعلَّم: من ضغط يريد أن يرى أنّ ضغطته وقعت */
+      var e = b.getAttribute("data-emo");
+      el.value = e;
+      /* الوجه يتغيّر في مكانه: إعادةُ الرسم تُغلق الحوار وتُفقد حقوله */
+      var face = document.querySelector(".emoface");
+      if(face) face.textContent = e;
       var all = document.querySelectorAll("[data-emo]");
       for(var i = 0; i < all.length; i++) all[i].classList.remove("on");
       b.classList.add("on");
-      try{ el.focus({ preventScroll: true }); }catch(e){}
+      var p = document.getElementById("emopick");
+      if(p) p.hidden = true;         /* اختار فانغلقت — ولا تُزاحم بعدُ */
     });
     on("[data-calck]", function(b){
       var k = b.getAttribute("data-calck");
@@ -8417,7 +8594,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       var md = gMode(g), derived = goalFromAccts(g);
       ask({ title: "تعديل «" + g.n + "»",
         msg: "النوع يحدّد كيف يُحسب المستهدف ومتى يتوقف الاقتطاع.",
-        html: emoPickHTML(),
+        html: emoPickHTML(g.e),
         fields: [
           { label: "الاسم", value: g.n },
           { label: "الرمز", value: g.e, ph: "🎯" },
@@ -9395,7 +9572,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.4.3+4-beta";
+  var APP_VERSION = "1.5.0-beta";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
@@ -10699,7 +10876,8 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
               "قواعد": (s.rules || []).length,
               "شهور فيها توزيع": 0, "شهور مقفلة": 0,
               "آثار محذوفة": (s.gone || []).length,
-              "مفاتيح الحالة": Object.keys(s).length };
+              "مفاتيح الحالة": Object.keys(s).length,
+              "مفاتيح أخرى للتطبيق": Object.keys(backupExtras().ls || {}).length };
     mk.forEach(function(k){
       var m = s.months[k] || {};
       o["حركات"] += ((m.items) || []).length;
@@ -10724,13 +10902,33 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
               + "فهذا الملفّ يُرسَل ويُحفظ، ومن وضع فيه مفتاحه سلّمه لمن يجده. "
               + "تُطلب مرّةً واحدة بعد الاستعادة.",
       "بيان": backupCount(),
-      extras: {
-        conf: conf(),
-        dev: devTag(),
-        snap: snapInfo()
-      },
+      /* الملحقات تُمسح مسحاً لا تُعدّ عدّاً: ما يُضاف غداً يدخل بلا
+         تعديلٍ هنا. ويُستثنى الرمزان وحدهما — ويُعلَن استثناؤهما. */
+      extras: backupExtras(),
       state: state
     }, null, 2);
+  }
+
+  /* كلُّ مفاتيح التطبيق في المتصفّح — إلا ما لا يجوز أن يُرسَل */
+  var BK_SKIP = null;
+  function backupExtras(){
+    if(!BK_SKIP) BK_SKIP = [GDKEY, AKEY];       /* رمزان لا يُنسخان */
+    var out = { ls: {} };
+    try{
+      for(var i = 0; i < localStorage.length; i++){
+        var k = localStorage.key(i);
+        if(!k) continue;
+        if(k !== LSKEY && k.indexOf("kh") !== 0) continue;
+        if(k === LSKEY) continue;               /* الحالة في مكانها */
+        if(BK_SKIP.indexOf(k) >= 0) continue;
+        out.ls[k] = localStorage.getItem(k);
+      }
+    }catch(e){}
+    /* وتبقى الثلاثة بأسمائها: نسخةٌ قديمة تقرأها ولا تعرف ls */
+    out.conf = conf();
+    out.dev = devTag();
+    out.snap = snapInfo();
+    return out;
   }
 
   /* يقبل الشكلين: المغلَّف الجديد، والحالة العارية التي أُخذت بالأمس */
@@ -10948,10 +11146,13 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
           return '<div class="gdvals">' + rows.map(function(r){
             return '<div><s>' + r[0] + '</s><code>' + esc(String(r[1])) + '</code></div>';
           }).join("") + '</div>'
-          + (ex && (ex.conf || ex.dev || ex.snap)
-              ? "ومعها إعدادُ التطبيق"
-                + (ex.snap ? " ولقطةُ ما قبل التحديث" : "") + "."
-              : "");
+          + (ex && ex.ls
+              ? ("ومعها <b>" + Object.keys(ex.ls).length + "</b> مفتاحاً آخر "
+                 + "للتطبيق — إعداداتُه وسجلّاته ولقطتُه. ولا رمزَ دخولٍ فيها.")
+              : (ex && (ex.conf || ex.dev || ex.snap)
+                  ? ("ومعها إعدادُ التطبيق"
+                     + (ex.snap ? " ولقطةُ ما قبل التحديث" : "") + ".")
+                  : ""));
         })()
       + "<br><b>ستحلّ محلّ ما في جهازك الآن</b> ("
       + cur0 + " حركة). ولا رجعة.",
@@ -10964,11 +11165,24 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
              الجهاز لمن لا هويّة له وحده — فلو أخذها جهازٌ ثانٍ صار
              للاثنين هويّةٌ واحدة، فتتصادم المعرّفات وتضيع حركات. */
           try{
-            if(ex.conf) confSet(ex.conf);
-            if(ex.snap && !snapInfo())
-              localStorage.setItem(SNAPKEY, JSON.stringify(ex.snap));
-            if(ex.dev && !localStorage.getItem("kh_dev_beta"))
-              localStorage.setItem("kh_dev_beta", String(ex.dev));
+            /* ما مُسح يُكتب كما هو — إلا هويّة الجهاز والرمزين */
+            var LS = (ex && ex.ls) || null;
+            if(LS){
+              for(var kk in LS){
+                if(kk === GDKEY || kk === AKEY) continue;
+                if(kk === DEVKEY || kk === "kh_dev"){
+                  if(localStorage.getItem(kk)) continue;   /* لا تُفرَض */
+                }
+                localStorage.setItem(kk, LS[kk]);
+              }
+            } else {
+              /* ملفٌّ من نسخةٍ أقدم: الثلاثة بأسمائها */
+              if(ex.conf) confSet(ex.conf);
+              if(ex.snap && !snapInfo())
+                localStorage.setItem(SNAPKEY, JSON.stringify(ex.snap));
+              if(ex.dev && !localStorage.getItem(DEVKEY))
+                localStorage.setItem(DEVKEY, String(ex.dev));
+            }
           }catch(e3){}
           toast("تمت الاستعادة · " + n + " حركة");
           save(); render();
