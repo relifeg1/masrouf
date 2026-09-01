@@ -7140,80 +7140,72 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
             + '<button class="mini" data-backup="1">انسخها</button></div>';
         })()
 
-      /* الخيارات العاملة وحدها */
+      /* نسختك خارج الجهاز: حالٌ وبرهانٌ وعمل — في صفٍّ واحد لا ثلاثة */
+      + (syncOn() ? syncRowHTML() : "")
+
+      + (!cloudAllowed()
+          ? ('<div class="mrow off"><span class="mn">المزامنة بين الأجهزة'
+             + '<span class="ms">غير متاحة داخل أرتفاكت كلود — سياسة الأمان تمنع '
+             + 'الاتّصال بمضيف خارجي. وتعمل في النسخة المستقلّة.</span></span>'
+             + '<span class="pill">غير متاحة هنا</span></div>')
+          : "");
+    h += '</div>';
+
+    /* ── بطاقةٌ ثانية: الاختيار وحده ── */
+    h += '<div class="sec"><h2>اختر أين تُحفظ</h2>'
+      + '<span class="hint">' + (syncOn() ? "نسختان" : "نسخةٌ واحدة") + '</span></div>'
+      + '<div class="card">'
       + storageHTML(true)
-
-      /* الرفع والتنزيل يدوياً — لمن يريد أن يبدأها بنفسه */
-      + (syncOn()
-          ? ('<div class="mrow"><span class="mn">مزامنة الآن'
-             + '<span class="ms">تقع تلقائياً بعد كل تعديل: تنزل ما هناك، وتدمجه '
-             + 'بما هنا سجلّاً سجلّاً، وترفع الناتج. ولا يُستبدل شيء.'
-             + (cloudMsg ? (' · ' + esc(cloudMsg)) : '') + '</span></span>'
-             + (cloudBusy ? '<span class="pill">جارٍ…</span>'
-                : '<span class="cmodes">'
-                  + '<button class="mini" data-cloudpush="1">ارفع</button>'
-                  + '<button class="mini" data-cloudpull="1">زامن</button></span>')
-             + '</div>' + syncLogHTML())
-          : "")
-
-      /* ما يجب أن يكون في مشروع جوجل — يُقرأ ولا يُخمَّن */
-      + (gdReady()
-          ? ('<div class="mrow"><span class="mn">إعداد مشروع جوجل'
-             + '<span class="ms">إن تعذّر الدخول، فهذان السطران يجب أن يكونا '
-             + 'في بيانات العميل عندك — حرفاً بحرف:<br>'
-             + '<b>Authorized JavaScript origins</b><br><code>'
-             + esc(location.origin) + '</code><br>'
-             + '<b>Authorized redirect URIs</b><br><code>'
-             + esc(gdRedirect()) + '</code>'
-             + '</span></span></div>')
-          : "")
-
-      /* الخروج من الوجه المتَّبع */
+      /* ضبطُ جلسة درايف داخل خياره لا في صفٍّ ثانٍ يحمل اسمه */
+      + (gdOn()
+          ? ('<div class="mrow"><span class="mn">جلستك في درايف'
+             + '<span class="ms">قائمة. وإن قيل لك «انتهت الجلسة» والإذن يبدو '
+             + 'قائماً، فجدّده من هنا.</span></span>'
+             + '<span class="cmodes">'
+             + '<button class="mini" data-gdin="1">جدّد الإذن</button>'
+             + '<button class="mini" data-gdout="1">اخرج</button></span></div>')
+          : gdStale()
+            ? ('<div class="mrow"><span class="mn">جلستك في درايف'
+               + '<span class="ms">انتهت — وإذنُ درايف يعيش ساعةً، وهذا حدُّ '
+               + 'جوجل. ويجدّده التطبيق صامتاً غالباً.</span></span>'
+               + '<button class="mini on" data-gdin="1">ادخل ثانيةً</button></div>')
+            : "")
       + (signedIn()
           ? ('<div class="mrow"><span class="mn">حسابك'
              + '<span class="ms">' + esc(cloudWho()) + '</span></span>'
              + '<button class="mini" data-authout="1">اخرج</button></div>')
           : "")
-      + (gdOn()
-          ? ('<div class="mrow"><span class="mn">درايفك'
-             + '<span class="ms">ملفّك في مجلَّدٍ خفيّ داخل درايفك. وإن قيل لك '
-             + '«انتهت الجلسة» والإذن يبدو قائماً، فجدّده من هنا.</span></span>'
-             + '<span class="cmodes">'
-             + '<button class="mini" data-gdin="1">جدّد الإذن</button>'
-             + '<button class="mini" data-gdout="1">اخرج</button></span></div>')
-          : gdStale()
-            ? ('<div class="mrow"><span class="mn">جوجل درايف'
-               + '<span class="ms">انتهت الجلسة — إذن درايف يعيش ساعة، وهذا حدُّ '
-               + 'جوجل</span></span>'
-               + '<button class="mini on" data-gdin="1">ادخل ثانيةً</button></div>')
-            : "");
+      + '</div>';
 
-    var SNP = snapInfo();
-    if(SNP){
-      h += '<div class="mrow"><span class="mn">نسخةٌ محفوظة قبل آخر تحديث'
-        + '<span class="ms">قبل أن يصلك تحديثٌ يغيّر بنية البيانات، يحفظ '
-        + 'التطبيق نسخةً منها كما كانت. فلو أخطأ التحديث رجعتَ بضغطة. '
-        + 'هذه من الإصدار <b>' + esc(String(SNP.ver || "")) + '</b>.</span></span>'
-        + '<span class="cmodes"><button class="mini" data-snapback="1">ارجع إليها</button>'
-        + '<button class="mini" data-snapdrop="1">احذفها</button></span></div>';
+    /* ── وبطاقةٌ ثالثة لا تظهر إلا عند عطل ── */
+    if(gdReady() && cloudAllowed() && (gdStale() || (syncLogGet().fails || 0) > 0)){
+      h += '<div class="sec"><h2>إن تعذّر الدخول بجوجل</h2>'
+        + '<span class="hint">تشخيص</span></div><div class="card">'
+        + '<div class="mrow"><span class="mn">سطران في مشروعك'
+        + '<span class="ms">يجب أن يكونا في بيانات العميل عندك — حرفاً بحرف:'
+        + '</span>'
+        + '<span class="ms"><b>Authorized JavaScript origins</b><br><code>'
+        + esc(location.origin) + '</code><br>'
+        + '<b>Authorized redirect URIs</b><br><code>'
+        + esc(gdRedirect()) + '</code></span></span></div>'
+        + '<div class="mrow"><span class="mn">وواجهةُ درايف مفعَّلة'
+        + '<span class="ms">أكثرُ ما يمنع الرفع أنّ <b>Drive API</b> غير '
+        + 'مفعَّلٍ في المشروع. وتفصيلُ ما يقوله الخادم في '
+        + '<b>مراقب الأخطاء</b> — قسمُ «التطبيق».</span></span></div>'
+        + '</div>';
     }
 
-    /* ما لم يُهيَّأ ليس خياراً أمام المستخدم — هو عملُ صاحب النسخة مرّةً */
-    if(!cloudAllowed()){
-      h += '<div class="mrow off"><span class="mn">المزامنة بين الأجهزة'
-        + '<span class="ms">غير متاحة داخل أرتفاكت كلود — سياسة الأمان تمنع '
-        + 'الاتّصال بمضيف خارجي. وتعمل في النسخة المستقلّة.</span></span>'
-        + '<span class="pill">غير متاحة هنا</span></div>';
-    } else if(!supaReady() || !gdReady()){
-      h += '<div class="mrow off"><span class="mn">إعدادٌ للمطوّر'
+    /* إعدادُ من يوزّع النسخة — لا شأن لمن يستعملها به */
+    if(cloudAllowed() && (!supaReady() || !gdReady())){
+      h += '<div class="sec"><h2>إعدادٌ للمطوّر</h2></div><div class="card">'
+        + '<div class="mrow off"><span class="mn">مفتاح المزامنة'
         + '<span class="ms">المزامنة بين الأجهزة تحتاج مفتاحاً يُسجَّل مرّةً '
         + 'واحدة عند مزوّدها — وهذا عملُ من يوزّع النسخة لا من يستعملها.'
         + '</span></span><span class="cmodes">'
         + (!gdReady() ? '<button class="mini" data-conf="drive">درايف</button>' : "")
         + (!supaReady() ? '<button class="mini" data-conf="account">حساب</button>' : "")
-        + '</span></div>';
+        + '</span></div></div>';
     }
-    h += '</div>';
 
     h += '<div class="sec"><h2>العملة والأرقام</h2>'
       + '<span class="hint">' + esc(cur()) + ' · '
@@ -7435,8 +7427,12 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       + (snapInfo()
           ? ('<div class="mrow"><span class="mn">٣ · وإن أخطأ تحديث'
              + '<span class="ms">عندك لقطةٌ حُفظت قبل آخر تحديثٍ غيّر بنية '
-             + 'البيانات. تجدها في «أين تُحفظ بياناتك».</span></span>'
-             + '<span class="pill">لك لقطة</span></div>')
+             + 'بياناتك، من الإصدار <b>'
+             + esc(String((snapInfo() || {}).ver || "")) + '</b>. فلو أخطأ '
+             + 'التحديث رجعتَ إليها بضغطة.</span></span>'
+             + '<span class="cmodes">'
+             + '<button class="mini" data-snapback="1">ارجع إليها</button>'
+             + '<button class="mini" data-snapdrop="1">احذفها</button></span></div>')
           : ('<div class="mrow off"><span class="mn">٣ · وإن أخطأ تحديث'
              + '<span class="ms">يحفظ التطبيق لقطةً قبل أيّ تحديثٍ يغيّر بنية '
              + 'البيانات، فترجع إليها بضغطة. ولا لقطة عندك الآن — لم يصلك '
@@ -7533,7 +7529,8 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   }
   /* خمس عائلات. والترتيب داخل كلٍّ هو ترتيب ورودها في الشاشة. */
   var SET_FAM = [
-    { n: "بياناتك", of: ["أين تُحفظ بياناتك", "النسخة الاحتياطية",
+    { n: "بياناتك", of: ["أين تُحفظ بياناتك", "اختر أين تُحفظ",
+                        "إن تعذّر الدخول بجوجل", "النسخة الاحتياطية",
                         "لو ضاعت بياناتك", "منطقة الخطر"] },
     { n: "خطتك", of: ["الدخل الافتراضي", "بنود المصروف", "الأهداف",
                       "جهات الاستثمار", "الحسابات", "قواعدك النسبية"] },
@@ -7541,7 +7538,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     { n: "العرض", of: ["العملة والأرقام", "المظهر والفتح", "التبويبات",
                        "التنبيه والتسجيل", "الشروح"] },
     { n: "التطبيق", of: ["عن التطبيق", "تثبيت التطبيق", "معالج البدء",
-                        "مراقب الأخطاء"] }
+                        "مراقب الأخطاء", "إعدادٌ للمطوّر"] }
   ];
   function famOf(name){
     for(var i = 0; i < SET_FAM.length; i++)
@@ -9077,7 +9074,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.4.3";
+  var APP_VERSION = "1.4.3+2";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
@@ -9794,29 +9791,35 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     return out.join("\n");
   }
 
-  function syncLogHTML(){
+  /* صفٌّ واحد يجمع ما كان ثلاثة: أين نسختك · أوصلت فعلاً · وزرّا العمل.
+     وكانت «مزامنة الآن» و«سجلّ الرفع» صفّين متجاورين يقولان الشيء
+     نفسه بعبارتين. */
+  function syncRowHTML(){
     var g = syncLogGet();
-    if(!g.tryAt && !g.okAt) return "";
-    var bad = g.okAt ? "" : " off";
-    return '<div class="mrow' + (g.ok ? "" : " off") + '">'
-      + '<span class="mn">سجلّ الرفع'
+    return '<div class="mrow"><span class="mn">نسختك في '
+      + esc(storageName(storageMode()))
       + '<span class="ms">'
       + (g.okAt
-          ? ('آخر رفعٍ <b>نجح</b> ' + clock(g.okAt) + ' — أي أنّ بياناتك '
-             + 'وصلت فعلاً إلى هناك.')
-          : '<b>لم ينجح رفعٌ قطّ من هذا الجهاز.</b> فما كتبتَه هنا لم '
-            + 'يغادره بعد.')
+          ? ('آخر رفعٍ <b>نجح ' + clock(g.okAt) + '</b> — أي أنّ بياناتك وصلت '
+             + 'فعلاً إلى هناك. ')
+          : ('<b>لم ينجح رفعٌ قطّ من هذا الجهاز.</b> فما كتبتَه هنا لم يغادره '
+             + 'بعد. '))
       + (g.tryAt && !g.ok
-          ? ('<br>وآخر محاولة ' + clock(g.tryAt) + ' فشلت: ' + esc(g.tryMsg || "بلا سبب")
-             + (g.fails > 1 ? (' · ' + g.fails + ' محاولةً متتاليةً') : ''))
-          : "")
+          ? ('وآخر محاولة ' + clock(g.tryAt) + ' فشلت: ' + esc(g.tryMsg || "بلا سبب")
+             + (g.fails > 1 ? (' · ' + g.fails + ' محاولةً متتاليةً') : '') + '. ')
+          : '')
+      + 'وتقع تلقائياً بعد كل تعديل: تنزل ما هناك، وتدمجه بما هنا سجلّاً '
+      + 'سجلّاً، وترفع الناتج — ولا يُستبدل شيء.'
       + '</span></span>'
-      + (g.ok
-          ? '<span class="pill">سليم</span>'
-          : '<span class="cmodes">'
-            + '<button class="mini on" data-gdin="1">ادخل</button></span>')
+      + (cloudBusy
+          ? '<span class="pill">جارٍ…</span>'
+          : ('<span class="cmodes">'
+             + (g.okAt && g.ok ? '' : '<button class="mini on" data-gdin="1">ادخل</button>')
+             + '<button class="mini" data-cloudpush="1">ارفع</button>'
+             + '<button class="mini" data-cloudpull="1">زامن</button></span>'))
       + '</div>';
   }
+
   var GD_API = "https://www.googleapis.com";
   var GD_FILE = "masrouf.json";
 
