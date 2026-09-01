@@ -1569,7 +1569,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
      يُركَّب قبل كلّ شيء: ما يقع في الإقلاع هو أهمّ ما يُلتقط، وهو
      أوّل ما يضيع. ولا يعتمد على شيءٍ من التطبيق حتى يعمل ولو انكسر
      التطبيق كلُّه. */
-  var DIAGKEY = "kh_diag", diagBuf = [], diagT = null;
+  var DIAGKEY = "kh_diag_beta", diagBuf = [], diagT = null;
   /* الأسرار تُحجب قبل الكتابة لا عند العرض — فما يُخزَّن نظيفٌ أصلاً */
   function diagScrub(t){
     return String(t)
@@ -1628,7 +1628,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     };
   }catch(e){}
 
-  var LSKEY = "khettati_v3";
+  var LSKEY = "khettati_v3_beta";
   var state = JSON.parse(document.getElementById("app-state").textContent);
   var pubApi = null, pending = null, dirty = false, focusSel = null;
   var ui = { month: null, cat: null, sub: null, tab: "dash", open: {},
@@ -1754,10 +1754,10 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   function devTag(){
     if(_devTag) return _devTag;
     var d = "";
-    try{ d = localStorage.getItem("kh_dev") || ""; }catch(e){}
+    try{ d = localStorage.getItem("kh_dev_beta") || ""; }catch(e){}
     if(!d){
       d = "d" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-      try{ localStorage.setItem("kh_dev", d); }catch(e){}
+      try{ localStorage.setItem("kh_dev_beta", d); }catch(e){}
     }
     _devTag = d.slice(-4);
     return _devTag;
@@ -3195,7 +3195,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
      صار يؤجَّل ٤٠٠ms: عشرة حقول تُملأ متتابعةً تُكتب مرّة لا عشراً.
      ويُفرَغ فوراً عند مغادرة الصفحة، فلا يضيع تعديلٌ أخير. */
   /* ═══ الوسم والدمج ═══ */
-  var DEVKEY = "kh_dev";
+  var DEVKEY = "kh_dev_beta";
   function deviceId(){
     var d = null;
     try{ d = localStorage.getItem(DEVKEY); }catch(e){}
@@ -3386,7 +3386,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
 
   /* ═══ المخزن ═══
      IndexedDB أصلاً، وlocalStorage مرآةً للإقلاع السريع وللارتداد. */
-  var IDB_NAME = "masrouf", IDB_VER = 1, IDB_STORE = "kv";
+  var IDB_NAME = "masrouf_beta", IDB_VER = 1, IDB_STORE = "kv";
   var idb = null, idbState = "?";      /* ? · ok · off */
   var idbLast = {};                    /* ما كُتب فعلاً، لئلا يُعاد */
 
@@ -3526,9 +3526,9 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* فحصٌ عند الإقلاع: لا ننتظر أوّل تعديلٍ ليكتشف أن عمله يضيع */
   function storeProbe(){
     try{
-      localStorage.setItem("kh_probe", "1");
-      if(localStorage.getItem("kh_probe") !== "1") throw new Error("no readback");
-      localStorage.removeItem("kh_probe");
+      localStorage.setItem("kh_probe_beta", "1");
+      if(localStorage.getItem("kh_probe_beta") !== "1") throw new Error("no readback");
+      localStorage.removeItem("kh_probe_beta");
     }catch(e){ saveBlocked = "store"; }
   }
   function localSave(){
@@ -9091,7 +9091,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.4.3+3";
+  var APP_VERSION = "1.4.3+3-beta";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
@@ -9467,8 +9467,8 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
      إخفاء المفتاح. */
   var SUPA_URL = "";
   var SUPA_KEY = "";
-  var AKEY = "kh_auth";
-  var CONFKEY = "kh_conf";
+  var AKEY = "kh_auth_beta";
+  var CONFKEY = "kh_conf_beta";
 
   /* ما أدخله صاحب الجهاز يعلو ما حُقن عند البناء */
   function conf(){
@@ -9595,7 +9595,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   }
 
   /* ═══ لقطة ما قبل التحديث ═══ */
-  var SNAPKEY = "kh_snap", VERKEY = "kh_ver";
+  var SNAPKEY = "kh_snap_beta", VERKEY = "kh_ver_beta";
 
   /* تُستدعى قبل migrate() — وإلا حُفظت البنية بعد ترقيتها فلا تنفع رجوعاً */
   function snapBeforeUpdate(){
@@ -9764,12 +9764,12 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
 
   /* ═══ جوجل درايف ═══ */
   var GD_ID = "218609276978-j09h44m13j4s3trqcjk5ckipt8ff1g9h.apps.googleusercontent.com";      /* يُحقن عند البناء */
-  var GDKEY = "kh_gd";
+  var GDKEY = "kh_gd_beta";
 
   /* سجلُّ الرفع: يبقى بعد الإغلاق، ويحمل ما وقع لا ما نرجوه. وهو
      خارج state عمداً — فالمزامنة تدمج state، ولا يصحّ أن يُدمج سجلُّ
      جهازٍ في جهازٍ آخر. */
-  var SYNCLOG = "kh_synclog";
+  var SYNCLOG = "kh_synclog_beta";
   function syncLogGet(){
     try{ var r = localStorage.getItem(SYNCLOG); return r ? JSON.parse(r) : {}; }
     catch(e){ return {}; }
@@ -9844,7 +9844,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   }
 
   var GD_API = "https://www.googleapis.com";
-  var GD_FILE = "masrouf.json";
+  var GD_FILE = "masrouf_beta.json";
 
   function gdReady(){
     return gdClient().indexOf(".apps.googleusercontent.com") > 0;
@@ -10663,8 +10663,8 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
             if(ex.conf) confSet(ex.conf);
             if(ex.snap && !snapInfo())
               localStorage.setItem(SNAPKEY, JSON.stringify(ex.snap));
-            if(ex.dev && !localStorage.getItem("kh_dev"))
-              localStorage.setItem("kh_dev", String(ex.dev));
+            if(ex.dev && !localStorage.getItem("kh_dev_beta"))
+              localStorage.setItem("kh_dev_beta", String(ex.dev));
           }catch(e3){}
           toast("تمت الاستعادة · " + n + " حركة");
           save(); render();
