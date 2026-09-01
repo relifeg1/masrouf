@@ -345,6 +345,10 @@ input,select,button,textarea{font-family:inherit;font-size:16px;min-width:0;max-
 .vtag{opacity:.55;font-size:11px;font-family:var(--mono, monospace);
       letter-spacing:.2px;white-space:nowrap}
 .savebar{margin:12px 0}
+.diagbox{font:11px/1.55 ui-monospace,Consolas,monospace;direction:ltr;
+text-align:left;white-space:pre-wrap;word-break:break-word;max-height:340px;
+overflow:auto;width:100%;margin:0;padding:10px;border-radius:8px;
+background:var(--bg2,#0e1420);color:var(--fg,#cfd8e6);border:1px solid var(--line,#243)}
 .gdvals{margin-top:10px;display:flex;flex-direction:column;gap:8px}
 .gdvals > div{background:var(--card-2,rgba(127,127,127,.09));border-radius:8px;padding:8px 10px}
 .gdvals s{display:block;text-decoration:none;font-size:10px;opacity:.6;margin-bottom:3px}
@@ -1560,6 +1564,69 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
 <script id="app-script">
 (function(){
   "use strict";
+
+  /* ── المراقب ──
+     يُركَّب قبل كلّ شيء: ما يقع في الإقلاع هو أهمّ ما يُلتقط، وهو
+     أوّل ما يضيع. ولا يعتمد على شيءٍ من التطبيق حتى يعمل ولو انكسر
+     التطبيق كلُّه. */
+  var DIAGKEY = "kh_diag", diagBuf = [], diagT = null;
+  /* الأسرار تُحجب قبل الكتابة لا عند العرض — فما يُخزَّن نظيفٌ أصلاً */
+  function diagScrub(t){
+    return String(t)
+      .replace(/(access_token|id_token|refresh_token|apikey|Bearer)([=:"'\s]+)([A-Za-z0-9._\-]{6,})/gi,
+               "$1$2«محجوب»")
+      .replace(/ya29\.[A-Za-z0-9._\-]+/g, "«محجوب»");
+  }
+  function diagSave(){
+    if(diagT) return;
+    diagT = setTimeout(function(){
+      diagT = null;
+      try{ localStorage.setItem(DIAGKEY, JSON.stringify(diagBuf)); }catch(e){}
+    }, 700);
+  }
+  function diag(kind, msg){
+    try{
+      diagBuf.push({ t: Date.now(), k: kind, m: diagScrub(msg).slice(0, 300) });
+      if(diagBuf.length > 250) diagBuf.splice(0, diagBuf.length - 250);
+      diagSave();
+    }catch(e){}
+  }
+  try{
+    var _raw = localStorage.getItem(DIAGKEY);
+    diagBuf = _raw ? JSON.parse(_raw) : [];
+    if(!diagBuf || !diagBuf.length) diagBuf = [];
+  }catch(e){ diagBuf = []; }
+
+  try{
+    window.addEventListener("error", function(e){
+      diag("خطأ", (e.message || "") + " · "
+                + String(e.filename || "").split("/").pop() + ":" + (e.lineno || 0));
+    });
+    window.addEventListener("unhandledrejection", function(e){
+      var r = e.reason;
+      diag("وعدٌ مرفوض", (r && (r.message || r)) || "بلا سبب");
+    });
+    var _ce = console.error;
+    console.error = function(){
+      try{ diag("console", [].slice.call(arguments).join(" ")); }catch(x){}
+      return _ce.apply(console, arguments);
+    };
+    /* كلُّ طلبٍ يخرج يُسجَّل: هذا هو الأثر الذي كان ينقصنا */
+    var _of = window.fetch;
+    if(_of) window.fetch = function(u, o){
+      var url = String((u && u.url) || u || ""), t0 = Date.now();
+      var m = (o && o.method) || (u && u.method) || "GET";
+      var shortUrl = url.replace(/[?#].*$/, "");
+      return _of.apply(window, arguments).then(function(r){
+        diag("شبكة", m + " " + shortUrl + " → " + r.status
+                   + " · " + (Date.now() - t0) + "مث");
+        return r;
+      })["catch"](function(e){
+        diag("شبكة", m + " " + shortUrl + " → فشل: " + ((e && e.message) || e));
+        throw e;
+      });
+    };
+  }catch(e){}
 
   var LSKEY = "khettati_v3";
   var state = JSON.parse(document.getElementById("app-state").textContent);
@@ -7007,6 +7074,21 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
         + '</div></div>';
     }
 
+    h += '<div class="sec"><h2>مراقب الأخطاء</h2>'
+      + '<span class="hint">' + diagBuf.length + '</span></div>'
+      + '<div class="card">'
+      + '<div class="mrow"><span class="mn">ماذا يسجّل'
+      + '<span class="ms">كلّ خطأٍ يقع، وكلّ طلبٍ يخرج بردّه وزمنه، وكلّ '
+      + 'محاولة رفع. ويبقى بعد إغلاق التطبيق — فما يقع عند الإقلاع أو '
+      + 'العودة من جوجل يُلتقط ولا يضيع. '
+      + '<b>ولا يُسجَّل فيه رمزُ دخولك</b>: يُحجب قبل الكتابة، فما تنسخه '
+      + 'وترسله خالٍ منه.</span></span>'
+      + '<span class="cmodes">'
+      + '<button class="mini on" data-diagcopy="1">انسخ الكلّ</button>'
+      + '<button class="mini" data-diagclear="1">امسح</button></span></div>'
+      + '<div class="mrow"><pre class="diagbox">' + esc(diagText()) + '</pre></div>'
+      + '</div>';
+
     h += '<div class="sec"><h2>عن التطبيق</h2>'
       + '<span class="hint">' + esc(verLabel()) + '</span></div>'
       + '<div class="card"><div class="mrow"><span class="mn">النسخة'
@@ -7432,7 +7514,8 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     { n: "شهرك", of: ["الشهر المالي", "الترحيل بين الشهور", "التقويم والزكاة"] },
     { n: "العرض", of: ["العملة والأرقام", "المظهر والفتح", "التبويبات",
                        "التنبيه والتسجيل", "الشروح"] },
-    { n: "التطبيق", of: ["عن التطبيق", "تثبيت التطبيق", "معالج البدء"] }
+    { n: "التطبيق", of: ["عن التطبيق", "تثبيت التطبيق", "معالج البدء",
+                        "مراقب الأخطاء"] }
   ];
   function famOf(name){
     for(var i = 0; i < SET_FAM.length; i++)
@@ -8648,6 +8731,21 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
         toast("نُسختا — الأولى للأصول والثانية للعودة");
       }catch(e){ toast("حدّدهما وانسخهما يدوياً"); }
     });
+    on("[data-diagcopy]", function(){
+      var t = diagText();
+      try{
+        var a = document.createElement("textarea");
+        a.value = t; a.style.position = "fixed"; a.style.opacity = "0";
+        document.body.appendChild(a); a.select(); document.execCommand("copy");
+        document.body.removeChild(a);
+        toast("نُسخ الأثر — الصقه في المحادثة");
+      }catch(e){ toast("حدّده وانسخه يدوياً"); }
+    });
+    on("[data-diagclear]", function(){
+      diagBuf.length = 0;
+      try{ localStorage.removeItem(DIAGKEY); }catch(e){}
+      toast("مُسح الأثر"); render();
+    });
     on("[data-gdin]", function(){
       if(!gdReady()){ toast("درايف غير مهيّأ في هذه النسخة"); return; }
       confirmDlg("الدخول بجوجل درايف",
@@ -8941,7 +9039,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.4.0+20";
+  var APP_VERSION = "1.4.0+21";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
@@ -9619,11 +9717,36 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       g.tryAt = Date.now();
       g.tryMsg = String(msg || "");
       g.ok = !!ok;
-      if(ok){ g.okAt = Date.now(); g.fails = 0; }
-      else { g.fails = (+g.fails || 0) + 1; }
+      if(ok){ g.okAt = Date.now(); g.fails = 0; diag("مزامنة", "رفعٌ نجح"); }
+      else { g.fails = (+g.fails || 0) + 1; diag("مزامنة", "رفعٌ فشل: " + msg); }
       localStorage.setItem(SYNCLOG, JSON.stringify(g));
     }catch(e){}
   }
+  /* ما يُنسخ ويُرسل: الحال أوّلاً ثم الأثر — فالسطر بلا سياقه لغز */
+  function diagText(){
+    var g = syncLogGet(), out = [];
+    out.push("مصروف · " + APP_VERSION);
+    out.push("الأصل: " + location.origin);
+    out.push("العنوان: " + location.href.replace(/[#?].*$/, ""));
+    out.push("مثبَّت: " + (isInstalled() ? "نعم" : "لا")
+           + " · بلا إنترنت: " + (swReady ? "جاهز" : "لا"));
+    out.push("الوجه: " + storageMode()
+           + " · درايف مهيّأ: " + (gdReady() ? "نعم" : "لا")
+           + " · إذنٌ صالح: " + (gdOn() ? "نعم" : "لا")
+           + " · منتهٍ: " + (gdStale() ? "نعم" : "لا"));
+    out.push("مكتبة جوجل: " + gisState);
+    out.push("آخر رفعٍ نجح: " + (g.okAt ? clock(g.okAt) : "لم ينجح قطّ")
+           + (g.fails ? (" · إخفاقات متتالية: " + g.fails) : ""));
+    if(g.tryMsg) out.push("آخر رسالة: " + g.tryMsg);
+    out.push("المتصفّح: " + String(navigator.userAgent || "").slice(0, 120));
+    out.push("──────── الأثر ────────");
+    diagBuf.forEach(function(e){
+      out.push(clock(e.t) + " [" + e.k + "] " + e.m);
+    });
+    if(!diagBuf.length) out.push("(لا شيء بعد)");
+    return out.join("\n");
+  }
+
   function syncLogHTML(){
     var g = syncLogGet();
     if(!g.tryAt && !g.okAt) return "";
