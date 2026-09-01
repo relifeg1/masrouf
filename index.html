@@ -7074,6 +7074,8 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
         + '</div></div>';
     }
 
+    gdWarm();   /* قبل أن يضغط أحد — وإلّا حُجبت النافذة */
+
     h += '<div class="sec"><h2>مراقب الأخطاء</h2>'
       + '<span class="hint">' + diagBuf.length + '</span></div>'
       + '<div class="card">'
@@ -8755,12 +8757,14 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
         + "ويجدّده التطبيق صامتاً حين تحتاجه، فلا تشعر به غالباً. وإن رفضت "
         + "جوجلُ التجديد طُلب منك الدخول من هنا.",
         "أكمل", function(){
-          /* النافذة أوّلاً — وإن تعذّرت سُلك طريق التوجيه كما كان */
-          gdPopupLogin(function(ok, why){
-            if(ok) return;
-            toast("تعذّرت النافذة (" + why + ") — نجرّب الطريق الآخر");
-            setTimeout(gdLogin, 900);
-          });
+          /* في اللحظة نفسها: النافذة تنبع من هذه الضغطة لا من ردّ
+             تحميلٍ لاحق — وإلّا حجبها المتصفّح. */
+          if(gdTokReady){
+            try{ gdTokReady.requestAccessToken({ prompt: "consent" }); return; }
+            catch(e){ diag("درايف", "طلب الرمز: " + (e.message || e)); }
+          }
+          diag("درايف", "العميل غير جاهز — طريق التوجيه");
+          gdLogin();
         });
     });
     on("[data-gdout]", function(){
@@ -9039,7 +9043,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.4.0+21";
+  var APP_VERSION = "1.4.0+22";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
@@ -9807,6 +9811,40 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   function gdRedirect(){ return location.href.replace(/[#?].*$/, ""); }
   /* الدخول بنافذةٍ منبثقة: لا تغادر الصفحة، ولا تحتاج عنوانَ عودةٍ
      مسجَّلاً — تتحقّق جوجل من أصل الموقع وحده. */
+  /* يُبنى عميلُ الرمز مقدَّماً حتى تكون الضغطةُ نفسها هي ما يفتح
+     النافذة. وبناؤه بعد الضغطة يقطع صلتها بها، فيحجب المتصفّح. */
+  var gdTokReady = null;
+  function gdWarm(){
+    if(gdTokReady || !gdReady() || !cloudAllowed()) return;
+    gdLoadGis(function(ok){
+      if(!ok) return;
+      try{
+        gdTokReady = google.accounts.oauth2.initTokenClient({
+          client_id: gdClient(),
+          scope: "https://www.googleapis.com/auth/drive.appdata",
+          callback: function(r){
+            if(r && r.access_token){
+              gdSet({ token: r.access_token,
+                      exp: Date.now() + ((+r.expires_in || 3600) * 1000) });
+              gdTok = null;
+              diag("درايف", "دخولٌ نجح بالنافذة");
+              toast("دخلتَ درايف");
+              setTimeout(gdFirstPull, 200);
+            } else diag("درايف", "النافذة ردّت بلا رمز");
+          },
+          error_callback: function(e){
+            var t = (e && e.type) || "";
+            diag("درايف", "النافذة: " + (t || "تعذّرت"));
+            if(t === "popup_failed_to_open"){
+              toast("منع المتصفّح النافذة — نجرّب الطريق الآخر");
+              setTimeout(gdLogin, 700);
+            }
+          }
+        });
+      }catch(e){ diag("درايف", "تعذّر بناء العميل: " + (e.message || e)); }
+    });
+  }
+
   function gdPopupLogin(then){
     gdLoadGis(function(ok){
       if(!ok) return then(false, "لم تُحمَّل مكتبة جوجل");
@@ -9923,10 +9961,25 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     var g = gdSess();
     if(g && g.token) gdSet({ token: g.token, exp: 0 });
   }
+  /* جوجل تسمّي سببَها في جسم الردّ — accessNotConfigured حين لا يكون
+     Drive API مفعَّلاً، وinsufficientPermissions حين ينقص النطاق. ولم
+     يكن يصل منه شيء، فيُقرأ ويُكتب كما هو. */
+  function gdBody(r){
+    try{
+      r.clone().text().then(function(t){
+        diag("درايف", r.status + " ← " + String(t).replace(/\s+/g, " ").slice(0, 220));
+      })["catch"](function(){});
+    }catch(e){}
+  }
   function gdErr(r){
-    if(r.status === 401 || r.status === 403){
+    gdBody(r);
+    if(r.status === 401){
       gdKill();
       return "انتهت جلسة درايف — ادخل ثانيةً";
+    }
+    if(r.status === 403){
+      /* ٤٠٣ ليس انتهاءً: أشهرُ أسبابه أنّ Drive API غير مفعَّل */
+      return "درايف رفض (403) — تحقّق أنّ Drive API مفعَّلٌ في مشروعك";
     }
     return "درايف ردّ HTTP " + r.status;
   }
