@@ -366,13 +366,13 @@ display:flex;align-items:center;justify-content:center;transition:transform .12s
 .emolab{display:flex;flex-direction:column;gap:2px;min-width:0}
 .emolab b{font-size:12.5px;color:var(--ink)}
 .emolab s{font-size:11px;color:var(--ink-3);text-decoration:none;line-height:1.5}
-.emopick{max-height:190px;overflow:auto;margin:2px 0 4px;
-padding:6px;border:1px solid var(--line);border-radius:9px;background:var(--bg2)}
-.emog{margin-bottom:7px}
+.emopick{max-height:132px;overflow:auto;margin:2px 0 4px;
+padding:5px 6px;border:1px solid var(--line);border-radius:9px;background:var(--bg2)}
+.emog{margin-bottom:4px}
 .emog>s{display:block;font-size:10.5px;color:var(--ink-3);text-decoration:none;
 margin:0 2px 3px;letter-spacing:.02em}
 .emor{display:flex;flex-wrap:wrap;gap:3px}
-.emopick .emo{font-size:18px;line-height:1;padding:5px;border-radius:7px;
+.emopick .emo{font-size:16px;line-height:1;padding:3px;border-radius:6px;
 border:1px solid transparent;background:transparent;cursor:pointer}
 .emopick .emo:hover{background:var(--line)}
 .emopick .emo.on{border-color:var(--gold);background:var(--line)}
@@ -3802,7 +3802,8 @@ vertical-align:middle}
       + f.map(function(x, i){
           if(x.type === "select")
             return '<div class="f2"><label>' + esc(x.label) + '</label>'
-              + '<select id="df' + i + '" class="sel">'
+              + '<select id="df' + i + '" class="sel"'
+              + (x.rerender ? ' data-dlgre="1"' : '') + '>'
               + (x.options || []).map(function(o){
                   return '<option value="' + esc(o.v) + '"'
                     + (String(o.v) === String(x.value) ? ' selected' : '') + '>' + esc(o.n) + '</option>';
@@ -3812,6 +3813,12 @@ vertical-align:middle}
             return '<div class="f2"><label>' + esc(x.label) + '</label>'
               + '<textarea id="df' + i + '" placeholder="' + esc(x.ph || "") + '">'
               + esc(x.value == null ? "" : x.value) + '</textarea></div>';
+          /* حقلٌ مخفيّ: يحمل قيمةً يكتبها غيرُه — كالرمز يكتبه الوجه.
+             ولا يُلفّ بعنوانٍ فارغ. */
+          if(x.type === "hidden")
+            return '<input id="df' + i + '" type="hidden"'
+              + (x.emo ? ' data-emofield="1"' : '')
+              + ' value="' + esc(x.value == null ? "" : x.value) + '">';
           return '<div class="f2"><label>' + esc(x.label) + '</label>'
             + '<input id="df' + i + '" type="' + (x.type || "text") + '"'
             + (x.type === "number" ? ' inputmode="decimal"' : "")
@@ -3835,8 +3842,26 @@ vertical-align:middle}
     };
     var fire = function(){
       var v = vals(), fn = dlg.onOk;
+      /* خريطةُ المفاتيح بجانب المصفوفة: حقلٌ يظهر ويغيب يزحزح ما بعده،
+         فقراءةُ الموضع تصير قراءةَ غيره. */
+      var by = {};
+      (dlg.fields || []).forEach(function(x, i){ if(x.key) by[x.key] = v[i]; });
       dlg = null;
-      if(fn) fn(v);
+      if(fn) fn(v, by);
+      render();
+    };
+    /* تُلتقط القيمُ كلُّها وتُكتب في تعريفها قبل إعادة الرسم — فمن
+       كتب اسماً ثمّ بدّل النوع وجد اسمه كما تركه. */
+    var reEl = document.querySelector("[data-dlgre]");
+    if(reEl) reEl.onchange = function(){
+      var v = vals();
+      (dlg.fields || []).forEach(function(x, i){ x.value = v[i]; });
+      /* الطقمُ نفسه يتغيّر لا قيمُه: حقلٌ يخصّ نوعاً يظهر ويغيب معه */
+      if(typeof dlg.rebuild === "function"){
+        var by = {};
+        (dlg.fields || []).forEach(function(x, i){ if(x.key) by[x.key] = v[i]; });
+        dlg.fields = dlg.rebuild(by);
+      }
       render();
     };
     var ok = document.querySelector("[data-dok]");
@@ -4154,6 +4179,69 @@ vertical-align:middle}
         save();
       } });
   }
+  /* ما يحتاجه كلُّ نوعٍ من حقول — باسمه لا باسمٍ يجمع نوعين */
+  /* طقمُ حقول الفرع: كطقم البند، ويزيد بالمدّة */
+  function subDlgFields(x, t, by, addMode){
+    var f = [
+      { key: "name",
+        label: addMode ? "الاسم — اسمٌ في كلّ سطر لعدّة بنودٍ معاً" : "الاسم",
+        type: addMode ? "area" : "text",
+        ph: addMode ? "قسط سيارة\nتابي = 250\nتمارا" : "اكتب اسم البند",
+        value: by.name !== undefined ? by.name : (x.n || "") },
+      { key: "emo", label: "الرمز", type: "hidden", emo: true,
+        value: by.emo !== undefined ? by.emo : (x.e || "") },
+      { key: "type", label: "النوع", type: "select", value: t, rerender: true,
+        options: TYPES.map(function(y){
+          return { v: y.k, n: y.i + " " + y.n + " — " + y.d }; }) },
+      { key: "span", label: "المدّة", type: "select",
+        value: by.span !== undefined ? by.span
+               : ((x.until && x.until === ui.month) ? "one" : "on"),
+        options: [{ v: "on", n: "مستمرّ — يظهر كلّ شهر" },
+                  { v: "one", n: "هذا الشهر وحده — " + mName(ui.month) }] },
+      { key: "amount", label: "المبلغ الشهريّ" + (t === "inst" ? " (اتركه ليُحسب)" : ""),
+        type: "number",
+        value: by.amount !== undefined ? by.amount : (x.p || "") }
+    ].concat(typeExtra(t, x, by.extra));
+    if(t === "inst")
+      f.push({ key: "total", label: "إجمالي المشتَرى (يُقسَّم على الأشهر)",
+               type: "number",
+               value: by.total !== undefined ? by.total : "" });
+    return f;
+  }
+
+  /* طقمُ حقول البند: يُبنى كلَّما تغيّر نوعُه */
+  function catDlgFields(c, cls, t, by){
+    return [
+      { key: "name", label: "اسم البند",
+        value: by.name !== undefined ? by.name : c.n },
+      { key: "emo", label: "الرمز", type: "hidden", emo: true,
+        value: by.emo !== undefined ? by.emo : c.e },
+      { key: "acct", label: "حسابه المخصَّص", type: "select",
+        value: by.acct !== undefined ? by.acct : (c.acct || ""),
+        options: acctPickOptions() },
+      { key: "cls", label: "التصنيف", type: "select", value: cls,
+        options: CLASSES.map(function(y){ return { v: y.k, n: y.n }; }) },
+      { key: "type", label: "النوع", type: "select", value: t, rerender: true,
+        options: TYPES.map(function(y){
+          return { v: y.k, n: y.i + " " + y.n + " — " + y.d }; }) }
+    ].concat(typeExtra(t, c, by.extra));
+  }
+
+  function typeExtra(t, x, cur){
+    var out = [];
+    if(t === "seas")
+      out.push({ key: "extra", label: "المبلغ السنويّ (يُقسَّم على اثني عشر)",
+                 type: "number",
+                 value: (cur !== undefined && cur !== "") ? cur
+                        : (num(x.yr) || num(x.p) * 12 || "") });
+    else if(t === "inst"){
+      out.push({ key: "extra", label: "عدد الأشهر المتبقّية", type: "number",
+                 value: (cur !== undefined && cur !== "") ? cur
+                        : (instLeft(x, ui.month) || "") });
+    }
+    return out;
+  }
+
   function typeFields(x){
     var t = typeOf(x), f = [];
     if(t === "seas") f.push({ label: "المبلغ السنوي (يُقسَّم على ١٢)", type: "number", value: num(x.yr) || num(x.p) * 12 });
@@ -4221,31 +4309,20 @@ vertical-align:middle}
     var c = catOf(ck), t = typeOf(c);
     ask({ title: "تعديل «" + c.n + "»",
       msg: "التصنيف والنوع للبند الأساسي فقط — البنود الفرعية تأخذ مبالغ لا أنواعاً.",
-      fields: [
-        { label: "اسم البند", value: c.n },
-        { label: "الرمز", value: c.e, ph: "⛽" },
-        { label: "حسابه المخصَّص", type: "select", value: c.acct || "",
-          options: acctPickOptions() },
-        { label: "التصنيف", type: "select", value: clsOf(c),
-          options: CLASSES.map(function(y){ return { v: y.k, n: y.n }; }) },
-        { label: "النوع", type: "select", value: t,
-          options: TYPES.map(function(y){ return { v: y.k, n: y.i + " " + y.n + " — " + y.d }; }) },
-        { label: "للموسمي: المبلغ السنوي · للقسط: عدد الأشهر المتبقّية", type: "number",
-          value: t === "seas" ? (num(c.yr) || num(c.p) * 12)
-               : (t === "inst" ? (instLeft(c, ui.month) || "") : "") }
-      ],
+      fields: catDlgFields(c, clsOf(c), typeOf(c), {}),
+      rebuild: function(by){ return catDlgFields(c, by.cls, by.type, by); },
       /* المنتقي يُضمّ إلى اللوحة القائمة لا يُكتب مفتاحاً ثانياً:
          مفتاحان باسمٍ واحد في كائن — والثاني يغلب. فبقي المنتقي
          مكتوباً ولا يُعرض. */
       html: function(){ return emoPickHTML(c.e) + catPanel(ck); },
       ok: "احفظ",
-      onOk: function(v){
+      onOk: function(v, by){
         var c2 = catOf(ck); if(!c2) return;
-        if(v[0]) c2.n = v[0].trim();
-        if(v[1]) c2.e = v[1].trim();
-        if(v[2]) c2.acct = v[2]; else delete c2.acct;
-        c2.cls = v[3];
-        applyType(c2, v[4], v[5]);
+        if(by.name) c2.n = String(by.name).trim();
+        if(by.emo) c2.e = String(by.emo).trim();
+        if(by.acct) c2.acct = by.acct; else delete c2.acct;
+        c2.cls = by.cls;
+        applyType(c2, by.type, by.extra);
         toast("حُدّث «" + c2.n + "»");
         save();
       } });
@@ -4256,30 +4333,18 @@ vertical-align:middle}
     var t = typeOf(x);
     ask({ title: "تعديل «" + x.n + "»",
       msg: "داخل بند " + esc(c.n),
-      fields: [
-        { label: "الاسم", value: x.n },
-        { label: "النوع", type: "select", value: t,
-          options: TYPES.map(function(y){ return { v: y.k, n: y.i + " " + y.n + " — " + y.d }; }) },
-        /* المدّة: صفةُ زمانٍ لا سلوك — فهي مستقلّةٌ عن النوع */
-        { label: "المدّة", type: "select",
-          value: (x.until && x.until === ui.month) ? "one" : "on",
-          options: [{ v: "on", n: "مستمرّ — يظهر كلّ شهر" },
-                    { v: "one", n: "هذا الشهر وحده — " + mName(ui.month) }] },
-        { label: "المبلغ الشهري (اتركه فارغاً للقسط ليُحسب)", type: "number", value: num(x.p) },
-        { label: "للموسمي: المبلغ السنوي · للقسط: عدد الأشهر المتبقّية", type: "number",
-          value: t === "seas" ? (num(x.yr) || num(x.p) * 12) : (t === "inst" ? (instLeft(x, ui.month) || "") : "") },
-        { label: "للقسط فقط: إجمالي المشتَرى (يُقسَّم على الأشهر)", type: "number",
-          value: t === "inst" ? (num(x.p) * (instLeft(x, ui.month) || 1)) : "" }
-      ],
+      html: emoPickHTML(x.e || "•"),
+      fields: subDlgFields(x, t, {}, false),
+      rebuild: function(by){ return subDlgFields(x, by.type, by, false); },
       ok: "احفظ",
-      onOk: function(v){
-        if(v[0]) x.n = v[0];
-        /* أُدرج «المدّة» ثانياً، فانزاح ما بعده واحداً */
-        var months = Math.round(num(v[4])), total = num(v[5]);
-        if(v[1] === "inst" && total > 0 && months > 0) x.p = Math.round(total / months);
-        else x.p = num(v[3]);
-        applyType(x, v[1], v[4]);
-        if(v[2] === "one"){ x.from = ui.month; x.until = ui.month; }
+      onOk: function(v, by){
+        if(by.name) x.n = String(by.name).trim();
+        if(by.emo) x.e = String(by.emo).trim();
+        var months = Math.round(num(by.extra)), total = num(by.total);
+        if(by.type === "inst" && total > 0 && months > 0) x.p = Math.round(total / months);
+        else x.p = num(by.amount);
+        applyType(x, by.type, by.extra);
+        if(by.span === "one"){ x.from = ui.month; x.until = ui.month; }
         else { delete x.from; delete x.until; }
         var cc = null;
         state.cats.forEach(function(y){ if(subOf(y, x.id)) cc = y; });
@@ -5998,7 +6063,8 @@ vertical-align:middle}
           : subs.map(function(x){
               var kk = lineKey(c.k, x.id);
               return '<div class="subrow"><span class="tick" style="background:' + c.c + ';opacity:.3"></span>'
-                + '<span class="sn tap" data-editsub="' + c.k + '|' + x.id + '">' + esc(x.n)
+                + '<span class="sn tap" data-editsub="' + c.k + '|' + x.id + '">'
+                + (x.e ? (esc(x.e) + ' ') : "") + esc(x.n)
                 + (isOvr(k, kk) ? '<span class="ovr">●</span>' : "") + '</span>'
                 + '<input class="ni s" type="number" inputmode="numeric" data-sub="' + c.k + '|' + x.id + '" value="' + rawP(x, k, kk) + '">'
                 + '<button class="del" data-delsub="' + c.k + '|' + x.id + '">×</button></div>';
@@ -6262,7 +6328,8 @@ vertical-align:middle}
                 var sv2 = A.bySub[x.id] || 0;
                 var lf2 = sp2 - sv2;
                 return '<div class="qtab qsub">'
-                  + '<span class="qn"><span class="qt"><b>' + esc(x.n) + '</b>'
+                  + '<span class="qn"><span class="qt"><b>'
+                  + (x.e ? (esc(x.e) + ' ') : "") + esc(x.n) + '</b>'
                   + '<s>' + (typeOf(x) === "inst" && x.end
                               ? ('قسط · ' + instLeft(x, k) + ' متبقّية')
                               : (typeInfo(typeOf(x)) || {}).n || "") + '</s></span></span>'
@@ -8503,25 +8570,46 @@ vertical-align:middle}
     });
     on("[data-addsub]", function(b){
       var k = b.getAttribute("data-addsub"), c = catOf(k);
+      var blank = { n: "", e: "", p: "" };
       ask({ title: "بند فرعي داخل «" + c.n + "»",
-        msg: "مثال: قسط سيارة · تابي · تمارا · إحسان",
-        fields: [{ label: "الاسم", value: "", ph: "اكتب اسم البند" },
-                 { label: "النوع", type: "select", value: "var",
-                   options: TYPES.map(function(y){ return { v: y.k, n: y.i + " " + y.n + " — " + y.d }; }) },
-                 { label: "المبلغ الشهري (اتركه فارغاً للقسط)", type: "number", value: "" },
-                 { label: "للموسمي: السنوي · للقسط: عدد الأشهر", type: "number", value: "" },
-                 { label: "للقسط فقط: إجمالي المشتَرى", type: "number", value: "" }],
+        msg: "اسمٌ في كلّ سطر لعدّة بنودٍ معاً. ومن كتب «اسم = مبلغ» "
+           + "أخذ مبلغه وحده.",
+        html: emoPickHTML("•"),
+        fields: subDlgFields(blank, "var", {}, true),
+        rebuild: function(by){ return subDlgFields(blank, by.type, by, true); },
         ok: "أضف",
-        onOk: function(v){
-          if(!v[0]) return;
+        onOk: function(v, by){
+          var lines = String(by.name || "").split("\n")
+            .map(function(t){ return t.trim(); })
+            .filter(function(t){ return t.length > 0; });
+          if(!lines.length) return;
           if(!c.subs) c.subs = [];
-          var months = Math.round(num(v[3])), total = num(v[4]);
-          var p0 = (v[1] === "inst" && total > 0 && months > 0) ? Math.round(total / months) : num(v[2]);
-          var x = { id: uid(), n: v[0], p: p0 };
-          applyType(x, v[1], v[3]);
-          c.subs.push(x);
-          clampSub(c, x);
-          ui.open[k] = true; save();
+          var months = Math.round(num(by.extra)), total = num(by.total);
+          var base = (by.type === "inst" && total > 0 && months > 0)
+                     ? Math.round(total / months) : num(by.amount);
+          var made = 0;
+          lines.forEach(function(ln){
+            /* «اسم = مبلغ» يأخذ مبلغه، وما سواه يأخذ العامّ */
+            var nm = ln, own = null, eq = ln.lastIndexOf("=");
+            if(eq > 0){
+              var tail = ln.slice(eq + 1).trim();
+              if(tail && !isNaN(parseFloat(tail))){
+                nm = ln.slice(0, eq).trim();
+                own = num(tail);
+              }
+            }
+            if(!nm) return;
+            var x = { id: uid(), n: nm, p: (own === null ? base : own) };
+            if(by.emo) x.e = String(by.emo).trim();
+            applyType(x, by.type, by.extra);
+            if(by.span === "one"){ x.from = ui.month; x.until = ui.month; }
+            c.subs.push(x);
+            clampSub(c, x);
+            made++;
+          });
+          ui.open[k] = true;
+          if(made > 1) toast("أُضيف " + made + " بنداً فرعياً");
+          save();
         } });
     });
     on("[data-delsub]", function(b){
@@ -8669,7 +8757,8 @@ vertical-align:middle}
       if(p) p.hidden = !p.hidden;
     });
     on("[data-emo]", function(b){
-      var el = document.getElementById("df1");
+      var el = document.querySelector("[data-emofield]")
+             || document.getElementById("df1");
       if(!el) return;
       var e = b.getAttribute("data-emo");
       el.value = e;
@@ -9753,7 +9842,7 @@ vertical-align:middle}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+7";
+  var APP_VERSION = "1.5.0-beta";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
