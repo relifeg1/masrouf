@@ -2035,12 +2035,24 @@ vertical-align:middle}
   }
   /* بلا تاريخ نهاية = مدّته غير محدَّدة بعد — نشط ويُحسب، لا منتهٍ */
   function instDone(x, mk){ return typeOf(x) === "inst" && !!x.end && mDiff(mk, x.end) < 0; }
+  /* نافذةُ البند الزمنية: خارجها صفر. وهي مستقلّةٌ عن النوع — صفةُ
+     زمانٍ لا صفةُ سلوك. */
+  function inWindow(x, mk){
+    if(!mk) return true;
+    if(x.from && mk < x.from) return false;
+    if(x.until && mk > x.until) return false;
+    return true;
+  }
   function linePlan(x, mk, key){
     if(typeOf(x) === "inst" && instDone(x, mk)) return 0;
+    if(!inWindow(x, mk)) return 0;
     return rawP(x, mk, key);
   }
   function typePill(x, mk){
     var t = typeOf(x);
+    /* المدّة تُقال قبل النوع: من رأى «هذا الشهر» عرف لماذا يختفي غداً */
+    if(x.until && x.from && x.from === x.until)
+      return '<span class="tpill tp-inst">' + esc(mName(x.until)) + ' وحده</span>';
     if(t === "var") return "";
     if(t === "inst" && instDone(x, mk))
       return '<span class="tpill tp-done">انتهى</span>';
@@ -4246,6 +4258,11 @@ vertical-align:middle}
         { label: "الاسم", value: x.n },
         { label: "النوع", type: "select", value: t,
           options: TYPES.map(function(y){ return { v: y.k, n: y.i + " " + y.n + " — " + y.d }; }) },
+        /* المدّة: صفةُ زمانٍ لا سلوك — فهي مستقلّةٌ عن النوع */
+        { label: "المدّة", type: "select",
+          value: (x.until && x.until === ui.month) ? "one" : "on",
+          options: [{ v: "on", n: "مستمرّ — يظهر كلّ شهر" },
+                    { v: "one", n: "هذا الشهر وحده — " + mName(ui.month) }] },
         { label: "المبلغ الشهري (اتركه فارغاً للقسط ليُحسب)", type: "number", value: num(x.p) },
         { label: "للموسمي: المبلغ السنوي · للقسط: عدد الأشهر المتبقّية", type: "number",
           value: t === "seas" ? (num(x.yr) || num(x.p) * 12) : (t === "inst" ? (instLeft(x, ui.month) || "") : "") },
@@ -4255,10 +4272,13 @@ vertical-align:middle}
       ok: "احفظ",
       onOk: function(v){
         if(v[0]) x.n = v[0];
-        var months = Math.round(num(v[3])), total = num(v[4]);
+        /* أُدرج «المدّة» ثانياً، فانزاح ما بعده واحداً */
+        var months = Math.round(num(v[4])), total = num(v[5]);
         if(v[1] === "inst" && total > 0 && months > 0) x.p = Math.round(total / months);
-        else x.p = num(v[2]);
-        applyType(x, v[1], v[3]);
+        else x.p = num(v[3]);
+        applyType(x, v[1], v[4]);
+        if(v[2] === "one"){ x.from = ui.month; x.until = ui.month; }
+        else { delete x.from; delete x.until; }
         var cc = null;
         state.cats.forEach(function(y){ if(subOf(y, x.id)) cc = y; });
         if(cc) clampSub(cc, x);
@@ -9678,7 +9698,7 @@ vertical-align:middle}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+5";
+  var APP_VERSION = "1.5.0-beta+6";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
