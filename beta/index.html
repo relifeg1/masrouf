@@ -1333,6 +1333,14 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
 .fitbar .ft s b{font-family:"IBM Plex Mono",monospace;display:inline;font-size:13px;color:var(--ink)}
 .fitbar .fh{font-size:11px;color:var(--ink-3);margin-top:10px;line-height:1.75}
 .fitbar .fh b{color:var(--ink-2);font-weight:600}
+.qtab .qsx{margin-inline-start:7px;border:1px solid var(--line);background:transparent;
+color:var(--ink-3);font:600 10px/1 inherit;padding:3px 6px;border-radius:99px;cursor:pointer;
+vertical-align:middle}
+.qtab .qsx.on{color:var(--accent);border-color:var(--accent)}
+.qtab.qsub{background:var(--card-2);font-size:12px}
+.qtab.qsub .qn{padding-inline-start:26px}
+.qtab.qsub .qt b{font-weight:600;color:var(--ink-2)}
+.qtab.qsub.rest .qt b{color:var(--ink-3);font-weight:500}
 .qtab{display:grid;grid-template-columns:minmax(0,1fr) 78px 84px 58px;gap:4px;
   align-items:center;padding:8px 12px;border-bottom:1px solid var(--line)}
 .qtab.head{background:var(--card-2);font-size:10px;color:var(--ink-3);position:sticky;top:0;z-index:2}
@@ -1677,7 +1685,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   var ui = { month: null, cat: null, sub: null, tab: "dash", open: {},
              openBank: {}, openAcct: {}, showArch: false,
              acctQ: "", hideZero: false, showArchAcct: false, year: null, openEnv: {},
-             spendMode: "quick", openGoal: {}, sort: "manual", zopen: false, openLog: {},
+             spendMode: "quick", openQ: {}, openGoal: {}, sort: "manual", zopen: false, openLog: {},
              openInv: {}, stripYear: null, jumpTo: null, ledger: "plan", setSec: 0, planLayer: null, showPrev: false, repN: 6, flash: null, invLog: {} };
   var PALETTE = ["#E2703A","#3E8E7E","#4C3AE3","#2F80ED","#B4542B","#C2407A","#7A5AF8",
                  "#D9A227","#0F7355","#B4342B","#1F7A8C","#8E44AD","#16A085","#8A92A0"];
@@ -1818,6 +1826,8 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   function catExists(k){ return idxOf(k) >= 0; }
   function migrate(){
     if(!state.wish) state.wish = [];
+    /* تُستنتج مرّةً وتُحفظ، فلا تتغيّر بتغيّر الشهور بعدها */
+    if(!state.planFrom) planFrom();
     state.cats.forEach(function(c){ if(!c.subs) c.subs = []; });
     state.goals.forEach(function(g){ if(g.arch === undefined) g.arch = false; });
     for(var k in state.months){
@@ -1981,9 +1991,29 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   function planOvr(mk){ var m = state.months[mk]; return (m && m.plan) || null; }
   function hasOvr(mk){ var o = planOvr(mk); if(!o) return false;
     for(var k in o) return true; return false; }
+  /* الشهر الذي وُضعت فيه الخطة. وما قبله ليس له منها نصيب — فالدفتر
+     يقول ما كان، لا ما صار يُخطَّط له بعدُ. */
+  function planFrom(){
+    if(state.planFrom) return state.planFrom;
+    /* لمن سبق التطبيقُ عنده هذا: أوّلُ شهرٍ فيه أثرُ عمل */
+    var best = "";
+    for(var mk in (state.months || {})){
+      var m = state.months[mk] || {};
+      var used = ((m.items || []).length > 0)
+              || (m.plan && Object.keys(m.plan).length > 0)
+              || !!m.setup || !!m.inc;
+      if(used && (!best || mk < best)) best = mk;
+    }
+    state.planFrom = best || todayKey();
+    return state.planFrom;
+  }
+
   function rawP(x, mk, key){
     var o = key ? planOvr(mk) : null;
     if(o && o[key] !== undefined) return num(o[key]);
+    /* قبل بداية الخطة: لا شيء. والتعديلُ الموضعيّ يعلو هذا وذاك —
+       فمن كتب رقماً بيده في شهرٍ ماضٍ رآه، لأنّه كتبه لا لأنّه انسحب. */
+    if(mk && mk < planFrom()) return 0;
     return num(x.p);
   }
   function isOvr(mk, key){ var o = planOvr(mk); return !!(o && o[key] !== undefined); }
@@ -4177,7 +4207,6 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     var c = catOf(ck), t = typeOf(c);
     ask({ title: "تعديل «" + c.n + "»",
       msg: "التصنيف والنوع للبند الأساسي فقط — البنود الفرعية تأخذ مبالغ لا أنواعاً.",
-      html: emoPickHTML(c.e),
       fields: [
         { label: "اسم البند", value: c.n },
         { label: "الرمز", value: c.e, ph: "⛽" },
@@ -4191,7 +4220,10 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
           value: t === "seas" ? (num(c.yr) || num(c.p) * 12)
                : (t === "inst" ? (instLeft(c, ui.month) || "") : "") }
       ],
-      html: function(){ return catPanel(ck); },
+      /* المنتقي يُضمّ إلى اللوحة القائمة لا يُكتب مفتاحاً ثانياً:
+         مفتاحان باسمٍ واحد في كائن — والثاني يغلب. فبقي المنتقي
+         مكتوباً ولا يُعرض. */
+      html: function(){ return emoPickHTML(c.e) + catPanel(ck); },
       ok: "احفظ",
       onOk: function(v){
         var c2 = catOf(ck); if(!c2) return;
@@ -6180,7 +6212,13 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
         + '<span class="qn"><button class="qi" data-calcq="' + c.k
         + '" title="احسب في ' + esc(c.n) + '" style="background:' + c.c + '22;color:' + c.c + '">'
         + c.e + '</button>'
-        + '<span class="qt"><b>' + esc(c.n) + '</b>'
+        + '<span class="qt"><b>' + esc(c.n)
+        + (subs
+            ? ('<button class="qsx' + (ui.openQ[c.k] ? " on" : "")
+               + '" data-qsub="' + c.k + '" title="فروعه">'
+               + (ui.openQ[c.k] ? "▾" : "▸") + ' ' + subs + '</button>')
+            : "")
+        + '</b>'
         + '<s>' + (dn ? dn + ' عملية مفصّلة (' + fmt(det) + ')'
               : (cry ? (cry > 0 ? "مُرحَّل +" : "مُرحَّل −") + fmt(Math.abs(cry))
                        + ' · المتاح ' + fmt(avail)
@@ -6193,7 +6231,30 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
         + 'data-quick="' + c.k + '" value="' + (sp || "") + '" placeholder="'
         + (pv ? fmt(pv) : "0") + '">'
         + '<span class="qv' + (left < 0 ? " neg" : (left ? "" : " dim")) + '">' + fmt(left) + '</span>'
-        + '</div>';
+        + '</div>'
+        /* الفروع بالأعمدة نفسها: خطّة · صُرف · باقٍ. ومعها ما بقي من
+           السقف بلا فرع، فتجتمع الأرقام ولا يبقى فرقٌ لا يُفسَّر. */
+        + ((subs && ui.openQ[c.k])
+            ? ((c.subs || []).map(function(x){
+                var sp2 = linePlan(x, k, lineKey(c.k, x.id));
+                var sv2 = A.bySub[x.id] || 0;
+                var lf2 = sp2 - sv2;
+                return '<div class="qtab qsub">'
+                  + '<span class="qn"><span class="qt"><b>' + esc(x.n) + '</b>'
+                  + '<s>' + (typeOf(x) === "inst" && x.end
+                              ? ('قسط · ' + instLeft(x, k) + ' متبقّية')
+                              : (typeInfo(typeOf(x)) || {}).n || "") + '</s></span></span>'
+                  + '<input class="qin plan" type="number" inputmode="decimal" step="any" '
+                  + 'data-sub="' + c.k + '|' + x.id + '" value="' + sp2 + '">'
+                  + '<span class="qv dim">' + (sv2 ? fmt(sv2) : "·") + '</span>'
+                  + '<span class="qv' + (lf2 < 0 ? " neg" : (lf2 ? "" : " dim")) + '">'
+                  + fmt(lf2) + '</span></div>';
+              }).join("")
+              + '<div class="qtab qsub rest"><span class="qn"><span class="qt">'
+              + '<b>الباقي بلا فرع</b><s>من سقف البند</s></span></span>'
+              + '<span class="qv dim">' + fmt(catFree(c, k)) + '</span>'
+              + '<span class="qv dim">·</span><span class="qv dim">·</span></div>')
+            : "");
     }).join("");
     h += '<div class="qtab foot"><span class="qn">'
       + '<span class="qi" style="background:var(--card-2)">Σ</span>'
@@ -8566,6 +8627,11 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       }
       try{ el.focus({ preventScroll: true }); }catch(e){}
     });
+    on("[data-qsub]", function(b){
+      var k = b.getAttribute("data-qsub");
+      ui.openQ[k] = !ui.openQ[k];
+      render();
+    });
     on("[data-calcq]", function(b){
       var ck = b.getAttribute("data-calcq"), c = catOf(ck);
       /* القيمة الحاليّة هي المصروف المسجَّل في البند — لا قيمةٌ محفوظة
@@ -9612,7 +9678,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+4";
+  var APP_VERSION = "1.5.0-beta+5";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
