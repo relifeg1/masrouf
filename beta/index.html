@@ -358,6 +358,11 @@ border:1px dashed var(--gold);font-size:11px;position:relative}
 .devx{position:absolute;left:6px;top:4px;border:0;background:transparent;
 color:var(--ink-3);cursor:pointer;font-size:14px;line-height:1}
 /* DEV:END */
+.icimg{width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block}
+.qi .icimg,.ic .icimg,.ei .icimg{border-radius:99px}
+.qt b .icimg,.sn .icimg{width:15px;height:15px;border-radius:4px;
+display:inline-block;vertical-align:-3px}
+.emoup{display:flex;gap:6px;margin-top:4px}
 .emoav{display:flex;align-items:center;gap:11px;margin:2px 0 8px}
 .emoface{width:52px;height:52px;flex:none;border-radius:99px;font-size:26px;
 line-height:1;cursor:pointer;border:1px solid var(--line);background:var(--bg2);
@@ -3963,14 +3968,27 @@ vertical-align:middle}
   ];
   /* وجهٌ يحمل الرمز الحاليّ، والأبوابُ تحته مطويّة. ويكتب في الحقل
      الثاني — وهو «الرمز» في حواري البند والهدف والأمنية معاً. */
+  /* حيث تُرسم الأيقونة: الصورةُ تعلو الرمز. وما سواها يقرأ الرمز كما
+     كان — فالرمز يُعرض في مواضع لا تقبل صورة. */
+  function iconOf(x){
+    if(x && x.img) return '<img class="icimg" src="' + esc(x.img) + '" alt="">';
+    return (x && x.e) ? esc(x.e) : "";
+  }
+
   function emoPickHTML(cur){
     var face = cur || "🙂";
+    var isImg = String(face).indexOf("data:") === 0;
     return '<div class="emoav">'
       + '<button class="emoface" data-emoopen="1" title="اختر رمزاً">'
-      + face + '</button>'
+      + (isImg ? ('<img class="icimg" src="' + esc(face) + '" alt="">') : face)
+      + '</button>'
       + '<span class="emolab"><b>الرمز</b>'
-      + '<s>اضغط الوجه فتُعرض عليك الرموز · أو اكتبه في الحقل أسفله</s>'
+      + '<s>اضغط الوجه فتُعرض عليك الرموز — أو ارفع صورةً من جهازك.</s>'
+      + '<span class="emoup">'
+      + '<button class="mini" data-imgpick="1">صورة من جهازك</button>'
+      + '<button class="mini" data-imgclear="1">أزلها</button></span>'
       + '</span></div>'
+      + '<input type="file" accept="image/*" id="emofile" hidden>'
       + '<div class="emopick" id="emopick" hidden>'
       + EMOJI.map(function(g){
           return '<div class="emog"><s>' + esc(g[0]) + '</s><div class="emor">'
@@ -4189,7 +4207,7 @@ vertical-align:middle}
         ph: addMode ? "قسط سيارة\nتابي = 250\nتمارا" : "اكتب اسم البند",
         value: by.name !== undefined ? by.name : (x.n || "") },
       { key: "emo", label: "الرمز", type: "hidden", emo: true,
-        value: by.emo !== undefined ? by.emo : (x.e || "") },
+        value: by.emo !== undefined ? by.emo : (x.img || x.e || "") },
       { key: "type", label: "النوع", type: "select", value: t, rerender: true,
         options: TYPES.map(function(y){
           return { v: y.k, n: y.i + " " + y.n + " — " + y.d }; }) },
@@ -4215,7 +4233,7 @@ vertical-align:middle}
       { key: "name", label: "اسم البند",
         value: by.name !== undefined ? by.name : c.n },
       { key: "emo", label: "الرمز", type: "hidden", emo: true,
-        value: by.emo !== undefined ? by.emo : c.e },
+        value: by.emo !== undefined ? by.emo : (c.img || c.e) },
       { key: "acct", label: "حسابه المخصَّص", type: "select",
         value: by.acct !== undefined ? by.acct : (c.acct || ""),
         options: acctPickOptions() },
@@ -4314,12 +4332,16 @@ vertical-align:middle}
       /* المنتقي يُضمّ إلى اللوحة القائمة لا يُكتب مفتاحاً ثانياً:
          مفتاحان باسمٍ واحد في كائن — والثاني يغلب. فبقي المنتقي
          مكتوباً ولا يُعرض. */
-      html: function(){ return emoPickHTML(c.e) + catPanel(ck); },
+      html: function(){ return emoPickHTML(c.img || c.e) + catPanel(ck); },
       ok: "احفظ",
       onOk: function(v, by){
         var c2 = catOf(ck); if(!c2) return;
         if(by.name) c2.n = String(by.name).trim();
-        if(by.emo) c2.e = String(by.emo).trim();
+        /* ما بدأ بـdata: صورةٌ تُحفظ في img، وما سواه رمز */
+        var _v = String(by.emo || "").trim();
+        if(_v.indexOf("data:") === 0){ c2.img = _v; }
+        else if(_v){ c2.e = _v; delete c2.img; }
+        else { delete c2.img; }
         if(by.acct) c2.acct = by.acct; else delete c2.acct;
         c2.cls = by.cls;
         applyType(c2, by.type, by.extra);
@@ -4333,13 +4355,16 @@ vertical-align:middle}
     var t = typeOf(x);
     ask({ title: "تعديل «" + x.n + "»",
       msg: "داخل بند " + esc(c.n),
-      html: emoPickHTML(x.e || "•"),
+      html: emoPickHTML(x.img || x.e || "•"),
       fields: subDlgFields(x, t, {}, false),
       rebuild: function(by){ return subDlgFields(x, by.type, by, false); },
       ok: "احفظ",
       onOk: function(v, by){
         if(by.name) x.n = String(by.name).trim();
-        if(by.emo) x.e = String(by.emo).trim();
+        var _v = String(by.emo || "").trim();
+        if(_v.indexOf("data:") === 0){ x.img = _v; }
+        else if(_v){ x.e = _v; delete x.img; }
+        else { delete x.img; }
         var months = Math.round(num(by.extra)), total = num(by.total);
         if(by.type === "inst" && total > 0 && months > 0) x.p = Math.round(total / months);
         else x.p = num(by.amount);
@@ -4968,7 +4993,7 @@ vertical-align:middle}
       h += ENVtop.map(function(x){
         var l = x.left;
         return '<div class="env" data-carry="' + x.c.k + '">'
-          + '<span class="ei" style="background:' + x.c.c + '22;color:' + x.c.c + '">' + x.c.e + '</span>'
+          + '<span class="ei" style="background:' + x.c.c + '22;color:' + x.c.c + '">' + iconOf(x.c) + '</span>'
           + '<span><span class="en">' + esc(x.c.n)
           + (x.carry ? ' <span class="carry' + (x.carry < 0 ? " neg" : "") + '">'
               + (x.carry > 0 ? "سابق +" : "سابق −") + fmt(Math.abs(x.carry)) + '</span>' : "")
@@ -6064,7 +6089,7 @@ vertical-align:middle}
               var kk = lineKey(c.k, x.id);
               return '<div class="subrow"><span class="tick" style="background:' + c.c + ';opacity:.3"></span>'
                 + '<span class="sn tap" data-editsub="' + c.k + '|' + x.id + '">'
-                + (x.e ? (esc(x.e) + ' ') : "") + esc(x.n)
+                + (iconOf(x) ? (iconOf(x) + ' ') : "") + esc(x.n)
                 + (isOvr(k, kk) ? '<span class="ovr">●</span>' : "") + '</span>'
                 + '<input class="ni s" type="number" inputmode="numeric" data-sub="' + c.k + '|' + x.id + '" value="' + rawP(x, k, kk) + '">'
                 + '<button class="del" data-delsub="' + c.k + '|' + x.id + '">×</button></div>';
@@ -6299,7 +6324,7 @@ vertical-align:middle}
       return '<div class="qtab' + (ui.flash === c.k ? " flash" : "") + '">'
         + '<span class="qn"><button class="qi" data-calcq="' + c.k
         + '" title="احسب في ' + esc(c.n) + '" style="background:' + c.c + '22;color:' + c.c + '">'
-        + c.e + '</button>'
+        + iconOf(c) + '</button>'
         + '<span class="qt"><b>' + esc(c.n)
         + (subs
             ? ('<button class="qsx' + (ui.openQ[c.k] ? " on" : "")
@@ -6329,7 +6354,7 @@ vertical-align:middle}
                 var lf2 = sp2 - sv2;
                 return '<div class="qtab qsub">'
                   + '<span class="qn"><span class="qt"><b>'
-                  + (x.e ? (esc(x.e) + ' ') : "") + esc(x.n) + '</b>'
+                  + (iconOf(x) ? (iconOf(x) + ' ') : "") + esc(x.n) + '</b>'
                   + '<s>' + (typeOf(x) === "inst" && x.end
                               ? ('قسط · ' + instLeft(x, k) + ' متبقّية')
                               : (typeInfo(typeOf(x)) || {}).n || "") + '</s></span></span>'
@@ -6505,7 +6530,7 @@ vertical-align:middle}
       var over = p && v > p, near = p && !over && ratio >= nearRatio();
       var col = over ? "var(--warn)" : (near ? "var(--gold)" : c.c);
       var s = '<div class="row tap' + (v ? "" : " zero") + '" data-open="' + c.k + '">'
-        + '<span class="ic" style="background:' + c.c + '22;color:' + c.c + '">' + c.e + '</span>'
+        + '<span class="ic" style="background:' + c.c + '22;color:' + c.c + '">' + iconOf(c) + '</span>'
         + '<span><span class="nm">' + esc(c.n) + (subs.length ? "" : typePill(c, k))
         + '<span class="chev">' + (open ? "▾" : "▸") + '</span></span>'
         + '<span class="sub">من أصل ' + fmt(p)
@@ -8600,7 +8625,10 @@ vertical-align:middle}
             }
             if(!nm) return;
             var x = { id: uid(), n: nm, p: (own === null ? base : own) };
-            if(by.emo) x.e = String(by.emo).trim();
+            var _v = String(by.emo || "").trim();
+            if(_v.indexOf("data:") === 0){ x.img = _v; }
+            else if(_v){ x.e = _v; delete x.img; }
+            else { delete x.img; }
             applyType(x, by.type, by.extra);
             if(by.span === "one"){ x.from = ui.month; x.until = ui.month; }
             c.subs.push(x);
@@ -8752,6 +8780,49 @@ vertical-align:middle}
         }, true);
     });
 /* DEV:END */
+    on("[data-imgpick]", function(){
+      var f = document.getElementById("emofile");
+      if(!f) return;
+      f.onchange = function(){
+        var file = f.files && f.files[0];
+        if(!file) return;
+        var rd = new FileReader();
+        rd.onload = function(){
+          var im = new Image();
+          im.onload = function(){
+            try{
+              /* ٦٤×٦٤ وwebp: بياناتك تُرفع في ملفٍّ واحد، وصورةُ الجوّال
+                 ثلاثةُ ميغابايت. وتُقصّ مربّعةً لأنّ الأيقونة دائرة. */
+              var side = Math.min(im.width, im.height);
+              var cv = document.createElement("canvas");
+              cv.width = cv.height = 64;
+              var g = cv.getContext("2d");
+              g.drawImage(im, (im.width - side) / 2, (im.height - side) / 2,
+                          side, side, 0, 0, 64, 64);
+              var url = cv.toDataURL("image/webp", 0.8);
+              if(url.length > 12000) url = cv.toDataURL("image/webp", 0.5);
+              var el = document.querySelector("[data-emofield]");
+              if(el) el.value = url;
+              var fc = document.querySelector(".emoface");
+              if(fc) fc.innerHTML = '<img class="icimg" src="' + esc(url) + '" alt="">';
+              toast("رُفعت الصورة · " + kb(url.length));
+            }catch(e){ toast("تعذّرت معالجة الصورة"); }
+          };
+          im.onerror = function(){ toast("الملفّ ليس صورةً صالحة"); };
+          im.src = rd.result;
+        };
+        rd.onerror = function(){ toast("تعذّرت قراءة الملفّ"); };
+        rd.readAsDataURL(file);
+      };
+      f.click();
+    });
+    on("[data-imgclear]", function(){
+      var el = document.querySelector("[data-emofield]");
+      if(el) el.value = "";
+      var fc = document.querySelector(".emoface");
+      if(fc) fc.textContent = "🙂";
+      toast("أُزيلت الصورة — اختر رمزاً");
+    });
     on("[data-emoopen]", function(){
       var p = document.getElementById("emopick");
       if(p) p.hidden = !p.hidden;
@@ -9842,7 +9913,7 @@ vertical-align:middle}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta";
+  var APP_VERSION = "1.5.0-beta+2";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
