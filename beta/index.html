@@ -859,6 +859,8 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
 }
 
 /* حقل الخطة داخل الجدول السريع — يتميّز عن حقل الصرف بلونه لا بحجمه */
+.qtab .qin.plan.ro{display:flex;align-items:center;justify-content:center;
+color:var(--gold);font-variant-numeric:tabular-nums;cursor:help}
 .qtab .qin.plan{background:transparent;border-color:transparent;color:var(--ink-3);
   font-weight:500}
 .qtab .qin.plan:hover{border-color:var(--line)}
@@ -1971,7 +1973,13 @@ vertical-align:middle}
     { k: "var",  n: "متغيّر", i: "~", d: "يتغيّر كل شهر — تتابعه بالمقارنة" },
     { k: "fix",  n: "ثابت",  i: "⟳", d: "مبلغ يتكرر — يُسجَّل تلقائياً أول الشهر" },
     { k: "seas", n: "موسمي", i: "◷", d: "سنوي يُقسَّم على ١٢ ويُحجز شهرياً" },
-    { k: "inst", n: "قسط",   i: "▤", d: "مبلغ × أشهر — يعدّ تنازلياً ثم يختفي" }
+    { k: "inst", n: "قسط",   i: "▤", d: "مبلغ × أشهر — يعدّ تنازلياً ثم يختفي" },
+    { k: "cycle", n: "دوريّ", i: "↻",
+      d: "كل ن شهر — يُحجز مقسوماً ويُقال متى يُدفع" },
+    { k: "pct",  n: "نسبة",  i: "٪",
+      d: "نسبة من دخل الشهر — تتغيّر مع راتبك" },
+    { k: "cap",  n: "سقف",   i: "⌐",
+      d: "حدٌّ لا تتجاوزه — لا يُحجز من دخلك" }
   ];
   function typeOf(x){ return x && x.t ? x.t : "var"; }
 
@@ -2048,16 +2056,44 @@ vertical-align:middle}
     if(x.until && mk > x.until) return false;
     return true;
   }
+  /* السقف: حدٌّ يُقاس عليه الصرف ولا يُحجز من الدخل */
+  function capOf(x){ return num(x && x.cap); }
+  function isCap(x){ return typeOf(x) === "cap"; }
+
   function linePlan(x, mk, key){
-    if(typeOf(x) === "inst" && instDone(x, mk)) return 0;
+    var t = typeOf(x);
+    if(t === "inst" && instDone(x, mk)) return 0;
     if(!inWindow(x, mk)) return 0;
+    if(x && x.off) return 0;            /* موقوفٌ مؤقّتاً: خطّته صفر */
+    if(t === "cap") return 0;           /* سقفٌ لا خطة: لا يُحجز */
+    if(t === "pct"){
+      /* من دخل الشهر نفسه: يتغيّر الراتب فتتغيّر معه */
+      var o = key ? planOvr(mk) : null;
+      if(o && o[key] !== undefined) return num(o[key]);
+      return Math.round(income(mk || ui.month) * num(x.pct) / 100);
+    }
+    if(t === "cycle"){
+      /* المبلغ الكامل مقسوماً على دورته — كالموسميّ ودورتُه مختارة */
+      var o2 = key ? planOvr(mk) : null;
+      if(o2 && o2[key] !== undefined) return num(o2[key]);
+      var ev = Math.max(1, Math.round(num(x.every) || 12));
+      return Math.round(num(x.full) / ev);
+    }
     return rawP(x, mk, key);
   }
   function typePill(x, mk){
     var t = typeOf(x);
     /* المدّة تُقال قبل النوع: من رأى «هذا الشهر» عرف لماذا يختفي غداً */
+    if(x.off) return '<span class="tpill tp-done">موقوف</span>';
     if(x.until && x.from && x.from === x.until)
       return '<span class="tpill tp-inst">' + esc(mName(x.until)) + ' وحده</span>';
+    if(t === "cycle")
+      return '<span class="tpill tp-seas">كلّ ' + (num(x.every) || 12) + ' شهر'
+        + (x.due ? (' · ' + esc(mName(x.due))) : "") + '</span>';
+    if(t === "pct")
+      return '<span class="tpill tp-fix">' + esc(String(num(x.pct))) + '٪ من دخلك</span>';
+    if(t === "cap")
+      return '<span class="tpill tp-var">سقف ' + fmt(capOf(x)) + '</span>';
     if(t === "var") return "";
     if(t === "inst" && instDone(x, mk))
       return '<span class="tpill tp-done">انتهى</span>';
@@ -4213,9 +4249,11 @@ vertical-align:middle}
           return { v: y.k, n: y.i + " " + y.n + " — " + y.d }; }) },
       { key: "span", label: "المدّة", type: "select",
         value: by.span !== undefined ? by.span
-               : ((x.until && x.until === ui.month) ? "one" : "on"),
+               : (x.off ? "off"
+                  : ((x.until && x.until === ui.month) ? "one" : "on")),
         options: [{ v: "on", n: "مستمرّ — يظهر كلّ شهر" },
-                  { v: "one", n: "هذا الشهر وحده — " + mName(ui.month) }] },
+                  { v: "one", n: "هذا الشهر وحده — " + mName(ui.month) },
+                  { v: "off", n: "موقوف مؤقّتاً — يخرج من الخطة ويبقى تاريخه" }] },
       { key: "amount", label: "المبلغ الشهريّ" + (t === "inst" ? " (اتركه ليُحسب)" : ""),
         type: "number",
         value: by.amount !== undefined ? by.amount : (x.p || "") }
@@ -4247,6 +4285,27 @@ vertical-align:middle}
 
   function typeExtra(t, x, cur){
     var out = [];
+    if(t === "cycle"){
+      out.push({ key: "extra", label: "المبلغ الكامل في كلّ دورة",
+                 type: "number",
+                 value: (cur !== undefined && cur !== "") ? cur : (num(x.full) || "") });
+      out.push({ key: "every", label: "كلّ كم شهر؟", type: "number",
+                 value: num(x.every) || 12 });
+      out.push({ key: "due", label: "شهر الاستحقاق (مثل 2026-12)",
+                 value: x.due || "" });
+      return out;
+    }
+    if(t === "pct"){
+      out.push({ key: "extra", label: "النسبة من دخل الشهر (٪)", type: "number",
+                 value: (cur !== undefined && cur !== "") ? cur : (num(x.pct) || "") });
+      return out;
+    }
+    if(t === "cap"){
+      out.push({ key: "extra", label: "السقف الشهريّ — حدٌّ لا يُحجز من دخلك",
+                 type: "number",
+                 value: (cur !== undefined && cur !== "") ? cur : (capOf(x) || "") });
+      return out;
+    }
     if(t === "seas")
       out.push({ key: "extra", label: "المبلغ السنويّ (يُقسَّم على اثني عشر)",
                  type: "number",
@@ -4276,7 +4335,23 @@ vertical-align:middle}
       var n = Math.round(num(extra));
       if(n > 0){ x.end = shift(ui.month, n - 1); if(!x.mo || n > num(x.mo)) x.mo = n; }
       delete x.yr;
-    } else { delete x.yr; delete x.end; delete x.mo; }
+    } else if(t === "cycle"){
+      var full = num(extra);
+      if(full > 0) x.full = full;
+      if(!x.every) x.every = 12;
+      delete x.yr; delete x.end;
+    } else if(t === "pct"){
+      var pc = num(extra);
+      if(pc > 0) x.pct = pc;
+      delete x.yr; delete x.end; delete x.mo;
+    } else if(t === "cap"){
+      var cp = num(extra);
+      if(cp > 0) x.cap = cp;
+      delete x.yr; delete x.end; delete x.mo;
+    } else {
+      delete x.yr; delete x.end; delete x.mo;
+      delete x.full; delete x.pct; delete x.cap; delete x.every; delete x.due;
+    }
   }
   /* لا يتجاوز مجموع الفروع ميزانية البند */
   /* تنبيه موحّد عند تجاوز سقف أي بند — يخيّرك بين رفع السقف والضبط على المتبقي */
@@ -4345,6 +4420,8 @@ vertical-align:middle}
         if(by.acct) c2.acct = by.acct; else delete c2.acct;
         c2.cls = by.cls;
         applyType(c2, by.type, by.extra);
+        if(by.every !== undefined && num(by.every) > 0) c2.every = Math.round(num(by.every));
+        if(by.due !== undefined){ if(by.due) c2.due = String(by.due).trim(); else delete c2.due; }
         toast("حُدّث «" + c2.n + "»");
         save();
       } });
@@ -4369,8 +4446,11 @@ vertical-align:middle}
         if(by.type === "inst" && total > 0 && months > 0) x.p = Math.round(total / months);
         else x.p = num(by.amount);
         applyType(x, by.type, by.extra);
-        if(by.span === "one"){ x.from = ui.month; x.until = ui.month; }
-        else { delete x.from; delete x.until; }
+        if(by.every !== undefined && num(by.every) > 0) x.every = Math.round(num(by.every));
+        if(by.due !== undefined){ if(by.due) x.due = String(by.due).trim(); else delete x.due; }
+        if(by.span === "one"){ x.from = ui.month; x.until = ui.month; delete x.off; }
+        else if(by.span === "off"){ x.off = true; delete x.from; delete x.until; }
+        else { delete x.from; delete x.until; delete x.off; }
         var cc = null;
         state.cats.forEach(function(y){ if(subOf(y, x.id)) cc = y; });
         if(cc) clampSub(cc, x);
@@ -6316,11 +6396,23 @@ vertical-align:middle}
     var TA = 0, TS = 0;
     h += CS.map(function(c){
       var cry = carryOf(c, k), avail = catPlan(c, k) + cry;
+      /* السقف يُقاس عليه الصرف ولا يدخل المجاميع: خطّته صفرٌ عمداً،
+         فلو عُرض صفراً لظنّ صاحبُه أنّه بلا حدّ. */
+      var capRow = isCap(c);
+      if(capRow) avail = capOf(c);
+      var tk = typeOf(c);
+      var roCalc = capRow || c.off || tk === "cycle" || tk === "pct";
+      var roWhy = c.off ? "موقوف مؤقّتاً"
+                : capRow ? "سقفٌ لا يُحجز من دخلك"
+                : tk === "cycle" ? ("المبلغ الكامل ÷ " + (num(c.every) || 12) + " شهراً")
+                : ("نسبةٌ من دخل الشهر: " + num(c.pct) + "٪");
       var sp = A.by[c.k] || 0, left = avail - sp;
       var det = detailSum(k, c.k), dn = detailCount(k, c.k);
       var pv = PA.by[c.k] || 0;
       var subs = (c.subs || []).length;
-      TA += avail; TS += sp;
+      /* لا يُجمع السقف: مالٌ لم يُحجز */
+      if(!capRow) TA += avail;
+      TS += sp;
       return '<div class="qtab' + (ui.flash === c.k ? " flash" : "") + '">'
         + '<span class="qn"><button class="qi" data-calcq="' + c.k
         + '" title="احسب في ' + esc(c.n) + '" style="background:' + c.c + '22;color:' + c.c + '">'
@@ -6332,14 +6424,19 @@ vertical-align:middle}
                + (ui.openQ[c.k] ? "▾" : "▸") + ' ' + subs + '</button>')
             : "")
         + '</b>'
-        + '<s>' + (dn ? dn + ' عملية مفصّلة (' + fmt(det) + ')'
+        + '<s>' + (capRow ? ('سقفٌ لا يُحجز · ' + fmt(Math.max(0, left)) + ' قبل بلوغه')
+              : dn ? dn + ' عملية مفصّلة (' + fmt(det) + ')'
               : (cry ? (cry > 0 ? "مُرحَّل +" : "مُرحَّل −") + fmt(Math.abs(cry))
                        + ' · المتاح ' + fmt(avail)
                  : (avail ? 'بلا رصيد مُرحَّل' : 'بلا خطة'))) + '</s></span></span>'
-        + '<input class="qin plan" type="number" inputmode="decimal" step="any" '
-        + 'data-plan="' + c.k + '" value="' + rawP(c, k, c.k) + '"'
-        + (subs ? ' title="' + esc("سقف البند — مجموع فروعه " + fmt(subsSum(c, k))) + '"' : "")
-        + '>'
+        /* الأنواع المحسوبة لا تُكتب: رقمُها يُشتقّ من دورةٍ أو نسبةٍ أو
+           سقف. فلو عُرض حقلاً يُكتب فيه لظنّ صاحبُه أنّ ما يكتبه يُؤخذ. */
+        + (roCalc ? ('<span class="qin plan ro" title="' + esc(roWhy) + '">'
+                 + fmt(avail) + '</span>')
+             : ('<input class="qin plan" type="number" inputmode="decimal" step="any" '
+                + 'data-plan="' + c.k + '" value="' + rawP(c, k, c.k) + '"'
+                + (subs ? ' title="' + esc("سقف البند — مجموع فروعه " + fmt(subsSum(c, k))) + '"' : "")
+                + '>'))
         + '<input class="qin' + (sp ? " has" : "") + '" type="number" inputmode="decimal" step="any" '
         + 'data-quick="' + c.k + '" value="' + (sp || "") + '" placeholder="'
         + (pv ? fmt(pv) : "0") + '">'
@@ -8631,6 +8728,7 @@ vertical-align:middle}
             else { delete x.img; }
             applyType(x, by.type, by.extra);
             if(by.span === "one"){ x.from = ui.month; x.until = ui.month; }
+            else if(by.span === "off") x.off = true;
             c.subs.push(x);
             clampSub(c, x);
             made++;
@@ -9913,7 +10011,7 @@ vertical-align:middle}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+2";
+  var APP_VERSION = "1.5.0-beta+3";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
