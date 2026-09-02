@@ -1340,6 +1340,12 @@ color:var(--gold);font-variant-numeric:tabular-nums;cursor:help}
 .fitbar .ft s b{font-family:"IBM Plex Mono",monospace;display:inline;font-size:13px;color:var(--ink)}
 .fitbar .fh{font-size:11px;color:var(--ink-3);margin-top:10px;line-height:1.75}
 .fitbar .fh b{color:var(--ink-2);font-weight:600}
+.hintnote.gcard{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+margin:0 15px 12px;line-height:1.7}
+.hintnote.gcard b{color:var(--ink)}
+.mrow.subh{padding-top:14px;margin-top:5px;border-top:1px solid var(--line)}
+.mrow.subh .mn{font-weight:700;color:var(--ink)}
+.card>.mrow.subh:first-child{border-top:0;margin-top:0;padding-top:0}
 .qok{width:22px;height:22px;flex:none;margin-inline-end:7px;border-radius:99px;
 border:1px solid var(--line);background:transparent;color:var(--ink-3);
 font-size:12px;line-height:1;cursor:pointer;display:inline-flex;
@@ -4215,6 +4221,13 @@ vertical-align:middle}
   }
 /* DEV:END */
 
+  /* عنوانٌ فرعيّ داخل البطاقة: يفصل ما جُمع ولا يُنشئ قسماً في الفهرس */
+  function subhead(t, hint){
+    return '<div class="mrow subh"><span class="mn">' + esc(t)
+      + (hint ? ('<span class="ms">' + esc(hint) + '</span>') : "")
+      + '</span></div>';
+  }
+
   function catOptions(){
     var o = [];
     state.cats.forEach(function(c){
@@ -5670,6 +5683,79 @@ vertical-align:middle}
      ليُقرأ — القاعدة الأولى تتحقّق بلا رقم نسخةٍ يُنسى رفعه.
      ولا يُغلق إلا الشرح والحاشية: اللافتة وحالة الفراغ وشريط القفل
      تصف حالةً الآن، وإخفاؤها إخفاء حقيقة. */
+  /* ── الدليل ──
+     لكلّ شاشةٍ سطرٌ يقول ما هي وبمَ تختلف عن جارتها، وأسطرٌ تقول ما
+     يُفعل فيها. والمتنُ في مكانٍ واحد: تُقرأ منه البطاقةُ في الشاشة
+     والقسمُ في الإعدادات معاً، فلا يفترقان. */
+  var GUIDE = [
+    { k: "dash", i: "🏠", n: "اللوحة",
+      w: "خلاصةُ شهرك في نظرة: دخلُك وما صُرف وما بقي، وما يحتاج انتباهك.",
+      h: ["الأرقام الأربعة أعلاها: دخلُ الشهر · ما صُرف · المتبقّي · صافي ثروتك.",
+          "«يحتاج انتباهك» يجمع ما تجاوز خطّته وما قارب، فلا تبحث عنه.",
+          "ولا تُدخل هنا شيئاً — هذه شاشةُ قراءةٍ لا كتابة."] },
+    { k: "plan", i: "🧭", n: "الخطة",
+      w: "أين تنوي أن يذهب دخلك: كم لكلّ بند، وكم للأهداف والاستثمار.",
+      h: ["اكتب لكلّ بندٍ ما تنوي صرفه شهرياً — والمجموع يُقارَن بدخلك.",
+          "البندُ يُقسَّم فروعاً: «جوال وإنترنت» فيه فاتورةٌ واشتراك.",
+          "والأهدافُ تقتطع من دخلك قبل المصروف — فما بقي هو ما تصرفه.",
+          "«أمنياتك» تقول أيسعُ شهرَك شيءٌ تريده أم ينقصك كذا."] },
+    { k: "spend", i: "🧾", n: "المصروف",
+      w: "ما صرفتَه فعلاً — لا ما نويت. وهنا تُسجَّل الأرقام يومياً.",
+      h: ["«إدخال سريع» جدولٌ تكتب فيه مجموعَ البند، وهو الأسرع.",
+          "و«عملية بعملية» لمن يريد تاريخاً ووصفاً ومن أيّ حسابٍ دُفع.",
+          "زرُّ ✓ يعني «دفعتُه كما خطّطت» — وضغطةٌ ثانية تتراجع.",
+          "ومقبضُ الفروع يفتحها فتسجّل لكلٍّ منها على حدة."] },
+    { k: "env", i: "🧧", n: "الأظرف",
+      w: "كلُّ بندٍ ظرفٌ فيه مبلغُه: يدخله ما خُطّط ويخرج منه ما صُرف.",
+      h: ["الطريقةُ نفسها بعينٍ أخرى: من يفكّر بالأظرف يراها هنا.",
+          "والرصيدُ المتبقّي في الظرف قد يُرحَّل إلى الشهر التالي — من الإعدادات."] },
+    { k: "rep", i: "📊", n: "التقارير",
+      w: "أين ذهب مالُك فعلاً: مقارنةُ الخطة بالواقع، وتصنيفُ مصروفك.",
+      h: ["«الفعلي مقابل المخطط» يقول أيّ بندٍ خالف خطّته وبكم.",
+          "و«احتياج · كماليّ · التزام» يقول أين تملك الخفض فعلاً."] },
+    { k: "year", i: "📅", n: "السنة",
+      w: "سنتُك كلُّها في جدول: شهرٌ في كلّ عمود، وبندٌ في كلّ صفّ.",
+      h: ["«الدفتر» فيه وجهان: خطّتُك وصرفُك — بدّل بينهما من أعلاه.",
+          "وما قبل شهرِ وضعِ خطّتك فارغٌ عمداً: الدفترُ يقول ما كان."] },
+    { k: "accts", i: "🏦", n: "الحسابات",
+      w: "أرصدةُ حساباتك وبطاقاتك، وما عليك من التزامات.",
+      h: ["اربط البند بحسابٍ فيُخصم منه تلقائياً عند الصرف.",
+          "و«صافي ثروتك» = ما تملك ناقص ما عليك."] },
+    { k: "inv", i: "📈", n: "الاستثمار",
+      w: "ما تضعه في محافظك ونموّه — منفصلاً عن مصروفك.",
+      h: ["لكلّ جهةٍ ما أدخلتَه فيها وقيمتُها اليوم، فيظهر الربح.",
+          "و«سقف الاستثمار الشهري» يمنعك أن تتجاوز ما تحتمله."] }
+  ];
+
+  /* الأنواع والمدّة: يُقرآن مع الدليل ومع حوار البند سواء */
+  var GUIDE_TYPES = [
+    ["~ متغيّر", "لا سلوك خاصّ — رقمُك كما هو، وتتابعه بالمقارنة."],
+    ["⟳ ثابت", "مبلغٌ يتكرّر، يُسجَّل تلقائياً أوّل الشهر فلا تكتبه."],
+    ["◷ موسمي", "تُدخل المبلغ السنويّ فيُقسَّم على اثني عشر ويُحجز شهرياً."],
+    ["▤ قسط", "مبلغٌ × أشهر — يعدّ تنازلياً، وحين ينتهي يختفي وحده."],
+    ["↻ دوريّ", "كلّ ن شهر: يُحجز مقسوماً على دورته، ويقول متى يُدفع."],
+    ["٪ نسبة", "نسبةٌ من دخل الشهر — تتغيّر مع راتبك بلا تعديل."],
+    ["⌐ سقف", "حدٌّ لا تتجاوزه — ولا يُحجز من دخلك ولا يدخل مجموعَ خطّتك."]
+  ];
+  var GUIDE_SPAN = [
+    ["مستمرّ", "يظهر كلّ شهر."],
+    ["هذا الشهر وحده", "فاتورةٌ عابرة: تُسجَّل في شهرها ولا تلاحقك بعده."],
+    ["موقوف مؤقّتاً", "يخرج من خطّة الشهر ويبقى تاريخُه في التقارير."]
+  ];
+
+  function guideOf(tab){
+    for(var i = 0; i < GUIDE.length; i++) if(GUIDE[i].k === tab) return GUIDE[i];
+    return null;
+  }
+  /* بطاقةُ الشاشة: سطرٌ واحد وزرٌّ إلى الدليل. وتُغلق كسائر الشروح. */
+  function guideCard(){
+    var g = guideOf(ui.tab || "dash");
+    if(!g) return "";
+    return '<div class="hintnote gcard" data-note="guide-' + g.k + '">'
+      + '<b>' + g.i + ' ' + esc(g.n) + '</b> — ' + esc(g.w)
+      + ' <button class="mini" data-guide="1">الدليل الكامل</button></div>';
+  }
+
   var NOTES = {};
   function seenMap(){ if(!state.seen) state.seen = {}; return state.seen; }
   function applyNotes(){
@@ -7751,6 +7837,35 @@ vertical-align:middle}
       + '<a class="mini" href="' + (channel() ? '../' : './beta/')
       + '">' + (channel() ? 'إلى الحيّة' : 'إلى التجربة') + '</a></div></div>';
 
+    h += '<div class="sec"><h2>دليل التطبيق</h2>'
+      + '<span class="hint">' + GUIDE.length + ' شاشات</span></div>'
+      + '<div class="card">'
+      + GUIDE.map(function(g){
+          return '<div class="mrow"><span class="mn">' + g.i + ' ' + esc(g.n)
+            + '<span class="ms"><b>' + esc(g.w) + '</b><br>'
+            + g.h.map(function(x){ return '· ' + esc(x); }).join('<br>')
+            + '</span></span>'
+            + '<button class="mini" data-goto="' + g.k + '">افتحها</button></div>';
+        }).join("")
+      + subhead("أنواع البند", "ما يفعله كلُّ نوعٍ في الحساب")
+      + GUIDE_TYPES.map(function(t){
+          return '<div class="mrow"><span class="mn">' + esc(t[0])
+            + '<span class="ms">' + esc(t[1]) + '</span></span></div>';
+        }).join("")
+      + subhead("مدّة البند", "متى يظهر ومتى يغيب")
+      + GUIDE_SPAN.map(function(t){
+          return '<div class="mrow"><span class="mn">' + esc(t[0])
+            + '<span class="ms">' + esc(t[1]) + '</span></span></div>';
+        }).join("")
+      + subhead("بياناتك", "أين تُحفظ وكيف تُستعاد")
+      + '<div class="mrow"><span class="mn">تُكتب في جهازك أوّلاً'
+      + '<span class="ms">فيعمل التطبيق بلا إنترنت. ومن ربط درايف صارت له '
+      + 'نسخةٌ تتبعه إلى أجهزته — ولا تُشارَك مع أحد.</span></span></div>'
+      + '<div class="mrow"><span class="mn">وخذ نسخةً احتياطية'
+      + '<span class="ms">ملفٌّ واحد فيه كلُّ شيء بلا استثناء. من '
+      + '«النسخة الاحتياطية» — دقيقةٌ تقيك شهوراً.</span></span></div>'
+      + '</div>';
+
     h += '<div class="sec"><h2>مراقب الأخطاء</h2>'
       + '<span class="hint">' + diagBuf.length + '</span></div>'
       + '<div class="card">'
@@ -8148,7 +8263,8 @@ vertical-align:middle}
     /* صنف الشاشة على .wrap — مقبض تخطيطها في الأنماط */
     document.getElementById("root").innerHTML =
       '<div class="wrap v-' + (ui.tab || "dash") + '">'
-      + topbar() + /* DEV:INLINE */ devBarHTML() + saveBar() + updateBar() + body
+      + topbar() + /* DEV:INLINE */ devBarHTML() + saveBar() + updateBar()
+      + guideCard() + body
       + '<footer>' + (saveBlocked ? 'الحفظ متعذّر — اقرأ التنبيه أعلاه' : saveProof())
       + ' <span class="vtag">مصروف ' + esc(verLabel()) + '</span></footer></div>'
       + navbar() + dlgHTML();
@@ -8222,7 +8338,7 @@ vertical-align:middle}
                       "الأهداف والاستثمار", "الحسابات", "قواعدك النسبية"] },
     { n: "شهرك", of: ["شهرك"] },
     { n: "العرض", of: ["العرض والتقويم"] },
-    { n: "التطبيق", of: ["عن التطبيق", "مراقب الأخطاء",
+    { n: "التطبيق", of: ["دليل التطبيق", "عن التطبيق", "مراقب الأخطاء",
                         /* DEV:NAME */ "أدوات التجربة",
                         "إعدادٌ للمطوّر"] }
   ];
@@ -8911,6 +9027,23 @@ vertical-align:middle}
       toast("مُسحت المشتراة"); save();
     });
 /* DEV:START */
+    on("[data-guide]", function(){
+      /* الدليل قسمٌ في الإعدادات — يُفتح عليه لا على أوّلها */
+      ui.tab = "set";
+      var names = [];
+      ui.setSec = 0;
+      render();
+      /* بعد الرسم: يُبحث عن مدخله في الفهرس ويُضغط */
+      setTimeout(function(){
+        var a = document.querySelectorAll("[data-setsec]");
+        for(var i = 0; i < a.length; i++)
+          if(/دليل التطبيق/.test(a[i].textContent || "")){ a[i].click(); return; }
+      }, 30);
+    });
+    on("[data-goto]", function(b){
+      ui.tab = b.getAttribute("data-goto");
+      render();
+    });
     on("[data-devbar]", function(b){
       devBarSet(b.getAttribute("data-devbar") === "1");
       render();
@@ -10094,7 +10227,7 @@ vertical-align:middle}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+4";
+  var APP_VERSION = "1.5.0-beta";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
