@@ -1638,7 +1638,7 @@ vertical-align:middle}
   function diag(kind, msg){
     try{
       diagBuf.push({ t: Date.now(), k: kind, m: diagScrub(msg).slice(0, 300) });
-      if(diagBuf.length > 250) diagBuf.splice(0, diagBuf.length - 250);
+      if(diagBuf.length > 400) diagBuf.splice(0, diagBuf.length - 400);
       diagSave();
     }catch(e){}
   }
@@ -3582,6 +3582,7 @@ vertical-align:middle}
   var saveBlocked = "";
   var lastSave = 0, lastSize = 0;
   function localWrite(){
+    diag("حفظ", "إلى مخزن الجهاز");
     _lsDirty = false;
     try{
       stampChanges();          /* ما تغيّر يُوسَم، وما اختفى يُشهَد عليه */
@@ -3784,6 +3785,7 @@ vertical-align:middle}
   }
   function closeDlg(){ dlg = null; render(); }
   function confirmDlg(title, msg, okText, onOk, danger){
+    diag("حوار", String(title || "").slice(0, 60));
     ask({ title: title, msg: msg, fields: [], ok: okText || "تأكيد", danger: !!danger, onOk: onOk });
   }
   function dlgHTML(){
@@ -7504,12 +7506,15 @@ vertical-align:middle}
       + '<div class="card">'
       + '<div class="mrow"><span class="mn">ماذا يسجّل'
       + '<span class="ms">كلّ خطأٍ يقع، وكلّ طلبٍ يخرج بردّه وزمنه، وكلّ '
-      + 'محاولة رفع. ويبقى بعد إغلاق التطبيق — فما يقع عند الإقلاع أو '
+      + 'محاولة رفع، وكلَّ ضغطةٍ وتغييرِ حقلٍ وحوارٍ وحفظ — فتُقرأ القصّة '
+      + 'من أوّلها لا آخرُها. ويبقى بعد إغلاق التطبيق — فما يقع عند الإقلاع أو '
       + 'العودة من جوجل يُلتقط ولا يضيع. '
       + '<b>ولا يُسجَّل فيه رمزُ دخولك</b>: يُحجب قبل الكتابة، فما تنسخه '
       + 'وترسله خالٍ منه.</span></span>'
       + '<span class="cmodes">'
       + '<button class="mini on" data-diagcopy="1">انسخ الكلّ</button>'
+      + '<button class="mini' + (diagOnlyBad ? ' on' : '')
+      + '" data-diagfilter="1">' + (diagOnlyBad ? 'الأعطال فقط' : 'الكلّ') + '</button>'
       + '<button class="mini" data-diagclear="1">امسح</button></span></div>'
       + '<div class="mrow"><pre class="diagbox">' + esc(diagText()) + '</pre></div>'
       + '</div>';
@@ -7878,6 +7883,7 @@ vertical-align:middle}
      فيصفّر المتصفّحُ التمرير، ثمّ تطول ويبقى الصفر. */
   var _scTab = null;
   function render(){
+    var _rt0 = Date.now();
     var sameTab = (_scTab === ui.tab);
     var keepY = sameTab
       ? (window.pageYOffset || document.documentElement.scrollTop || 0) : 0;
@@ -7898,6 +7904,13 @@ vertical-align:middle}
       + navbar() + dlgHTML();
     applyNotes();
     wire(); if(!setNav()) colLayout(); wire(); dlgWire(); restoreFocus();
+
+    /* الرسم يقع عشراتِ المرّات — فلا يُسجَّل إلا ما أبطأ منه، وإلا
+       أغرق الأثرَ بما لا يدلّ. */
+    try{
+      var _rms = Date.now() - _rt0;
+      if(_rms >= 60) diag("رسم", (ui.tab || "dash") + " · " + _rms + "مث");
+    }catch(e){}
 
     _scTab = ui.tab;
     if(keepY > 0){
@@ -8064,6 +8077,16 @@ vertical-align:middle}
     tail.forEach(function(el){ wrap.appendChild(el); });
     return true;
   }
+  /* قسمةُ العمودين تُحفظ: الموازنة في كلّ رسمٍ تجعل الشاشة تقفز
+     كلّما طال قسمٌ — وفتحُ بندٍ ليس طلباً لإعادة ترتيب الصفحة. */
+  var _colMem = { sig: "", side: {} };
+  function unitName(u, i){
+    var el = u.els && u.els[0];
+    var h2 = el && el.querySelector ? el.querySelector("h2") : null;
+    if(h2) return h2.textContent.trim();
+    return (el && el.className ? String(el.className).split(" ")[0] : "?") + "#" + i;
+  }
+
   function colLayout(){
     var wrap = document.querySelector("#root > .wrap");
     if(!wrap) return;
@@ -8104,6 +8127,15 @@ vertical-align:middle}
       wrap.appendChild(box);
     }
     /* كم وحدة متتالية غير عابرة؟ أقلّ من اثنتين لا تستحق عمودين */
+    /* بصمةُ الطقم: الشاشة · وأسماء الأقسام · وعرض النافذة. فإن لم
+       تتغيّر أُعيد كلُّ قسمٍ إلى عموده، وإلا وُزّع من جديد. */
+    var _names = [];
+    seq.forEach(function(u, i){ if(!u.span) _names.push(unitName(u, i)); });
+    var _sig = (ui.tab || "") + "|" + _names.join("§") + "|"
+             + (window.innerWidth < 1500 ? "s" : "w");
+    var _keep = (_sig === _colMem.sig);
+    if(!_keep){ _colMem = { sig: _sig, side: {} }; }
+
     seq.forEach(function(u, i){
       if(u.span){
         closeBox();
@@ -8111,6 +8143,13 @@ vertical-align:middle}
         return;
       }
       if(!box) openBox();
+
+      var _nm = unitName(u, i);
+      if(_keep && _colMem.side[_nm]){
+        var tt = (_colMem.side[_nm] === "A") ? colA : colB;
+        u.els.forEach(function(e){ tt.appendChild(e); });
+        return;
+      }
 
       /* الوجهة بالمعنى لا بالارتفاع:
          ما فيه جدول أو قائمة أعمدة يحتاج عرضاً · وما هو ملخّص أو تنبيه
@@ -8127,6 +8166,7 @@ vertical-align:middle}
       } else {
         t = (ha <= hb) ? colA : colB;
       }
+      _colMem.side[_nm] = (t === colA) ? "A" : "B";
       u.els.forEach(function(e){ t.appendChild(e); });
     });
   }
@@ -8147,8 +8187,19 @@ vertical-align:middle}
 
   function wire(){
     var q = function(s){ return Array.prototype.slice.call(document.querySelectorAll(s)); };
-    var on = function(sel, fn){ q(sel).forEach(function(el){ el.onclick = function(e){ fn(el, e); }; }); };
-    var ch = function(sel, fn){ q(sel).forEach(function(el){ el.onchange = function(){ fn(el); }; }); };
+    /* اسمُ المقبض وقيمتُه — لا ما كُتب في الحقل. فالقيمُ بيانات
+       صاحبه، والأثرُ يُرسَل. */
+    var actName = function(sel, el){
+      var m = /\[data-([a-z0-9-]+)\]/i.exec(sel);
+      var k = m ? m[1] : sel;
+      var v = "";
+      try{ v = el.getAttribute("data-" + k) || ""; }catch(e){}
+      return k + (v && v !== "1" ? ("=" + String(v).slice(0, 24)) : "");
+    };
+    var on = function(sel, fn){ q(sel).forEach(function(el){ el.onclick = function(e){
+      diag("ضغط", actName(sel, el)); fn(el, e); }; }); };
+    var ch = function(sel, fn){ q(sel).forEach(function(el){ el.onchange = function(){
+      diag("حقل", actName(sel, el)); fn(el); }; }); };
 
     on("[data-tab]", function(b){ ui.tab = b.getAttribute("data-tab");
       try{ sessionStorage.setItem("kh_tab", ui.tab); }catch(e){} render(); });
@@ -9398,6 +9449,10 @@ vertical-align:middle}
         toast("نُسخ الأثر — الصقه في المحادثة");
       }catch(e){ toast("حدّده وانسخه يدوياً"); }
     });
+    on("[data-diagfilter]", function(){
+      diagOnlyBad = !diagOnlyBad;
+      render();
+    });
     on("[data-diagclear]", function(){
       diagBuf.length = 0;
       try{ localStorage.removeItem(DIAGKEY); }catch(e){}
@@ -9698,7 +9753,7 @@ vertical-align:middle}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+6";
+  var APP_VERSION = "1.5.0-beta+7";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
@@ -10393,6 +10448,13 @@ vertical-align:middle}
     }catch(e){}
   }
   /* ما يُنسخ ويُرسل: الحال أوّلاً ثم الأثر — فالسطر بلا سياقه لغز */
+  /* من يبحث عن عطلٍ لا يقرأ مئة ضغطة */
+  var diagOnlyBad = false;
+  function diagKeep(e){
+    if(!diagOnlyBad) return true;
+    return /خطأ|وعد|console|شبكة|درايف|مزامنة/.test(e.k || "");
+  }
+
   function diagText(){
     var g = syncLogGet(), out = [];
     out.push("مصروف · " + APP_VERSION);
@@ -10415,6 +10477,7 @@ vertical-align:middle}
     out.push("المتصفّح: " + String(navigator.userAgent || "").slice(0, 120));
     out.push("──────── الأثر ────────");
     diagBuf.forEach(function(e){
+      if(!diagKeep(e)) return;
       out.push(clock(e.t) + " [" + e.k + "] " + e.m);
     });
     if(!diagBuf.length) out.push("(لا شيء بعد)");
