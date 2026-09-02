@@ -1340,6 +1340,13 @@ color:var(--gold);font-variant-numeric:tabular-nums;cursor:help}
 .fitbar .ft s b{font-family:"IBM Plex Mono",monospace;display:inline;font-size:13px;color:var(--ink)}
 .fitbar .fh{font-size:11px;color:var(--ink-3);margin-top:10px;line-height:1.75}
 .fitbar .fh b{color:var(--ink-2);font-weight:600}
+.qok{width:22px;height:22px;flex:none;margin-inline-end:7px;border-radius:99px;
+border:1px solid var(--line);background:transparent;color:var(--ink-3);
+font-size:12px;line-height:1;cursor:pointer;display:inline-flex;
+align-items:center;justify-content:center;transition:.12s}
+.qok:hover{border-color:var(--ok);color:var(--ok)}
+.qok.on{background:var(--ok);border-color:var(--ok);color:#fff}
+.qtab.qsub .qok{width:19px;height:19px;font-size:11px}
 .qtab .qsx{margin-inline-start:7px;border:1px solid var(--line);background:transparent;
 color:var(--ink-3);font:600 10px/1 inherit;padding:3px 6px;border-radius:99px;cursor:pointer;
 vertical-align:middle}
@@ -2945,6 +2952,46 @@ vertical-align:middle}
   }
 
   /* كم وضعتَ فعلاً في هذا الهدف هذا الشهر — قد يقلّ عن المخطط */
+  /* ── صرفُ الفرع ──
+     نظيرُ setQuick بقيدٍ واحد: العملية تحمل s فتُنسب إلى فرعها. وما
+     سُجّل عمليةً عمليةً لا يُمسّ، فلا يُحسب المبلغ مرّتين. */
+  function quickSubItem(mk, ck, sid){
+    var m = state.months[mk], q = null;
+    if(m && m.items) m.items.forEach(function(it){
+      if(it.q && it.c === ck && it.s === sid) q = it; });
+    return q;
+  }
+  function detailSubSum(mk, ck, sid){
+    var m = state.months[mk], t = 0;
+    if(m && m.items) m.items.forEach(function(it){
+      if(it.c === ck && it.s === sid && !it.q) t += num(it.a); });
+    return t;
+  }
+  function setQuickSub(mk, ck, sid, total){
+    var det = detailSubSum(mk, ck, sid), q = quickSubItem(mk, ck, sid), m = month(mk);
+    var t = Math.max(0, num(total));
+    if(t < det){
+      toast("مسجَّل تفصيلياً " + fmt(det) + " — الإجمالي لا يقل عنه");
+      t = det;
+    }
+    var rest = t - det;
+    if(q) unlinkSpend(q);
+    if(rest <= 0){
+      if(q) m.items = m.items.filter(function(x){ return x.id !== q.id; });
+      return t;
+    }
+    if(!q){
+      q = { id: uid(), c: ck, s: sid, a: rest, t: "إدخال سريع", d: mk + "-01", q: true };
+      var c0 = catOf(ck), ca = c0 && c0.acct;
+      if(trackSrc() && ca && acctOf(ca)) q.acct = ca;
+      m.items.push(q);
+    } else {
+      q.a = rest;
+    }
+    linkSpend(q);
+    return t;
+  }
+
   function goalOf(id){
     for(var i=0;i<state.goals.length;i++) if(state.goals[i].id === id) return state.goals[i];
     return null;
@@ -6414,7 +6461,13 @@ vertical-align:middle}
       if(!capRow) TA += avail;
       TS += sp;
       return '<div class="qtab' + (ui.flash === c.k ? " flash" : "") + '">'
-        + '<span class="qn"><button class="qi" data-calcq="' + c.k
+        + '<span class="qn">'
+        + (capRow || c.off ? ""
+            : ('<button class="qok' + ((avail > 0 && sp >= avail) ? " on" : "")
+               + '" data-qfull="' + c.k + '" title="'
+               + esc((avail > 0 && sp >= avail) ? "تراجع عن الدفع" : "دفعتُه كاملاً")
+               + '">✓</button>'))
+        + '<button class="qi" data-calcq="' + c.k
         + '" title="احسب في ' + esc(c.n) + '" style="background:' + c.c + '22;color:' + c.c + '">'
         + iconOf(c) + '</button>'
         + '<span class="qt"><b>' + esc(c.n)
@@ -6449,15 +6502,23 @@ vertical-align:middle}
                 var sp2 = linePlan(x, k, lineKey(c.k, x.id));
                 var sv2 = A.bySub[x.id] || 0;
                 var lf2 = sp2 - sv2;
+                var paid2 = (sp2 > 0 && sv2 >= sp2);
                 return '<div class="qtab qsub">'
-                  + '<span class="qn"><span class="qt"><b>'
+                  + '<span class="qn">'
+                  /* ضغطةٌ تعني «دفعتُها كاملةً»، وثانيةٌ تتراجع */
+                  + '<button class="qok' + (paid2 ? " on" : "") + '" data-qfull="'
+                  + c.k + '|' + x.id + '" title="'
+                  + esc(paid2 ? "تراجع عن الدفع" : "دفعتُها كاملةً") + '">✓</button>'
+                  + '<span class="qt"><b>'
                   + (iconOf(x) ? (iconOf(x) + ' ') : "") + esc(x.n) + '</b>'
                   + '<s>' + (typeOf(x) === "inst" && x.end
                               ? ('قسط · ' + instLeft(x, k) + ' متبقّية')
                               : (typeInfo(typeOf(x)) || {}).n || "") + '</s></span></span>'
                   + '<input class="qin plan" type="number" inputmode="decimal" step="any" '
                   + 'data-sub="' + c.k + '|' + x.id + '" value="' + sp2 + '">'
-                  + '<span class="qv dim">' + (sv2 ? fmt(sv2) : "·") + '</span>'
+                  + '<input class="qin' + (sv2 ? " has" : "") + '" type="number" '
+                  + 'inputmode="decimal" step="any" data-qsubspend="' + c.k + '|' + x.id
+                  + '" value="' + (sv2 || "") + '" placeholder="0">'
                   + '<span class="qv' + (lf2 < 0 ? " neg" : (lf2 ? "" : " dim")) + '">'
                   + fmt(lf2) + '</span></div>';
               }).join("")
@@ -8956,6 +9017,28 @@ vertical-align:middle}
       }
       try{ el.focus({ preventScroll: true }); }catch(e){}
     });
+    ch("[data-qsubspend]", function(el){
+      var p = el.getAttribute("data-qsubspend").split("|");
+      setQuickSub(ui.month, p[0], p[1], el.value);
+      flashRow(p[0]); save(); render();
+    });
+    on("[data-qfull]", function(b){
+      var p = b.getAttribute("data-qfull").split("|");
+      var c = catOf(p[0]);
+      if(!c) return;
+      if(p.length > 1){
+        var x = subOf(c, p[1]);
+        if(!x) return;
+        var want = linePlan(x, ui.month, lineKey(c.k, x.id));
+        var now = actuals(ui.month).bySub[x.id] || 0;
+        setQuickSub(ui.month, c.k, x.id, (now >= want && want > 0) ? 0 : want);
+      } else {
+        var av = isCap(c) ? capOf(c) : (catPlan(c, ui.month) + carryOf(c, ui.month));
+        var cur = actuals(ui.month).by[c.k] || 0;
+        setQuick(ui.month, c.k, (cur >= av && av > 0) ? 0 : av);
+      }
+      flashRow(p[0]); save(); render();
+    });
     on("[data-qsub]", function(b){
       var k = b.getAttribute("data-qsub");
       ui.openQ[k] = !ui.openQ[k];
@@ -10011,7 +10094,7 @@ vertical-align:middle}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+3";
+  var APP_VERSION = "1.5.0-beta+4";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
