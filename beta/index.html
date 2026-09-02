@@ -7874,15 +7874,33 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     { n: "بياناتك", of: ["أين تُحفظ بياناتك", "اختر أين تُحفظ",
                         "إن تعذّر الدخول بجوجل", "النسخة الاحتياطية",
                         "لو ضاعت بياناتك", "منطقة الخطر"] },
-    { n: "خطتك", of: ["الدخل الافتراضي", "بنود المصروف", "الأهداف",
-                      "جهات الاستثمار", "الحسابات", "قواعدك النسبية"] },
-    { n: "شهرك", of: ["الشهر المالي", "الترحيل بين الشهور", "التقويم والزكاة"] },
-    { n: "العرض", of: ["العملة والأرقام", "المظهر والفتح", "التبويبات",
-                       "التنبيه والتسجيل", "الشروح"] },
-    { n: "التطبيق", of: ["عن التطبيق", "تثبيت التطبيق", "معالج البدء",
-                        "مراقب الأخطاء", "القناة", /* DEV:NAME */ "أدوات التجربة",
+    { n: "خطتك", of: ["الدخل الافتراضي", "بنود المصروف",
+                      "الأهداف والاستثمار", "الحسابات", "قواعدك النسبية"] },
+    { n: "شهرك", of: ["شهرك"] },
+    { n: "العرض", of: ["العرض والتقويم"] },
+    { n: "التطبيق", of: ["عن التطبيق", "مراقب الأخطاء",
+                        /* DEV:NAME */ "أدوات التجربة",
                         "إعدادٌ للمطوّر"] }
   ];
+  /* ما يُعرض معاً تحت مدخلٍ واحد. والجمعُ في الفهرس لا في المحتوى:
+     الأقسام تُبنى كما هي، ثمّ تُعرض مجموعةً — فلا يُمسّ شرطٌ ولا
+     بطاقة. وقد جُرّب الدمجُ في المصدر فكسر أقساماً لا تُرى. */
+  var SET_GRP = [
+    { n: "العرض والتقويم", of: ["العملة والأرقام", "التقويم والزكاة",
+                               "المظهر والفتح", "التبويبات",
+                               "التنبيه والتسجيل", "الشروح"] },
+    { n: "شهرك", of: ["الشهر المالي", "الترحيل بين الشهور"] },
+    { n: "الأهداف والاستثمار", of: ["الأهداف", "جهات الاستثمار",
+                                   "سقف الاستثمار الشهري"] },
+    { n: "عن التطبيق", of: ["عن التطبيق", "تثبيت التطبيق", "القناة",
+                           "معالج البدء"] }
+  ];
+  function grpOf(name){
+    for(var i = 0; i < SET_GRP.length; i++)
+      if(SET_GRP[i].of.indexOf(name) >= 0) return SET_GRP[i];
+    return null;
+  }
+
   function famOf(name){
     for(var i = 0; i < SET_FAM.length; i++)
       if(SET_FAM[i].of.indexOf(name) >= 0) return i;
@@ -7902,7 +7920,27 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
       if(cur) cur.els.push(el); else lead.push(el);
     });
     if(units.length < 3) return false;
-    var pick = Math.min(ui.setSec || 0, units.length - 1);
+
+    /* تُجمَع الوحدات: ما كان في مجموعةٍ انضمّ إلى أختها، وما لا فهو
+       مجموعةٌ وحده. والترتيب ترتيبُ أوّل عضوٍ يظهر. */
+    var groups = [], byName = {};
+    units.forEach(function(u, i){
+      var h2 = u.h.querySelector("h2");
+      var nm = h2 ? h2.textContent.trim() : "قسم";
+      var g = grpOf(nm);
+      var key = g ? g.n : ("#" + i);
+      if(!byName[key]){
+        byName[key] = { name: g ? g.n : nm, idx: [], hint: "" };
+        groups.push(byName[key]);
+      }
+      byName[key].idx.push(i);
+      if(!g){
+        var hn = u.h.querySelector(".hint");
+        byName[key].hint = hn ? hn.textContent.trim() : "";
+      }
+    });
+
+    var pick = Math.min(ui.setSec || 0, groups.length - 1);
 
     kids.forEach(function(el){ wrap.removeChild(el); });
     lead.forEach(function(el){ wrap.appendChild(el); });
@@ -7919,12 +7957,11 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     /* تُصنَّف أوّلاً ثم تُرسم عائلةً عائلة — فالفهرس يُقرأ لا يُمسح */
     var bins = [];
     for(var f = 0; f <= SET_FAM.length; f++) bins.push([]);
-    units.forEach(function(u, i){
-      var h2 = u.h.querySelector("h2"), hint = u.h.querySelector(".hint");
-      var name = h2 ? h2.textContent : "قسم";
-      var ht = hint ? hint.textContent.trim() : "";
+    groups.forEach(function(g, i){
+      var ht = g.hint;
       if(ht.length > 12 || !/[0-9٠-٩]/.test(ht)) ht = "";
-      bins[famOf(name)].push({ i: i, name: name, ht: ht, bad: /خطر/.test(name) });
+      bins[famOf(g.name)].push({ i: i, name: g.name, ht: ht,
+                                 bad: /خطر/.test(g.name) });
     });
     var html = "";
     bins.forEach(function(list, f){
@@ -7940,7 +7977,9 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
     nav.innerHTML = html;
     a.appendChild(nav);
 
-    units[pick].els.forEach(function(el){ b.appendChild(el); });
+    groups[pick].idx.forEach(function(ui2){
+      units[ui2].els.forEach(function(el){ b.appendChild(el); });
+    });
     tail.forEach(function(el){ wrap.appendChild(el); });
     return true;
   }
@@ -9573,7 +9612,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+2-beta";
+  var APP_VERSION = "1.5.0-beta+3-beta";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
