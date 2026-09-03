@@ -359,6 +359,25 @@ text-decoration:none;white-space:normal}
 .wroom span{flex:1 1 0;min-width:0;display:block}
 .wroom b{display:block;font-size:19px;font-variant-numeric:tabular-nums}
 .wroom s{display:block;text-decoration:none;font-size:11px;color:var(--ink-3);line-height:1.6}
+.wsim{margin-top:13px;padding-top:12px;border-top:1px solid var(--line)}
+.simhead{display:flex;align-items:center;gap:10px;margin:6px 0 9px;flex-wrap:wrap}
+.simchip{flex:none;font-size:11.5px;padding:3px 11px;border-radius:99px;
+border:1px solid var(--line);color:var(--ink-3)}
+.simchip.ok{background:var(--ok,#0F7355);border-color:var(--ok,#0F7355);color:#fff}
+.simchip.warn{background:var(--warn,#C2407A);border-color:var(--warn,#C2407A);color:#fff}
+.simchip.cost{border-color:var(--warn,#C2407A);color:var(--warn,#C2407A)}
+.simnum{flex:1 1 0;min-width:0;font-size:15px;font-variant-numeric:tabular-nums}
+.simnum b{font-weight:600}
+.simnum s{display:block;text-decoration:none;font-size:11px;color:var(--ink-3);margin-top:1px}
+.simrows{display:flex;flex-direction:column;gap:2px}
+.simr{display:flex;gap:9px;align-items:baseline;padding:7px 10px;border-radius:10px;
+background:var(--card-2)}
+.simr>b{flex:none;font-size:13.5px;font-variant-numeric:tabular-nums;min-width:58px}
+.simr>s{flex:1 1 0;min-width:0;text-decoration:none;font-size:11.5px;color:var(--ink-3);
+line-height:1.7}
+.simr.warn>b{color:var(--warn,#C2407A)}
+.simr.cost{border:1px dashed var(--warn,#C2407A);background:transparent}
+.simr.cost>b{color:var(--warn,#C2407A)}
 .wout{margin-top:13px;padding-top:12px;border-top:1px solid var(--line)}
 .wstrip{display:flex;gap:3px;align-items:flex-end;margin:8px 0 2px;height:62px}
 .wb{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;
@@ -4213,7 +4232,9 @@ vertical-align:middle}
     });
     return {
       surplus: S.sur,                       /* فائض الشهر لو مضى كما خُطّط */
-      now: S.inc - A.sum - left - S.save    /* وما يبقى الآن بعد المحجوز */
+      now: S.inc - A.sum - left - S.save,   /* وما يبقى الآن بعد المحجوز */
+      left: left,                           /* محجوزٌ لبنودٍ لم تُصرف بعد */
+      save: S.save                          /* وما نويتَ ادّخاره */
     };
   }
   function wishList(){ return state.wish || (state.wish = []); }
@@ -4246,6 +4267,66 @@ vertical-align:middle}
       return b.avg - a.avg;
     });
     return out.slice(0, 3);
+  }
+
+  /* ── لو اشتريتَها اليوم ──
+     ثلاثةُ مصادرَ للمال تبدو في الرصيد سواءً وليست سواءً: فائضٌ حرّ،
+     ومالٌ محجوزٌ لبندٍ لم يُصرف، وادّخارٌ لهدف. فيُقال من أيّها تُؤخذ. */
+  function wishSim(x, k){
+    var R = wishRoom(k), p = num(x.price);
+    var fromFree = Math.min(p, Math.max(0, R.now));
+    var rest = p - fromFree;
+    var fromPlan = Math.min(rest, Math.max(0, R.left));
+    var fromSave = Math.max(0, rest - fromPlan);
+    var lvl = fromSave > 0 ? 2 : (fromPlan > 0 ? 1 : 0);
+    var o = { p: p, now: R.now, after: R.now - p, lvl: lvl,
+              free: fromFree, plan: fromPlan, save: fromSave, cat: null };
+    /* وإن عيّن لها بنداً: تجاوزُه يُقال باسمه */
+    if(x.cat){
+      var pr = String(x.cat).split("|"), c = catOf(pr[0]);
+      if(c){
+        var av = catPlan(c, k) + carryOf(c, k);
+        var sp = (actuals(k).by[c.k] || 0);
+        o.cat = { n: c.n, plan: av, spent: sp,
+                  after: sp + p, over: Math.max(0, sp + p - av) };
+      }
+    }
+    return o;
+  }
+  var SIMLVL = [
+    { n: "لا يمسّ شيئاً", c: "ok" },
+    { n: "يأكل المحجوز", c: "warn" },
+    { n: "يكسر ادّخارك", c: "cost" }
+  ];
+  function simHTML(x, k){
+    var o = wishSim(x, k);
+    if(o.p <= 0) return "";
+    var L = SIMLVL[o.lvl];
+    var h = '<div class="wsim"><s class="wlab">لو اشتريتَها اليوم</s>'
+      + '<div class="simhead"><span class="simchip ' + L.c + '">' + L.n + '</span>'
+      + '<span class="simnum">' + fmt(o.now) + ' <b>←</b> '
+      + '<b class="' + (o.after < 0 ? "wno" : "wok") + '">' + fmt(o.after) + '</b>'
+      + '<s>الباقي الآن قبلَها وبعدَها</s></span></div><div class="simrows">';
+    if(o.free > 0)
+      h += '<div class="simr"><b>' + fmt(o.free) + '</b>'
+         + '<s>من فائضٍ حرٍّ — لا خطّةَ فيه ولا ادّخار</s></div>';
+    if(o.plan > 0)
+      h += '<div class="simr warn"><b>' + fmt(o.plan) + '</b>'
+         + '<s>من مالٍ محجوزٍ لبنودٍ لم تصرفها بعد — فتضيق آخرَ الشهر</s></div>';
+    if(o.save > 0)
+      h += '<div class="simr cost"><b>' + fmt(o.save) + '</b>'
+         + '<s>من ادّخارك — وهو نقضٌ لما نويتَه لا تأجيلٌ له</s></div>';
+    if(o.cat)
+      h += '<div class="simr' + (o.cat.over > 0 ? " warn" : "") + '"><b>'
+         + esc(o.cat.n) + '</b><s>خطّتُه ' + fmt(o.cat.plan) + ' · صُرف '
+         + fmt(o.cat.spent) + ' · بعدها ' + fmt(o.cat.after)
+         + (o.cat.over > 0 ? (' — تجاوزٌ ' + fmt(o.cat.over)) : ' — يتّسع')
+         + '</s></div>';
+    if(num(x.run) > 0)
+      h += '<div class="simr"><b>' + fmt(o.p + num(x.run) * 12) + '</b>'
+         + '<s>كلفتُها في سنتها الأولى — ثمنُها و' + fmt(num(x.run))
+         + ' شهرياً بعدها</s></div>';
+    return h + '</div></div>';
   }
 
   /* طرقُك إليها — مرتَّبةً: ما لا يهزّ شيئاً أوّلاً، وما له ثمنٌ آخراً */
@@ -5966,6 +6047,8 @@ vertical-align:middle}
           "«فائض الشهر» يقول أيسعُها أصلاً، و«ما بقي الآن» أتُشترى اليوم.",
           "واضغطها فتُعرض «طرقُك إليها»: من فائض اليوم أو الشهر أو ادّخارٍ على أشهر أو بندٍ لا تصرفه كاملاً — محسوبةً من أرقامك.",
           "وشريطُ الأشهر القادمة يقول متى: خطّتُك تعرف متى ينتهي قسطُك ومتى تنقضي مدّةُ بندك، فيُقال لك أفضلُ شهرٍ لشرائها وأضيقُ شهرٍ تتجنّبه — بسببه.",
+          "و«لو اشتريتَها اليوم» يقول من أين يأتي المال: من فائضٍ حرٍّ لا يمسّ شيئاً، أو من محجوزٍ لبنودٍ لم تصرفها، أو من ادّخارك — وهي في الرصيد سواءٌ وليست سواءً.",
+          "ومن عيّن لها «كلفةً شهريّةً بعد شرائها» حُسبت كلفتُها في سنتها الأولى، وصارت بندًا ثابتاً يوم تشتريها فلا تُنسى.",
           "ومتى اشتريتَها صارت مصروفاً في بندها بضغطة، فلا تُكتب مرّتين."] },
     { k: "spend", i: "🧾", n: "المصروف",
       w: "ما صرفتَه فعلاً — لا ما نويت. وهنا تُسجَّل الأرقام يومياً.",
@@ -6364,6 +6447,7 @@ vertical-align:middle}
         + (can ? "var(--ok,#0F7355)" : "var(--accent,#4C3AE3)") + '"></i></div>';
 
       if(open){
+        h += simHTML(x, k);
         h += outStripHTML(k, p);
         h += '<div class="wways"><s class="wlab">طرقُك إليها</s>';
         wishWays(x, k).forEach(function(o){
@@ -9359,12 +9443,19 @@ vertical-align:middle}
       ask({ title: "تعديل «" + w.n + "»",
         fields: [{ label: "ما هو", value: w.n },
                  { label: "الثمن", type: "number", value: num(w.price) },
-                 { label: "خلال كم شهر (اختياري)", type: "number", value: w.by || "" }],
+                 { label: "خلال كم شهر (اختياري)", type: "number", value: w.by || "" },
+                 { label: "من أيّ بند (اختياري)", type: "select",
+                   options: [{ v: "", n: "— بلا بند —" }].concat(catOptions()),
+                   value: w.cat || "" },
+                 { label: "كلفةٌ شهريّةٌ بعد شرائها (اختياري)", type: "number",
+                   value: w.run || "" }],
         ok: "احفظ",
         onOk: function(v){
           if(!v[0]) return;
           w.n = String(v[0]); w.price = num(v[1]);
           w.by = Math.max(0, Math.round(num(v[2])));
+          w.cat = String(v[3] || "");
+          w.run = Math.max(0, num(v[4]));
           save();
         } });
     });
@@ -9408,16 +9499,34 @@ vertical-align:middle}
       /* تصير مصروفاً في بندها: فلا تُكتب مرّتين ولا تُنسى */
       ask({ title: "اشتريتَ «" + w.n + "»",
         msg: "تُسجَّل مصروفاً في الشهر المفتوح. اختر بندها.",
-        fields: [{ label: "البند", type: "select", value: (state.cats[0] || {}).k || "",
+        fields: [{ label: "البند", type: "select",
+                   value: w.cat || (state.cats[0] || {}).k || "",
                    options: catOptions() },
-                 { label: "المبلغ المدفوع", type: "number", value: num(w.price) }],
+                 { label: "المبلغ المدفوع", type: "number", value: num(w.price) },
+                 { label: "كلفةٌ شهريّةٌ بعدها (اختياري)", type: "number",
+                   value: w.run || "" }],
         ok: "سجّلها مصروفاً",
         onOk: function(v){
+          /* القائمةُ تعرض الفروعَ أيضاً بصيغة «بند|فرع» — فيُفصلان،
+             وإلا صارت العمليةُ بلا بندٍ يعرفه أحد. */
+          var pr = String(v[0]).split("|");
           var m = month(ui.month);
-          m.items.push({ id: uid(), c: v[0], a: num(v[1]), t: w.n,
-                         d: defaultDate(), at: Date.now() });
+          var it = { id: uid(), c: pr[0], a: num(v[1]), t: w.n,
+                     d: defaultDate(), at: Date.now() };
+          if(pr[1]) it.s = pr[1];
+          m.items.push(it);
           w.bought = true;
-          toast("سُجّلت مصروفاً في " + mName(ui.month));
+          w.run = Math.max(0, num(v[2]));
+          /* الكلفةُ التي لا تنتهي عند الشراء تصير بنداً ثابتاً في حينه */
+          var c = catOf(pr[0]);
+          if(w.run > 0 && c){
+            c.subs = c.subs || [];
+            c.subs.push({ id: uid(), n: w.n, e: w.e || "🎁",
+                          p: w.run, t: "fix" });
+            toast("سُجّلت · وأُضيف «" + w.n + "» بندًا ثابتاً بـ" + fmt(w.run));
+          } else {
+            toast("سُجّلت مصروفاً في " + mName(ui.month));
+          }
           save();
         } });
     });
@@ -10631,7 +10740,7 @@ vertical-align:middle}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+4";
+  var APP_VERSION = "1.5.0-beta+5";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
