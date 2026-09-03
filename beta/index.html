@@ -222,14 +222,18 @@ h1,h2,h3{font-family:"Alexandria","IBM Plex Sans Arabic",sans-serif;margin:0;lin
    أ · صفّ بأيقونة  34px | الاسم | القيمة      .row .ecard .grow .env
    ب · صفّ نصّي     الاسم | القيمة (+فرق)      .cmp .mrow .own .acct
    كل ما يخصّ الصفّ — الحشو والفاصل والمحاذاة — يُعدَّل هنا فقط. */
-.row,.ecard,.grow,.env,.cmp,.mrow,.own,.acct,.distcard .dl{
+.row,.ecard,.grow,.env,.cmp,.mrow,.own,.acct,.distcard .dl,
+.whead,.wway,.simr,.pxr,.schr,.askr{
   display:grid;gap:12px;align-items:center;padding:12px 16px;
   border-bottom:1px solid var(--line)}
 .row:last-child,.ecard:last-child,.grow:last-child,.env:last-child,
-.cmp:last-child,.mrow:last-child,.own:last-child,.distcard .dl:last-child{border-bottom:0}
-.rowa,.row,.ecard,.grow,.env{grid-template-columns:34px minmax(0,1fr) auto}
+.cmp:last-child,.mrow:last-child,.own:last-child,.distcard .dl:last-child,
+.wway:last-child,.simr:last-child,.pxr:last-child,.schr:last-child,
+.askr:last-child{border-bottom:0}
+.rowa,.row,.ecard,.grow,.env,.whead,.wway{grid-template-columns:34px minmax(0,1fr) auto}
 .rowb,.own,.acct{grid-template-columns:minmax(0,1fr) auto}
-.cmp,.mrow{grid-template-columns:minmax(0,1fr) auto auto}
+.cmp,.mrow,.schr{grid-template-columns:minmax(0,1fr) auto auto}
+.simr,.pxr{grid-template-columns:76px minmax(0,1fr) auto}
 /* أيقونة الصفّ — مقاس واحد */
 .ic,.eic,.grow .gic,.env .ei{width:34px;height:34px;border-radius:10px;flex:none;
   display:flex;align-items:center;justify-content:center;font-size:16px}
@@ -346,33 +350,19 @@ input,select,button,textarea{font-family:inherit;font-size:16px;min-width:0;max-
 .vtag{opacity:.55;font-size:11px;font-family:var(--mono, monospace);
       letter-spacing:.2px;white-space:nowrap}
 .savebar{margin:12px 0}
-.wadd .wtop{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .wadd .emoface.ro{display:inline-flex;align-items:center;justify-content:center}
-.win{flex:1 1 150px;min-width:0;padding:10px 12px;border:1px solid var(--line);
-border-radius:12px;background:var(--card-2);color:var(--ink);font:inherit;font-size:14px}
-.win:focus{outline:none;border-color:var(--accent,#4C3AE3)}
-.win.wnum{flex:0 1 118px;text-align:center;font-variant-numeric:tabular-nums}
-.wadd .wgo{flex:0 0 auto;padding:10px 16px}
-.whint{display:block;margin-top:9px;font-size:11px;color:var(--ink-3);line-height:1.7;
+.whint{display:block;font-size:11px;color:var(--ink-3);line-height:1.7;
 text-decoration:none;white-space:normal}
-.wroom{display:flex;gap:10px;margin-top:10px;border-top:1px solid var(--line);padding-top:10px}
-.wroom span{flex:1 1 0;min-width:0;display:block}
-.wroom b{display:block;font-size:19px;font-variant-numeric:tabular-nums}
-.wroom s{display:block;text-decoration:none;font-size:11px;color:var(--ink-3);line-height:1.6}
-.wrdy{border-color:var(--ok,#0F7355)}
-.wrdy .mn b{font-size:14.5px;color:var(--ok,#0F7355)}
-.wrdy .mn s{display:block;text-decoration:none;font-size:12px;color:var(--ink-3);
-margin-top:3px;line-height:1.8}
-.askr{display:flex;gap:9px;align-items:center;padding:9px 10px;border-radius:10px;
-background:var(--card-2);margin-top:6px;flex-wrap:wrap}
-.askr>b{flex:1 1 120px;min-width:0;font-size:13.5px}
-.schr>i.bad{color:var(--warn,#C2407A)}
-.wcap{display:flex;gap:8px;align-items:center;margin-top:10px;padding-top:10px;
-border-top:1px solid var(--line)}
-.wcap .mn{flex:1 1 0;min-width:0}
-.wcap .mn b{display:block;font-size:13.5px}
-.wcap .mn s{display:block;text-decoration:none;font-size:11px;color:var(--ink-3);
-line-height:1.7;margin-top:2px}
+.wrdy{border-color:var(--ok)}
+.wrdy .nm{color:var(--ok)}
+.wrdy .sub{text-decoration:none;line-height:1.8;white-space:normal}
+.askr{grid-template-columns:minmax(0,1fr) auto}
+.askr>b{min-width:0;font-size:14px;font-weight:500}
+.qinc.wadd .f.grow{flex:1 1 200px;min-width:0}
+.qinc.wadd .qi2.wide{width:100%;text-align:start;font-family:inherit;font-weight:400;
+font-size:14px;direction:rtl}
+.qinc.wadd .emoface{align-self:flex-end}
+.qinc.wadd .wgo{align-self:flex-end;margin-bottom:2px}
 .wtag{display:inline-block;font-size:10.5px;padding:2px 9px;border-radius:99px;
 border:1px solid var(--line);color:var(--ink-3)}
 .wtag.ok{color:var(--ok,#0F7355);border-color:var(--ok,#0F7355)}
@@ -382,25 +372,20 @@ border:1px solid var(--line);color:var(--ink-3)}
 background:transparent;cursor:pointer;padding:0;transition:.12s}
 .dot:hover{border-color:var(--acc,#4C3AE3)}
 .dot.on{background:var(--acc,#4C3AE3);border-color:var(--acc,#4C3AE3)}
-.wsch{display:flex;flex-direction:column;gap:2px;margin-top:9px}
-.schr{display:flex;gap:9px;align-items:baseline;padding:8px 10px;border-radius:10px;
-background:var(--card-2)}
-.schr>b{flex:0 1 auto;min-width:0;font-size:13.5px;overflow:hidden;
+.wsch{display:flex;flex-direction:column}
+.schr>b{min-width:0;font-size:14px;font-weight:500;overflow:hidden;
 text-overflow:ellipsis;white-space:nowrap}
-.schr>s{flex:1 1 0;min-width:0;text-decoration:none;font-size:11px;color:var(--ink-3)}
-.schr>i{flex:none;font-style:normal;font-size:12.5px;color:var(--ok,#0F7355);
-font-weight:600}
+.schr>s{text-decoration:none;font-size:11px;color:var(--ink-3);white-space:nowrap}
+.schr>i{font-style:normal;font-family:"IBM Plex Mono",monospace;font-size:12.5px;
+color:var(--ok);font-weight:600}
 .schr.no>i{color:var(--ink-3);font-weight:400}
-.pxr.one{gap:9px;flex-wrap:wrap;align-items:center}
-.pxr.one>s{flex:1 1 140px;min-width:0}
-.pxr.one>.mini{flex:none}
-.wpxr{display:flex;flex-direction:column;gap:2px;margin-top:6px}
-.pxr{display:flex;gap:9px;align-items:baseline;padding:5px 9px;border-radius:9px;
-background:var(--card-2)}
-.pxr>b{flex:none;font-size:13.5px;font-variant-numeric:tabular-nums;min-width:58px}
-.pxr>s{flex:1 1 0;min-width:0;text-decoration:none;font-size:11.5px;color:var(--ink-3);
-line-height:1.7}
-.pxr.lo>b{color:var(--ok,#0F7355)}
+.schr>i.bad{color:var(--warn)}
+.pxr.one{grid-template-columns:minmax(0,1fr) auto}
+.pxr.one>s{min-width:0;white-space:normal}
+.wpxr{display:flex;flex-direction:column}
+.pxr>b{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:600}
+.pxr>s{min-width:0;text-decoration:none;font-size:11px;color:var(--ink-3);line-height:1.7}
+.pxr.lo>b{color:var(--ok)}
 .wpx .wact{margin-top:8px}
 .wplan{}
 .wplan.off{opacity:.72}
@@ -419,15 +404,18 @@ font-variant-numeric:tabular-nums}
 }
 .wcol{display:flex;flex-direction:column;min-width:0}
 /* إيقاعٌ واحد: الفاصلُ والهامشُ قاعدةٌ للعمود لا لكلّ قسمٍ على حدة */
-.wcol>*{margin:0;padding:9px 0 0;border-top:1px solid var(--line)}
-.wcol>*:first-child{border-top:0;padding-top:2px}
+.wcol>*{margin:0;padding:10px 0 2px;border-top:1px solid var(--line)}
+.wcol>*:first-child{border-top:0}
+.wcol .wlab,.wcol .whint,.wcol .wpnum,.wcol .wact,.wcol .wstrip{
+  padding-inline:16px}
+.wcol .wout .whint{padding-inline:16px}
 @media(max-width:759px){ .wcol:last-child>*:first-child{border-top:1px solid var(--line);
 padding-top:9px} }
 .wmeta{display:flex;align-items:center;justify-content:space-between;gap:10px;
-flex-wrap:wrap;margin:7px 0 2px}
+flex-wrap:wrap;padding:9px 16px 0}
 .impx{display:inline-flex;align-items:center;gap:8px}
 .impx>s{text-decoration:none;font-size:10.5px;color:var(--ink-3)}
-.wfoot{display:flex;gap:6px;justify-content:flex-end;margin-top:10px;padding-top:9px;
+.wfoot{display:flex;gap:6px;justify-content:flex-end;padding:11px 16px;
 border-top:1px solid var(--line)}
 .wsim{}
 .simhead{display:flex;align-items:center;gap:10px;margin:4px 0 6px;flex-wrap:wrap}
@@ -440,14 +428,9 @@ border:1px solid var(--line);color:var(--ink-3)}
 .simnum b{font-weight:600}
 .simnum s{display:block;text-decoration:none;font-size:11px;color:var(--ink-3);margin-top:1px}
 .simrows{display:flex;flex-direction:column;gap:2px}
-.simr{display:flex;gap:9px;align-items:baseline;padding:5px 9px;border-radius:9px;
-background:var(--card-2)}
-.simr>b{flex:none;font-size:13.5px;font-variant-numeric:tabular-nums;min-width:58px}
-.simr>s{flex:1 1 0;min-width:0;text-decoration:none;font-size:11.5px;color:var(--ink-3);
-line-height:1.7}
-.simr.warn>b{color:var(--warn,#C2407A)}
-.simr.cost{border:1px dashed var(--warn,#C2407A);background:transparent}
-.simr.cost>b{color:var(--warn,#C2407A)}
+.simr>b{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:600}
+.simr>s{min-width:0;text-decoration:none;font-size:11px;color:var(--ink-3);line-height:1.7}
+.simr.warn>b,.simr.cost>b{color:var(--warn)}
 .wout{}
 .wstrip{display:flex;gap:3px;align-items:flex-end;margin:5px 0 1px;height:46px}
 .wb{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;
@@ -459,30 +442,22 @@ justify-content:flex-end;height:100%;cursor:default}
 white-space:nowrap;overflow:hidden}
 .wb.hit s{color:var(--ok,#0F7355);font-weight:600}
 .wout .whint{margin-top:4px}
-.wcard{padding-bottom:10px}
-.whead{display:flex;gap:10px;align-items:center;cursor:pointer;margin-bottom:7px}
-.wico{width:34px;height:34px;flex:none;border-radius:99px;background:var(--card-2);
-display:inline-flex;align-items:center;justify-content:center;font-size:17px}
-.wnm2{flex:1 1 0;min-width:0}
-.wnm2 b{display:block;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.wnm2 s{display:block;text-decoration:none;font-size:11.5px;color:var(--ink-3);margin-top:2px}
-.wpct{flex:none;font-size:13px;color:var(--ink-3);font-variant-numeric:tabular-nums}
-.wways{display:flex;flex-direction:column;gap:2px}
+.wcard{padding:0}
+.whead{cursor:pointer}
+.wico{background:var(--card-2)}
+.wnm2{min-width:0}
+.wnm2 s{text-decoration:none}
+.wpct .a.wok{color:var(--ok)}
+.wtrack{margin:0 16px}
+.wways{display:flex;flex-direction:column}
 .wlab{display:block;text-decoration:none;font-size:11px;color:var(--ink-3);
 letter-spacing:.04em;margin-bottom:2px}
-.wway{display:flex;gap:9px;align-items:flex-start;padding:7px 10px;border-radius:11px;
-background:var(--card-2)}
-.wway .wwi{flex:none;width:22px;height:22px;border-radius:99px;display:inline-flex;
-align-items:center;justify-content:center;font-size:12px;background:var(--track);
-color:var(--ink-3)}
-.wway.ok .wwi{background:var(--ok,#0F7355);color:#fff}
-.wway.warn .wwi,.wway.ask .wwi{background:var(--warn,#C2407A);color:#fff}
-.wway .wwt{flex:1 1 0;min-width:0}
-.wway .wwt b{display:block;font-size:13.5px;margin-bottom:2px}
-.wway .wwt s{display:block;text-decoration:none;font-size:11.5px;color:var(--ink-3);
-line-height:1.75}
-.wway.cost{opacity:.82;border:1px dashed var(--line);background:transparent}
-.wway .mini{flex:none;align-self:center}
+.wway .wwi{background:var(--track);color:var(--ink-3);font-size:14px}
+.wway.ok .wwi{background:var(--ok-soft);color:var(--ok)}
+.wway.warn .wwi,.wway.ask .wwi{background:var(--warn-soft);color:var(--warn)}
+.wway .wwt{min-width:0}
+.wway .wwt s{text-decoration:none;line-height:1.75;white-space:normal}
+.wway.cost .wwi{background:transparent;border:1px dashed var(--line)}
 .wact{display:flex;gap:6px;margin-top:8px;justify-content:flex-end}
 .wok{color:var(--ok,#0F7355)}
 .wno{color:var(--warn,#C2407A)}
@@ -6765,46 +6740,54 @@ vertical-align:middle}
     h += '<div class="sec"><h2>سجّل أمنيتك</h2>'
       + '<span class="hint">' + (live.length ? (live.length + " في الانتظار") : "ابدأ")
       + '</span></div>'
-      + '<div class="card wadd"><div class="wtop">'
+      /* شريطُ الإدخال نفسه الذي في شاشة المصروف — لا شريطٌ من عندي */
+      + '<div class="qinc wadd">'
       + (dlg ? ('<span class="emoface ro">' + esc(d.e || "🎁") + '</span>')
              : ('<button class="emoface" data-emoopen="1" title="اختر رمزاً">'
                 + esc(d.e || "🎁") + '</button>'
                 + '<input type="hidden" id="wemo" data-emofield="1" value="'
                 + esc(d.e || "🎁") + '">'))
-      + '<input class="win wnm" id="wnm" data-wf="n" value="' + esc(d.n)
-      + '" placeholder="ما الذي تريده؟ — شنطة · جوّال · رحلة">'
-      + '<input class="win wnum" id="wpr" data-wf="p" type="number" '
-      + 'inputmode="decimal" step="any" value="' + esc(d.p) + '" placeholder="الثمن">'
-      + '<input class="win wnum" id="wby" data-wf="by" type="number" '
-      + 'inputmode="numeric" value="' + esc(d.by) + '" placeholder="خلال كم شهر؟">'
-      + '<button class="mini on wgo" data-wadd="1">سجّلها</button></div>'
+      + '<div class="f grow"><label>ما الذي تريده؟</label>'
+      + '<input class="qi2 wide" id="wnm" data-wf="n" value="' + esc(d.n)
+      + '" placeholder="شنطة · جوّال · رحلة"></div>'
+      + '<div class="f"><label>الثمن</label>'
+      + '<input class="qi2" id="wpr" data-wf="p" type="number" '
+      + 'inputmode="decimal" step="any" value="' + esc(d.p) + '" placeholder="0"></div>'
+      + '<div class="f"><label>خلال كم شهر</label>'
+      + '<input class="qi2" id="wby" data-wf="by" type="number" '
+      + 'inputmode="numeric" value="' + esc(d.by) + '" placeholder="—"></div>'
+      + '<button class="mini on wgo" data-wadd="1">سجّلها</button>'
+      + '<div class="qsum">'
+      + '<div class="qs big"><s>فائض الشهر</s><b>' + fmt(R.surplus) + '</b></div>'
+      + '<div class="qs big"><s>ما بقي الآن</s><b class="'
+      + (R.now < 0 ? "bad" : "ok") + '">' + fmt(R.now) + '</b></div>'
+      + '</div></div>'
       + (dlg ? "" : emoPanelHTML())
-      + '<div class="whint">الشهرُ اختياريّ — إن حدّدتَه حُسبت أقساطُه، وإلّا '
-      + 'حُسب أقصرُ طريقٍ يحتمله فائضك.</div>'
-      + '<div class="wcap">'
+      + '<div class="card">'
+      + '<div class="mrow wcap"><span class="mn">'
       + (wishCap()
-          ? ('<span class="mn"><b>سقفُ الكماليّات · ' + fmt(wishSpent(k))
-             + ' من ' + fmt(wishCap()) + '</b>'
-             + '<s>ما أنفقتَه على أمنياتك هذا الشهر — والباقي '
+          ? ('سقفُ الكماليّات · ' + fmt(wishSpent(k)) + ' من ' + fmt(wishCap())
+             + '<span class="ms">الباقي منه '
              + fmt(Math.max(0, wishCap() - wishSpent(k)))
-             + '. ويقصُّ جدولَ الشراء بقدره.</s></span>'
-             + '<button class="mini" data-wcap="1">عدّله</button>')
-          : ('<span class="mn"><s>لا سقف للكماليّات — ضع سقفاً شهرياً فلا '
-             + 'تنازع أمنياتُك بقالتَك في الشهر نفسه.</s></span>'
-             + '<button class="mini" data-wcap="1">ضع سقفاً</button>'))
-      + '</div>'
-      + '<div class="wroom">'
-      + '<span><b>' + fmt(R.surplus) + '</b><s>فائض الشهر لو مضى كما خُطّط</s></span>'
-      + '<span><b class="' + (R.now < 0 ? "wno" : "wok") + '">' + fmt(R.now)
-      + '</b><s>وما بقي الآن — وبه تشتري اليوم</s></span>'
-      + '</div></div>';
+             + ' — ويقصُّ جدولَ الشراء بقدره.</span>')
+          : ('بلا سقفٍ للكماليّات'
+             + '<span class="ms">ضع سقفاً شهرياً فلا تنازع أمنياتُك بقالتَك '
+             + 'في الشهر نفسه.</span>'))
+      + '</span><button class="mini" data-wcap="1">'
+      + (wishCap() ? "عدّله" : "ضع سقفاً") + '</button></div>'
+      + '<div class="mrow"><span class="mn">الشهرُ اختياريّ'
+      + '<span class="ms">إن حدّدتَه حُسبت أقساطُه، وإلّا حُسب أقصرُ طريقٍ '
+      + 'يحتمله فائضك.</span></span></div>'
+      + '</div>';
 
     var rdy = wishReady(k);
     if(rdy.length){
-      h += '<div class="card wrdy"><span class="mn"><b>صارت في متناولك</b>'
-        + '<s>' + rdy.map(function(w){
+      h += '<div class="card wrdy"><div class="row">'
+        + '<span class="ic" style="background:var(--ok-soft);color:var(--ok)">✓</span>'
+        + '<span><b class="nm">صارت في متناولك</b><s class="sub">'
+        + rdy.map(function(w){
             return (w.e || "🎁") + " " + esc(w.n) + " · " + fmt(num(w.price));
-          }).join(" · ") + '</s></span></div>';
+          }).join(" · ") + '</s></span></div></div>';
     }
 
     var ASK = wishAsk();
@@ -6863,13 +6846,15 @@ vertical-align:middle}
       var pct = p > 0 ? Math.max(0, Math.min(100, Math.round(R.now / p * 100))) : 0;
       h += '<div class="card wcard' + (open ? " open" : "") + '">'
         + '<div class="whead" data-wsel="' + x.id + '">'
-        + '<span class="wico">' + (x.e ? esc(x.e) : "🎁") + '</span>'
-        + '<span class="wnm2"><b>' + esc(x.n) + '</b><s>' + fmt(p) + ' ' + esc(cur())
+        + '<span class="ic wico">' + (x.e ? esc(x.e) : "🎁") + '</span>'
+        + '<span class="wnm2"><b class="nm">' + esc(x.n) + '</b>'
+        + '<s class="sub">' + fmt(p) + ' ' + esc(cur())
         + ' — ' + (can ? 'يسعها ما بقي الآن'
                        : ('ينقصك ' + fmt(gap)
                           + (x.by ? (' · تريدها خلال ' + arMonths(num(x.by))) : "")))
         + '</s></span>'
-        + '<span class="wpct ' + (can ? "wok" : "") + '">' + pct + '٪</span></div>'
+        + '<span class="rt wpct"><b class="a' + (can ? " wok" : "") + '">' + pct
+        + '٪</b><b class="b">من ثمنها</b></span></div>'
         + (function(){
             /* الوسمُ والنقاطُ سطرٌ واحد — كانا سطرين */
             var tg = wishAgeTag(x), r = "";
@@ -6887,8 +6872,8 @@ vertical-align:middle}
             }
             return r + '</div>';
           })()
-        + '<div class="bar"><i style="width:' + pct + '%;background:'
-        + (can ? "var(--ok,#0F7355)" : "var(--accent,#4C3AE3)") + '"></i></div>';
+        + '<div class="track wtrack"><i style="width:' + pct + '%;background:'
+        + (can ? "var(--ok)" : "var(--accent)") + '"></i></div>';
 
       if(open){
         /* عمودان على العريض: ما يُقرأ في جهةٍ وما يُفعل في جهة */
@@ -6899,8 +6884,9 @@ vertical-align:middle}
         h += '</div><div class="wcol">';
         h += '<div class="wways"><s class="wlab">طرقُك إليها</s>';
         wishWays(x, k).forEach(function(o){
-          h += '<div class="wway ' + o.t + '"><span class="wwi">' + o.i + '</span>'
-            + '<span class="wwt"><b>' + o.n + '</b><s>' + o.d + '</s></span>'
+          h += '<div class="wway ' + o.t + '"><span class="ic wwi">' + o.i + '</span>'
+            + '<span class="wwt"><b class="nm">' + o.n + '</b>'
+            + '<s class="sub">' + o.d + '</s></span>'
             + (o.b ? ('<button class="mini" ' + o.a + '>' + o.b + '</button>') : "")
             + '</div>';
         });
@@ -6997,8 +6983,8 @@ vertical-align:middle}
               : (fmt(rate) + " شهرياً · بقي " + fmt(rest)
                  + (when ? (" · تكتمل في " + esc(when)) : ""))))
       + '</s></div>'
-      + '<div class="bar"><i style="width:' + pct + '%;background:'
-      + (rest <= 0 ? "var(--ok,#0F7355)" : "var(--acc,#4C3AE3)") + '"></i></div>'
+      + '<div class="track"><i style="width:' + pct + '%;background:'
+      + (rest <= 0 ? "var(--ok)" : "var(--accent)") + '"></i></div>'
       + '<div class="wact">'
       + (paused
           ? ('<button class="mini on" data-wresume="' + x.id + '">استأنفها</button>')
@@ -11371,7 +11357,7 @@ vertical-align:middle}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+11";
+  var APP_VERSION = "1.5.0-beta+12";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
