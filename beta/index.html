@@ -4768,7 +4768,8 @@ vertical-align:middle}
   }
   function navbar(){
     var tabs = [["dash","🏠","اللوحة"],["rep","📊","التقارير"],["year","📅","السنة"],
-                ["plan","🧭","الخطة"],["env","🧧","الأظرف"],["spend","🧾","المصروف"],
+                ["plan","🧭","الخطة"],["wish","🎁","أمنياتك"],
+                ["env","🧧","الأظرف"],["spend","🧾","المصروف"],
                 ["accts","🏦","الحسابات"],["inv","📈","الاستثمار"]]
                 .filter(function(t){ return tabShown(t[0]); });
     return '<div class="nav"><div class="nav-in">'
@@ -5699,6 +5700,11 @@ vertical-align:middle}
           "البندُ يُقسَّم فروعاً: «جوال وإنترنت» فيه فاتورةٌ واشتراك.",
           "والأهدافُ تقتطع من دخلك قبل المصروف — فما بقي هو ما تصرفه.",
           "«أمنياتك» تقول أيسعُ شهرَك شيءٌ تريده أم ينقصك كذا."] },
+    { k: "wish", i: "🎁", n: "أمنياتك",
+      w: "ما تريده ولم تشترِه بعد — ويُقال لك أيسعُه شهرك أم ينقصك كذا.",
+      h: ["سجّل الشيء بثمنه، فيُحسب من الباقي بعد خطّتك وادّخارك لا من دخلك.",
+          "«فائض الشهر» يقول أيسعُها أصلاً، و«ما بقي الآن» أتُشترى اليوم.",
+          "ومتى اشتريتَها صارت مصروفاً في بندها بضغطة، فلا تُكتب مرّتين."] },
     { k: "spend", i: "🧾", n: "المصروف",
       w: "ما صرفتَه فعلاً — لا ما نويت. وهنا تُسجَّل الأرقام يومياً.",
       h: ["«إدخال سريع» جدولٌ تكتب فيه مجموعَ البند، وهو الأسرع.",
@@ -6080,6 +6086,12 @@ vertical-align:middle}
     return h + '</div>';
   }
 
+  /* شاشتُها: الخطةُ ما عزمتَ عليه، والأمنيةُ ما لم تعزم عليه بعد —
+     فلا يُجمعان في شاشةٍ واحدة. */
+  function viewWish(){
+    return wishHTML(ui.month);
+  }
+
   function viewPlan(){
     var k = ui.month, o = incObj(k), inc = income(k);
     var al = allocated(), un = inc - al;
@@ -6451,7 +6463,6 @@ vertical-align:middle}
     }).join("");
     h += '<div style="padding:0 15px 15px"><button class="addbtn" data-addgoal="1">+ أضف هدفاً</button></div></div>';
 
-    h += wishHTML(k);
 
     /* أفعال هذا الشهر — كانت في «الإعدادات» وهي شاشة عامّة، فعادت إلى
        شاشة الشهر حيث الإقفال والإرجاع للأساسية. */
@@ -8256,6 +8267,7 @@ vertical-align:middle}
              : ui.tab === "year" ? viewYear()
              : ui.tab === "env" ? viewEnv()
              : ui.tab === "plan" ? viewPlan()
+             : ui.tab === "wish" ? viewWish()
              : ui.tab === "spend" ? viewSpend()
              : ui.tab === "accts" ? viewAccts()
              : ui.tab === "inv" ? viewInv()
@@ -8295,7 +8307,7 @@ vertical-align:middle}
      يعبر العمودين: الترويسة · شريط الشهور · المؤشرات · اللافتات
      · المعالج · الشبكات · الجداول العريضة.
      وما بقي يُقسَّم وحدات (عنوان + بطاقته) تُوضع كلٌّ في العمود الأقصر. */
-  var COLTABS = { dash:1, rep:1, year:1, plan:1, accts:1, inv:1, set:1 };
+  var COLTABS = { dash:1, rep:1, year:1, plan:1, accts:1, inv:1, set:1, wish:1 };
   function spansBoth(el){
     var c = el.className || "";
     if(ui.tab === "plan" && /(flag|mixline|wiz)/.test(c)) return false;
@@ -8445,7 +8457,10 @@ vertical-align:middle}
   }
   /* قسمةُ العمودين تُحفظ: الموازنة في كلّ رسمٍ تجعل الشاشة تقفز
      كلّما طال قسمٌ — وفتحُ بندٍ ليس طلباً لإعادة ترتيب الصفحة. */
-  var _colMem = { sig: "", side: {} };
+  /* خريطةٌ لا ذاكرةٌ واحدة: البصمةُ فيها اسمُ الشاشة، فذاكرةٌ واحدة
+     تُمحى كلَّما انتقلتَ ثمّ عدتَ — فتُحسب القسمة من جديد والبندُ
+     مفتوحٌ هذه المرّة، فتنتقل القائمة. */
+  var _colMem = {};
   function unitName(u, i){
     var el = u.els && u.els[0];
     var h2 = el && el.querySelector ? el.querySelector("h2") : null;
@@ -8499,8 +8514,10 @@ vertical-align:middle}
     seq.forEach(function(u, i){ if(!u.span) _names.push(unitName(u, i)); });
     var _sig = (ui.tab || "") + "|" + _names.join("§") + "|"
              + (window.innerWidth < 1500 ? "s" : "w");
-    var _keep = (_sig === _colMem.sig);
-    if(!_keep){ _colMem = { sig: _sig, side: {} }; }
+    var _tk = ui.tab || "dash";
+    var _mem = _colMem[_tk];
+    var _keep = !!(_mem && _mem.sig === _sig);
+    if(!_keep){ _mem = _colMem[_tk] = { sig: _sig, side: {} }; }
 
     seq.forEach(function(u, i){
       if(u.span){
@@ -8511,8 +8528,8 @@ vertical-align:middle}
       if(!box) openBox();
 
       var _nm = unitName(u, i);
-      if(_keep && _colMem.side[_nm]){
-        var tt = (_colMem.side[_nm] === "A") ? colA : colB;
+      if(_keep && _mem.side[_nm]){
+        var tt = (_mem.side[_nm] === "A") ? colA : colB;
         u.els.forEach(function(e){ tt.appendChild(e); });
         return;
       }
@@ -8532,7 +8549,7 @@ vertical-align:middle}
       } else {
         t = (ha <= hb) ? colA : colB;
       }
-      _colMem.side[_nm] = (t === colA) ? "A" : "B";
+      _mem.side[_nm] = (t === colA) ? "A" : "B";
       u.els.forEach(function(e){ t.appendChild(e); });
     });
   }
@@ -10227,7 +10244,7 @@ vertical-align:middle}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta";
+  var APP_VERSION = "1.5.0-beta+2";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
