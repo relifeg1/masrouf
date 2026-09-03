@@ -391,11 +391,9 @@ text-overflow:ellipsis;white-space:nowrap}
 .schr>i{flex:none;font-style:normal;font-size:12.5px;color:var(--ok,#0F7355);
 font-weight:600}
 .schr.no>i{color:var(--ink-3);font-weight:400}
-.wpx{margin-top:9px;padding-top:8px;border-top:1px solid var(--line)}
-.wpx.one{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
-.wpx.one>s{flex:1 1 140px;min-width:0;text-decoration:none;font-size:11px;
-color:var(--ink-3);line-height:1.6}
-.wpx.one>.mini{flex:none}
+.pxr.one{gap:9px;flex-wrap:wrap;align-items:center}
+.pxr.one>s{flex:1 1 140px;min-width:0}
+.pxr.one>.mini{flex:none}
 .wpxr{display:flex;flex-direction:column;gap:2px;margin-top:6px}
 .pxr{display:flex;gap:9px;align-items:baseline;padding:5px 9px;border-radius:9px;
 background:var(--card-2)}
@@ -404,7 +402,7 @@ background:var(--card-2)}
 line-height:1.7}
 .pxr.lo>b{color:var(--ok,#0F7355)}
 .wpx .wact{margin-top:8px}
-.wplan{margin-top:9px;padding-top:8px;border-top:1px solid var(--line)}
+.wplan{}
 .wplan.off{opacity:.72}
 .wpnum{margin:6px 0 8px;font-size:15px;font-variant-numeric:tabular-nums}
 .wpnum b{font-size:19px;font-weight:600}
@@ -415,12 +413,23 @@ margin-top:2px;line-height:1.7}
 min-width:16px;height:16px;padding:0 4px;margin-inline-start:6px;border-radius:99px;
 background:var(--ok,#0F7355);color:#fff;font-size:10px;font-style:normal;
 font-variant-numeric:tabular-nums}
-.wbody{display:grid;gap:2px;margin-top:2px}
+.wbody{display:grid;gap:0;margin-top:2px}
 @media(min-width:760px){
-  .wbody{grid-template-columns:1fr 1fr;gap:0 18px;align-items:start}
+  .wbody{grid-template-columns:1fr 1fr;gap:0 20px;align-items:start}
 }
-.wmeta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:7px 0 2px}
-.wsim{margin-top:9px;padding-top:8px;border-top:1px solid var(--line)}
+.wcol{display:flex;flex-direction:column;min-width:0}
+/* إيقاعٌ واحد: الفاصلُ والهامشُ قاعدةٌ للعمود لا لكلّ قسمٍ على حدة */
+.wcol>*{margin:0;padding:9px 0 0;border-top:1px solid var(--line)}
+.wcol>*:first-child{border-top:0;padding-top:2px}
+@media(max-width:759px){ .wcol:last-child>*:first-child{border-top:1px solid var(--line);
+padding-top:9px} }
+.wmeta{display:flex;align-items:center;justify-content:space-between;gap:10px;
+flex-wrap:wrap;margin:7px 0 2px}
+.impx{display:inline-flex;align-items:center;gap:8px}
+.impx>s{text-decoration:none;font-size:10.5px;color:var(--ink-3)}
+.wfoot{display:flex;gap:6px;justify-content:flex-end;margin-top:10px;padding-top:9px;
+border-top:1px solid var(--line)}
+.wsim{}
 .simhead{display:flex;align-items:center;gap:10px;margin:4px 0 6px;flex-wrap:wrap}
 .simchip{flex:none;font-size:11.5px;padding:3px 11px;border-radius:99px;
 border:1px solid var(--line);color:var(--ink-3)}
@@ -439,7 +448,7 @@ line-height:1.7}
 .simr.warn>b{color:var(--warn,#C2407A)}
 .simr.cost{border:1px dashed var(--warn,#C2407A);background:transparent}
 .simr.cost>b{color:var(--warn,#C2407A)}
-.wout{margin-top:9px;padding-top:8px;border-top:1px solid var(--line)}
+.wout{}
 .wstrip{display:flex;gap:3px;align-items:flex-end;margin:5px 0 1px;height:46px}
 .wb{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;
 justify-content:flex-end;height:100%;cursor:default}
@@ -458,7 +467,7 @@ display:inline-flex;align-items:center;justify-content:center;font-size:17px}
 .wnm2 b{display:block;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wnm2 s{display:block;text-decoration:none;font-size:11.5px;color:var(--ink-3);margin-top:2px}
 .wpct{flex:none;font-size:13px;color:var(--ink-3);font-variant-numeric:tabular-nums}
-.wways{margin-top:9px;display:flex;flex-direction:column;gap:2px}
+.wways{display:flex;flex-direction:column;gap:2px}
 .wlab{display:block;text-decoration:none;font-size:11px;color:var(--ink-3);
 letter-spacing:.04em;margin-bottom:2px}
 .wway{display:flex;gap:9px;align-items:flex-start;padding:7px 10px;border-radius:11px;
@@ -6867,13 +6876,14 @@ vertical-align:middle}
             if(!open && !tg) return "";
             r = '<div class="wmeta">'
               + (tg ? ('<span class="wtag ' + tg.c + '" title="' + esc(tg.t) + '">'
-                       + esc(tg.n) + '</span>') : "");
+                       + esc(tg.n) + '</span>') : '<span></span>');
             if(open){
-              r += '<span class="dots" title="كم تهمّك">';
+              /* خمسُ دوائرَ بلا اسمٍ تُقرأ ولا تُفهم */
+              r += '<span class="impx"><s>الأهمّيّة</s><span class="dots">';
               for(var q = 1; q <= 5; q++)
                 r += '<button class="dot' + (q <= wishImp(x) ? " on" : "")
                    + '" data-wimp="' + x.id + '|' + q + '" title="' + q + ' من ٥"></button>';
-              r += '</span>';
+              r += '</span></span>';
             }
             return r + '</div>';
           })()
@@ -6886,7 +6896,6 @@ vertical-align:middle}
         h += wishPlanHTML(x, k);
         h += wishPxHTML(x);
         h += simHTML(x, k);
-        h += outStripHTML(k, p);
         h += '</div><div class="wcol">';
         h += '<div class="wways"><s class="wlab">طرقُك إليها</s>';
         wishWays(x, k).forEach(function(o){
@@ -6895,12 +6904,15 @@ vertical-align:middle}
             + (o.b ? ('<button class="mini" ' + o.a + '>' + o.b + '</button>') : "")
             + '</div>';
         });
-        h += '</div><div class="wact">'
+        h += '</div>';
+        h += outStripHTML(k, p);          /* الشريطُ يوازن العمودَ القصير */
+        h += '</div></div>';
+        /* ذيلٌ يمتدّ تحت العمودين — فتُختم البطاقةُ ولا تُترك معلَّقة */
+        h += '<div class="wfoot">'
           + '<button class="mini' + (can ? " on" : "") + '" data-wbuy="' + x.id
           + '">اشتريتها</button>'
           + '<button class="mini" data-wedit="' + x.id + '">عدّلها</button>'
-          + '<button class="mini" data-wdel="' + x.id + '">احذف</button></div>'
-          + '</div></div>';
+          + '<button class="mini" data-wdel="' + x.id + '">احذف</button></div>';
       }
       h += '</div>';
     });
@@ -6946,9 +6958,11 @@ vertical-align:middle}
     var a = wishPx(x), lo = pxLow(x);
     /* الفارغُ سطرٌ وزرُّه بجانبه — لا كتلةٌ فارغةٌ تأخذ ثلاثة أسطر */
     if(!a.length){
-      return '<div class="wpx one"><s>لا سعرَ مسجَّل — سجّله كلّما رأيتَه '
+      return '<div class="wpx"><s class="wlab">دفترُ السعر</s>'
+        + '<div class="pxr one"><s>لا سعرَ مسجَّل — سجّله كلّما رأيتَه '
         + 'فيصير للسعر تاريخ.</s>'
-        + '<button class="mini" data-wpx="' + x.id + '">سجّل سعراً</button></div>';
+        + '<button class="mini" data-wpx="' + x.id + '">سجّل سعراً</button>'
+        + '</div></div>';
     }
     return '<div class="wpx"><s class="wlab">دفترُ السعر</s>'
       + '<div class="wpxr">'
@@ -11357,7 +11371,7 @@ vertical-align:middle}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+10";
+  var APP_VERSION = "1.5.0-beta+11";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
