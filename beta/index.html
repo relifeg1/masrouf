@@ -359,6 +359,17 @@ text-decoration:none;white-space:normal}
 .wroom span{flex:1 1 0;min-width:0;display:block}
 .wroom b{display:block;font-size:19px;font-variant-numeric:tabular-nums}
 .wroom s{display:block;text-decoration:none;font-size:11px;color:var(--ink-3);line-height:1.6}
+.wout{margin-top:13px;padding-top:12px;border-top:1px solid var(--line)}
+.wstrip{display:flex;gap:3px;align-items:flex-end;margin:8px 0 2px;height:62px}
+.wb{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;
+justify-content:flex-end;height:100%;cursor:default}
+.wb i{display:block;width:100%;border-radius:4px 4px 0 0;background:var(--track)}
+.wb.hit i{background:var(--ok,#0F7355)}
+.wb.neg i{background:var(--warn,#C2407A);opacity:.5}
+.wb s{display:block;text-decoration:none;font-size:9px;color:var(--ink-3);margin-top:4px;
+white-space:nowrap;overflow:hidden}
+.wb.hit s{color:var(--ok,#0F7355);font-weight:600}
+.wout .whint{margin-top:4px}
 .wcard{padding-bottom:12px}
 .whead{display:flex;gap:10px;align-items:center;cursor:pointer;margin-bottom:9px}
 .wico{width:34px;height:34px;flex:none;border-radius:99px;background:var(--card-2);
@@ -4137,20 +4148,72 @@ vertical-align:middle}
   /* ── الأمنيات ──
      ما يبقى بعد الالتزامات، لا الدخل. فالخطةُ غير المصروفة مالٌ محجوز
      لا فائض — ومن عدّها فائضاً اشترى أمنيته بمال بقالته. */
-  function wishRoom(k){
-    var inc = income(k), A = actuals(k);
-    var plan = 0, left = 0;
-    visibleCats().forEach(function(c){
-      var p = catPlan(c, k), sp = A.by[c.k] || 0;
-      plan += p;
-      left += Math.max(0, p - sp);
+  /* فائضُ شهرٍ — حسابٌ واحدٌ لا حسابان. وكان ثانياً هنا يخالف شاشة
+     الخطة: يتجاهل المخفيّ، ويعدّ الاستثمار مرّتين حين يكون بنداً. */
+  function monthSurplus(mk){
+    var inc = income(mk), plan = 0, save = 0;
+    state.cats.forEach(function(c){ plan += catPlan(c, mk); });
+    activeGoals().forEach(function(g){ save += goalMonthly(g, mk); });
+    if(!invCat()) save += invMonthly();
+    return { inc: inc, plan: plan, save: save, sur: inc - plan - save };
+  }
+
+  /* ── خريطةُ الأشهر القادمة ──
+     الخطةُ تعرف مستقبلَها ولم تُسأل عنه: القسطُ يعرف متى ينتهي، وللبند
+     مدّةٌ تبدأ وتنتهي. فيُعاد الحسابُ اثنتي عشرة مرّةً بأشهرٍ قادمة. */
+  function outlook(k, n){
+    n = n || 12;
+    var out = [], cum = 0;
+    for(var i = 0; i < n; i++){
+      var mk = shift(k, i), S = monthSurplus(mk);
+      cum += Math.max(0, S.sur);
+      out.push({ k: mk, i: i, sur: S.sur, cum: cum });
+    }
+    return out;
+  }
+
+  /* السببُ يُستخرج ولا يُخترع: يُقارَن حسابُ البند في الشهرين */
+  function changeCause(c, a, b){
+    var lines = [c].concat(c.subs || []);
+    for(var i = 0; i < lines.length; i++){
+      var x = lines[i], key = (i === 0) ? c.k : lineKey(c.k, x.id);
+      var p0 = linePlan(x, a, key), p1 = linePlan(x, b, key);
+      var q = "«" + x.n + "»";
+      if(p1 < p0 - 0.5){
+        if(typeOf(x) === "inst" && x.end)
+          return { n: x.n, amt: p0 - p1, why: "ينتهي قسطُ " + q + " في " + mName(x.end) };
+        if(x.until)
+          return { n: x.n, amt: p0 - p1, why: "تنتهي مدّةُ " + q + " في " + mName(x.until) };
+        return { n: x.n, amt: p0 - p1, why: "يقلّ " + q };
+      }
+      if(p1 > p0 + 0.5){
+        if(x.from)
+          return { n: x.n, amt: p1 - p0, why: "يبدأ " + q + " في " + mName(x.from), up: true };
+        return { n: x.n, amt: p1 - p0, why: "يزيد " + q, up: true };
+      }
+    }
+    return null;
+  }
+  /* أكبرُ سببٍ لاختلاف شهرين — لا كلُّ سببٍ صغير */
+  function whyMonth(a, b, up){
+    var best = null;
+    state.cats.forEach(function(c){
+      if(c.hidden) return;
+      var g = changeCause(c, a, b);
+      if(!g || !!g.up !== !!up) return;
+      if(!best || g.amt > best.amt) best = g;
     });
-    var save = 0;
-    (state.goals || []).forEach(function(g){ if(!g.arch) save += num(g.m); });
-    (state.invest || []).forEach(function(x){ save += num(x.m); });
+    return best;
+  }
+
+  function wishRoom(k){
+    var S = monthSurplus(k), A = actuals(k), left = 0;
+    state.cats.forEach(function(c){
+      left += Math.max(0, catPlan(c, k) - (A.by[c.k] || 0));
+    });
     return {
-      surplus: inc - plan - save,          /* فائض الشهر لو مضى كما خُطّط */
-      now: inc - A.sum - left - save       /* وما يبقى الآن بعد المحجوز */
+      surplus: S.sur,                       /* فائض الشهر لو مضى كما خُطّط */
+      now: S.inc - A.sum - left - S.save    /* وما يبقى الآن بعد المحجوز */
     };
   }
   function wishList(){ return state.wish || (state.wish = []); }
@@ -4207,21 +4270,69 @@ vertical-align:middle}
            + " يسعها — فإن مضى شهرك على خطّته اشتريتَها بلا اقتطاعٍ من شيء." });
     }
 
-    if(p > now && sur > 0){
-      var n = Math.max(1, Math.ceil(p / sur));
+    /* ── الوقت ── */
+    var O = outlook(k, 12);
+
+    /* أوّلُ شهرٍ يتّسع فائضُه لثمنها كلِّه — تُشترى فيه بلا ادّخار */
+    var solo = null;
+    for(var a = 1; a < O.length; a++){
+      if(O[a].sur >= p){ solo = O[a]; break; }
+    }
+    if(p > now && p > sur && solo){
+      var cz = whyMonth(k, solo.k, false);
+      W.push({ t: "ok", i: "◈", n: "اشترِها في " + esc(mName(solo.k)) + " بلا ادّخار",
+        d: "فائضُ ذلك الشهر " + fmt(solo.sur) + " " + esc(cur()) + " — يسعها وحدَه."
+           + (cz ? (" و" + esc(cz.why) + " فيتحرّر " + fmt(cz.amt) + ".") : "") });
+    }
+
+    /* بلوغُها بتراكم الفوائض — لا بقسمةِ الثمن على فائض شهرٍ واحد */
+    var reach = null;
+    for(var b2 = 0; b2 < O.length; b2++){
+      if(O[b2].cum >= p){ reach = O[b2]; break; }
+    }
+    if(p > now && (sur > 0 || reach)){
+      var n = reach ? (reach.i + 1) : 0;
       if(want > 0) n = Math.max(1, want);
-      var per = Math.ceil(p / n);
-      var over = per - sur;
-      W.push({ t: (over > 0 ? "warn" : "ok"), i: "▤",
-        n: "ادّخرها على " + arMonths(n),
-        d: fmt(per) + " " + esc(cur()) + " شهرياً — تكتمل في "
-           + esc(mName(shift(k, n - 1))) + "."
-           + (over > 0
-               ? (" وهذا يزيد على فائضك بـ " + fmt(over)
-                  + " شهرياً، فإمّا مدّدتَها أو خفّضتَ بندًا بقدرها.")
-               : " وفائضُك يحتملها."),
-        b: (x.goal ? "" : "اجعلها هدفاً"),
+      var per = n ? Math.ceil(p / n) : 0;
+      var fits = !!reach && (want <= 0 || want >= (reach.i + 1));
+      /* أضيقُ شهرٍ في المدّة: القسطُ المتساوي قد لا يمرّ فيه */
+      var lean = null;
+      if(n) for(var d2 = 0; d2 < n && d2 < O.length; d2++){
+        if(!lean || O[d2].sur < lean.sur) lean = O[d2];
+      }
+      var uneven = (fits && lean && per > lean.sur + 0.5);
+      W.push({ t: (fits ? "ok" : "warn"), i: "▤",
+        n: n ? ("ادّخرها على " + arMonths(n)) : "لا تبلغُها في سنة",
+        d: n
+            ? (fmt(per) + " " + esc(cur()) + " شهرياً — تكتمل في "
+               + esc(mName(shift(k, n - 1))) + "."
+               + (fits
+                   ? (uneven
+                       ? (" غير أنّ " + esc(mName(lean.k)) + " فائضُه " + fmt(lean.sur)
+                          + " لا يحتمل هذا القسط — فادّخر فائض كلّ شهرٍ كما هو،"
+                          + " يبلغ المجموعُ ثمنَها.")
+                       : " وفوائضُ تلك الأشهر تحتملها كما هي مخطَّطة.")
+                   : (" وفوائضُ تلك الأشهر لا تبلغ ذلك — أقربُ ما تبلغها "
+                      + (reach ? esc(mName(reach.k)) : "بعد سنة") + ".")))
+            : ("مجموعُ فوائض اثني عشر شهراً " + fmt(O[O.length - 1].cum)
+               + " — دون ثمنها. تحتاج خفضاً في الخطة أو دخلاً زائداً."),
+        b: (x.goal || !n ? "" : "اجعلها هدفاً"),
         a: 'data-wgoal="' + x.id + '|' + n + '"' });
+    }
+
+    /* وأضيقُ شهرٍ في الطريق يُتجنّب — بسببه */
+    if(p > now && reach && reach.i >= 1){
+      var tight = null;
+      for(var c2 = 1; c2 <= reach.i; c2++){
+        if(!tight || O[c2].sur < tight.sur) tight = O[c2];
+      }
+      if(tight && tight.sur < sur * 0.75){
+        var tz = whyMonth(k, tight.k, true);
+        W.push({ t: "warn", i: "▲", n: "تجنّب " + esc(mName(tight.k)),
+          d: "فائضُه " + fmt(tight.sur) + " " + esc(cur()) + " لا غير"
+             + (tz ? (" — " + esc(tz.why) + " بـ " + fmt(tz.amt) + ".") : ".")
+             + " فلا تُثقله بها." });
+      }
     }
 
     var S = wishSlack(k);
@@ -5854,6 +5965,7 @@ vertical-align:middle}
       h: ["سجّل الشيء بثمنه، فيُحسب من الباقي بعد خطّتك وادّخارك لا من دخلك.",
           "«فائض الشهر» يقول أيسعُها أصلاً، و«ما بقي الآن» أتُشترى اليوم.",
           "واضغطها فتُعرض «طرقُك إليها»: من فائض اليوم أو الشهر أو ادّخارٍ على أشهر أو بندٍ لا تصرفه كاملاً — محسوبةً من أرقامك.",
+          "وشريطُ الأشهر القادمة يقول متى: خطّتُك تعرف متى ينتهي قسطُك ومتى تنقضي مدّةُ بندك، فيُقال لك أفضلُ شهرٍ لشرائها وأضيقُ شهرٍ تتجنّبه — بسببه.",
           "ومتى اشتريتَها صارت مصروفاً في بندها بضغطة، فلا تُكتب مرّتين."] },
     { k: "spend", i: "🧾", n: "المصروف",
       w: "ما صرفتَه فعلاً — لا ما نويت. وهنا تُسجَّل الأرقام يومياً.",
@@ -6252,6 +6364,7 @@ vertical-align:middle}
         + (can ? "var(--ok,#0F7355)" : "var(--accent,#4C3AE3)") + '"></i></div>';
 
       if(open){
+        h += outStripHTML(k, p);
         h += '<div class="wways"><s class="wlab">طرقُك إليها</s>';
         wishWays(x, k).forEach(function(o){
           h += '<div class="wway ' + o.t + '"><span class="wwi">' + o.i + '</span>'
@@ -6278,6 +6391,30 @@ vertical-align:middle}
         + '<button class="mini" data-wclear="1">امسحها</button></div></div>';
     }
     return h;
+  }
+
+  /* شريطُ السنة: الفائضُ ارتفاعاً، وشهرُ بلوغها معلَّم. يُقرأ الطريقُ
+     بالنظر قبل أن يُقرأ بالرقم. */
+  function outStripHTML(k, price){
+    var O = outlook(k, 12), mx = 1, hit = -1;
+    O.forEach(function(o){ if(o.sur > mx) mx = o.sur; });
+    if(price > 0) for(var i = 0; i < O.length; i++){
+      if(O[i].cum >= price){ hit = i; break; }
+    }
+    return '<div class="wout"><s class="wlab">فائضُ الأشهر القادمة</s>'
+      + '<div class="wstrip">'
+      + O.map(function(o, i){
+          var hh = Math.max(3, Math.round(Math.min(1, Math.abs(o.sur) / mx) * 44));
+          var cl = (o.sur <= 0) ? " neg" : (i === hit ? " hit" : "");
+          return '<span class="wb' + cl + '" title="' + esc(mName(o.k)) + ' · '
+            + fmt(o.sur) + '"><i style="height:' + hh + 'px"></i>'
+            + '<s>' + esc(AR_M[+o.k.slice(5) - 1].slice(0, 3)) + '</s></span>';
+        }).join("")
+      + '</div>'
+      + '<s class="whint">' + (hit >= 0
+          ? ('العمودُ المعلَّم ' + esc(mName(O[hit].k))
+             + ' — عنده يبلغ تراكمُ فوائضك ثمنَها.')
+          : 'لا يبلغ تراكمُ فوائض السنة ثمنَها.') + '</s></div>';
   }
 
   /* شاشتُها: الخطةُ ما عزمتَ عليه، والأمنيةُ ما لم تعزم عليه بعد —
@@ -10494,7 +10631,7 @@ vertical-align:middle}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+3";
+  var APP_VERSION = "1.5.0-beta+4";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
