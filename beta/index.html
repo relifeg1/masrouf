@@ -346,6 +346,44 @@ input,select,button,textarea{font-family:inherit;font-size:16px;min-width:0;max-
 .vtag{opacity:.55;font-size:11px;font-family:var(--mono, monospace);
       letter-spacing:.2px;white-space:nowrap}
 .savebar{margin:12px 0}
+.wadd .wtop{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.wadd .emoface.ro{display:inline-flex;align-items:center;justify-content:center}
+.win{flex:1 1 150px;min-width:0;padding:10px 12px;border:1px solid var(--line);
+border-radius:12px;background:var(--card-2);color:var(--ink);font:inherit;font-size:14px}
+.win:focus{outline:none;border-color:var(--accent,#4C3AE3)}
+.win.wnum{flex:0 1 118px;text-align:center;font-variant-numeric:tabular-nums}
+.wadd .wgo{flex:0 0 auto;padding:10px 16px}
+.whint{display:block;margin-top:9px;font-size:11px;color:var(--ink-3);line-height:1.7;
+text-decoration:none;white-space:normal}
+.wroom{display:flex;gap:10px;margin-top:10px;border-top:1px solid var(--line);padding-top:10px}
+.wroom span{flex:1 1 0;min-width:0;display:block}
+.wroom b{display:block;font-size:19px;font-variant-numeric:tabular-nums}
+.wroom s{display:block;text-decoration:none;font-size:11px;color:var(--ink-3);line-height:1.6}
+.wcard{padding-bottom:12px}
+.whead{display:flex;gap:10px;align-items:center;cursor:pointer;margin-bottom:9px}
+.wico{width:34px;height:34px;flex:none;border-radius:99px;background:var(--card-2);
+display:inline-flex;align-items:center;justify-content:center;font-size:17px}
+.wnm2{flex:1 1 0;min-width:0}
+.wnm2 b{display:block;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wnm2 s{display:block;text-decoration:none;font-size:11.5px;color:var(--ink-3);margin-top:2px}
+.wpct{flex:none;font-size:13px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.wways{margin-top:12px;display:flex;flex-direction:column;gap:2px}
+.wlab{display:block;text-decoration:none;font-size:11px;color:var(--ink-3);
+letter-spacing:.04em;margin-bottom:4px}
+.wway{display:flex;gap:9px;align-items:flex-start;padding:9px 10px;border-radius:12px;
+background:var(--card-2)}
+.wway .wwi{flex:none;width:22px;height:22px;border-radius:99px;display:inline-flex;
+align-items:center;justify-content:center;font-size:12px;background:var(--track);
+color:var(--ink-3)}
+.wway.ok .wwi{background:var(--ok,#0F7355);color:#fff}
+.wway.warn .wwi,.wway.ask .wwi{background:var(--warn,#C2407A);color:#fff}
+.wway .wwt{flex:1 1 0;min-width:0}
+.wway .wwt b{display:block;font-size:13.5px;margin-bottom:2px}
+.wway .wwt s{display:block;text-decoration:none;font-size:11.5px;color:var(--ink-3);
+line-height:1.75}
+.wway.cost{opacity:.82;border:1px dashed var(--line);background:transparent}
+.wway .mini{flex:none;align-self:center}
+.wact{display:flex;gap:6px;margin-top:11px;justify-content:flex-end}
 .wok{color:var(--ok,#0F7355)}
 .wno{color:var(--warn,#C2407A)}
 /* DEV:START */
@@ -4078,7 +4116,12 @@ vertical-align:middle}
       + '<button class="mini" data-imgclear="1">أزلها</button></span>'
       + '</span></div>'
       + '<input type="file" accept="image/*" id="emofile" hidden>'
-      + '<div class="emopick" id="emopick" hidden>'
+      + emoPanelHTML();
+  }
+
+  /* اللوحةُ وحدَها: تُستعمل في الحوار وفي شاشة الأمنيات بأسلاكها نفسها */
+  function emoPanelHTML(){
+    return '<div class="emopick" id="emopick" hidden>'
       + EMOJI.map(function(g){
           return '<div class="emog"><s>' + esc(g[0]) + '</s><div class="emor">'
             + Array.from(g[1]).filter(function(ch){
@@ -4111,6 +4154,112 @@ vertical-align:middle}
     };
   }
   function wishList(){ return state.wish || (state.wish = []); }
+
+  /* ما لا يُصرف من البنود: بمتوسّط ستّة أشهرٍ مضت لا بالظنّ. فمن قيل له
+     «قلّص مطاعمك» وهو لا يصرفها أصلاً لم يُفَد. */
+  function wishSlack(k){
+    var keys = Object.keys(state.months || {}).sort().filter(function(x){
+      return x < k && actuals(x).sum > 0;
+    }).slice(-6);
+    if(!keys.length) return [];
+    var out = [];
+    visibleCats().forEach(function(c){
+      if(isCap(c) || c.off) return;
+      var t = 0, spent = 0;
+      keys.forEach(function(mk){
+        var sp = actuals(mk).by[c.k] || 0;
+        spent += sp;
+        t += Math.max(0, catPlan(c, mk) - sp);
+      });
+      /* بندٌ لم يُصرف منه شيءٌ قطُّ ليس متروكاً — إنّما هو غير مسجَّل */
+      if(spent <= 0) return;
+      var avg = Math.round(t / keys.length);
+      if(avg >= 25) out.push({ c: c, avg: avg, cls: clsOf(c) });
+    });
+    /* الكماليّ أوّلاً: هناك يملك الخفضَ بلا ألم */
+    out.sort(function(a, b){
+      var ka = (a.cls === "want" ? 1 : 0), kb = (b.cls === "want" ? 1 : 0);
+      if(ka !== kb) return kb - ka;
+      return b.avg - a.avg;
+    });
+    return out.slice(0, 3);
+  }
+
+  /* طرقُك إليها — مرتَّبةً: ما لا يهزّ شيئاً أوّلاً، وما له ثمنٌ آخراً */
+  function wishWays(x, k){
+    var R = wishRoom(k), p = num(x.price), W = [];
+    var now = Math.max(0, R.now), sur = Math.max(0, R.surplus);
+    var want = Math.max(0, Math.round(num(x.by)));   /* خلال كم شهر — إن حدّده */
+    if(p <= 0){
+      W.push({ t: "ask", i: "؟", n: "ضع لها ثمناً",
+               d: "بلا ثمنٍ لا تُحسب طريق. قدِّره تقريباً — يكفي." });
+      return W;
+    }
+
+    if(now >= p){
+      W.push({ t: "ok", i: "✓", n: "اشترِها اليوم",
+        d: "ما بقي الآن " + fmt(now) + " " + esc(cur()) + " — تسعها ويبقى "
+           + fmt(now - p) + "، ولا تمسّ خطّةً ولا ادّخاراً.",
+        b: "سجّلها مصروفاً", a: 'data-wbuy="' + x.id + '"' });
+    } else if(sur >= p){
+      W.push({ t: "ok", i: "◷", n: "انتظر آخر " + esc(mName(k)),
+        d: "ينقصك اليوم " + fmt(p - now) + "، لكنّ فائض الشهر " + fmt(sur)
+           + " يسعها — فإن مضى شهرك على خطّته اشتريتَها بلا اقتطاعٍ من شيء." });
+    }
+
+    if(p > now && sur > 0){
+      var n = Math.max(1, Math.ceil(p / sur));
+      if(want > 0) n = Math.max(1, want);
+      var per = Math.ceil(p / n);
+      var over = per - sur;
+      W.push({ t: (over > 0 ? "warn" : "ok"), i: "▤",
+        n: "ادّخرها على " + arMonths(n),
+        d: fmt(per) + " " + esc(cur()) + " شهرياً — تكتمل في "
+           + esc(mName(shift(k, n - 1))) + "."
+           + (over > 0
+               ? (" وهذا يزيد على فائضك بـ " + fmt(over)
+                  + " شهرياً، فإمّا مدّدتَها أو خفّضتَ بندًا بقدرها.")
+               : " وفائضُك يحتملها."),
+        b: (x.goal ? "" : "اجعلها هدفاً"),
+        a: 'data-wgoal="' + x.id + '|' + n + '"' });
+    }
+
+    var S = wishSlack(k);
+    if(p > now && S.length){
+      var gain = 0;
+      S.forEach(function(o){ gain += o.avg; });
+      var n2 = Math.max(1, Math.ceil(p / (sur + gain)));
+      W.push({ t: "ok", i: "✂",
+        n: "قلّص ما لا تصرفه أصلاً",
+        d: "تترك في " + S.map(function(o){
+             return "«" + esc(o.c.n) + "» " + fmt(o.avg);
+           }).join(" · ") + " شهرياً في المتوسّط. لو حوّلتَها إليها جمعتَها في "
+           + arMonths(n2) + " — وخطّتك كما هي، إنّما نُقل ما لم يُصرف." });
+    }
+
+    var g = null;
+    (state.goals || []).forEach(function(o){
+      if(!o.arch && num(o.m) > 0 && (!g || num(o.m) > num(g.m))) g = o;
+    });
+    var n3 = g ? Math.max(1, Math.ceil((p - now) / num(g.m))) : 0;
+    /* إيقافُ هدفٍ تسعةً وثلاثين شهراً ليس تأجيلاً بل هدمٌ — فلا يُعرض */
+    if(p > now && g && n3 <= 6){
+      W.push({ t: "cost", i: "⏸",
+        n: "أوقف «" + esc(g.n) + "» " + arMonths(n3),
+        d: "يوفّر " + fmt(num(g.m) * n3) + " " + esc(cur())
+           + " فتبلغها — بمقابل: هدفُك يتأخّر " + arMonths(n3)
+           + ". آخرُ الطرق لا أوّلُها." });
+    }
+
+    if(p > now && sur <= 0){
+      var need = Math.ceil(p / 6);
+      W.push({ t: "warn", i: "!", n: "شهرُك لا فائض فيه",
+        d: "خطّتُك وادّخارُك يستوعبان دخلك كلَّه. لتبلغها في ستّة أشهر يلزمك "
+           + fmt(need) + " " + esc(cur())
+           + " شهرياً — إمّا من خفض بندٍ بقدرها أو من دخلٍ زائد." });
+    }
+    return W;
+  }
 
 /* DEV:START */
   /* ── أدوات التجربة ──
@@ -5704,6 +5853,7 @@ vertical-align:middle}
       w: "ما تريده ولم تشترِه بعد — ويُقال لك أيسعُه شهرك أم ينقصك كذا.",
       h: ["سجّل الشيء بثمنه، فيُحسب من الباقي بعد خطّتك وادّخارك لا من دخلك.",
           "«فائض الشهر» يقول أيسعُها أصلاً، و«ما بقي الآن» أتُشترى اليوم.",
+          "واضغطها فتُعرض «طرقُك إليها»: من فائض اليوم أو الشهر أو ادّخارٍ على أشهر أو بندٍ لا تصرفه كاملاً — محسوبةً من أرقامك.",
           "ومتى اشتريتَها صارت مصروفاً في بندها بضغطة، فلا تُكتب مرّتين."] },
     { k: "spend", i: "🧾", n: "المصروف",
       w: "ما صرفتَه فعلاً — لا ما نويت. وهنا تُسجَّل الأرقام يومياً.",
@@ -6037,53 +6187,97 @@ vertical-align:middle}
     return h;
   }
 
-  /* تُعرض في شاشة الخطة: موضعُ الموازنة بين ما تريد وما تملك */
+  /* ── شاشةُ الأمنيات ──
+     الصدرُ للتسجيل، ولكلّ أمنيةٍ طرقُها. والنقصُ وحدَه خبرٌ لا حلّ. */
   function wishHTML(k){
     var W = wishList(), R = wishRoom(k);
     var live = W.filter(function(x){ return !x.bought; });
     var done = W.filter(function(x){ return x.bought; });
-    var h = '<div class="sec"><h2>أمنياتك</h2><span class="hint">'
-      + (live.length ? (live.length + " في الانتظار") : "لا شيء") + '</span></div>'
-      + '<div class="card">';
+    live.sort(function(a, b){ return num(a.price) - num(b.price); });
+    var d = ui.wdraft || (ui.wdraft = { n: "", e: "🎁", p: "", by: "" });
+    var h = "";
 
-    h += '<div class="mrow"><span class="mn">ما يسعه شهرك'
-      + '<span class="ms">فائض الشهر لو مضى كما خُطّط: <b>' + fmt(R.surplus) + '</b> '
-      + esc(cur()) + ' · وما بقي الآن بعد المصروف والمحجوز للخطة والادخار: <b>'
-      + fmt(R.now) + '</b>. والثاني هو ما تشتري به اليوم.</span></span>'
-      + '<button class="mini on" data-addwish="1">+ أمنية</button></div>';
+    /* ١ · التسجيل: حقولٌ ظاهرة لا زرٌّ يفتح حواراً */
+    h += '<div class="sec"><h2>سجّل أمنيتك</h2>'
+      + '<span class="hint">' + (live.length ? (live.length + " في الانتظار") : "ابدأ")
+      + '</span></div>'
+      + '<div class="card wadd"><div class="wtop">'
+      + (dlg ? ('<span class="emoface ro">' + esc(d.e || "🎁") + '</span>')
+             : ('<button class="emoface" data-emoopen="1" title="اختر رمزاً">'
+                + esc(d.e || "🎁") + '</button>'
+                + '<input type="hidden" id="wemo" data-emofield="1" value="'
+                + esc(d.e || "🎁") + '">'))
+      + '<input class="win wnm" id="wnm" data-wf="n" value="' + esc(d.n)
+      + '" placeholder="ما الذي تريده؟ — شنطة · جوّال · رحلة">'
+      + '<input class="win wnum" id="wpr" data-wf="p" type="number" '
+      + 'inputmode="decimal" step="any" value="' + esc(d.p) + '" placeholder="الثمن">'
+      + '<input class="win wnum" id="wby" data-wf="by" type="number" '
+      + 'inputmode="numeric" value="' + esc(d.by) + '" placeholder="خلال كم شهر؟">'
+      + '<button class="mini on wgo" data-wadd="1">سجّلها</button></div>'
+      + (dlg ? "" : emoPanelHTML())
+      + '<div class="whint">الشهرُ اختياريّ — إن حدّدتَه حُسبت أقساطُه، وإلّا '
+      + 'حُسب أقصرُ طريقٍ يحتمله فائضك.</div>'
+      + '<div class="wroom">'
+      + '<span><b>' + fmt(R.surplus) + '</b><s>فائض الشهر لو مضى كما خُطّط</s></span>'
+      + '<span><b class="' + (R.now < 0 ? "wno" : "wok") + '">' + fmt(R.now)
+      + '</b><s>وما بقي الآن — وبه تشتري اليوم</s></span>'
+      + '</div></div>';
 
-    if(!W.length){
-      h += '<div class="mrow off"><span class="mn">لا أمنيات بعد'
-        + '<span class="ms">سجّل ما تريده بثمنه — شنطةً أو جهازاً أو رحلة — '
-        + 'فيُقال لك بالرقم أيسعه شهرك أم ينقصه كذا. وما لا يُسجَّل ينازع '
-        + 'خطّتك في رأسك بلا حساب.</span></span></div>';
+    if(!live.length && !done.length){
+      h += '<div class="card"><div class="mrow off"><span class="mn">لا أمنيات بعد'
+        + '<span class="ms">سجّل ما تريده بثمنه، فيُقال لك من أين يأتي: '
+        + 'من فائض اليوم أو فائض الشهر أو ادّخارٍ على أشهر أو بندٍ لا تصرفه '
+        + 'كاملاً. وما لا يُسجَّل ينازع خطّتك في رأسك بلا حساب.</span></span>'
+        + '</div></div>';
     }
 
-    live.sort(function(a, b){ return num(a.price) - num(b.price); });
+    /* ٢ · المفتوحةُ واحدة: الطرقُ تُقرأ ولا تُتصفَّح */
+    var sel = ui.wsel;
+    if(!sel || !live.some(function(x){ return x.id === sel; }))
+      sel = live.length ? live[0].id : "";
+
     live.forEach(function(x){
-      var p = num(x.price), gap = p - R.now, can = gap <= 0;
-      h += '<div class="mrow"><span class="mn">' + (x.e || "🎁") + ' ' + esc(x.n)
-        + '<span class="ms">' + fmt(p) + ' ' + esc(cur()) + ' — '
-        + (can
-            ? '<b class="wok">يسعها ما بقي الآن</b>'
-            : ('<b class="wno">ينقصك ' + fmt(gap) + '</b>'
-               + (p <= R.surplus
-                   ? ' — ويسعها فائض الشهر لو التزمت خطّتك'
-                   : ' — وأكبر من فائض الشهر كلِّه، فوزّعها على شهرين')))
-        + '</span></span>'
-        + '<span class="cmodes">'
-        + '<button class="mini' + (can ? ' on' : '') + '" data-wbuy="' + x.id + '">اشتريتها</button>'
-        + '<button class="mini" data-wdel="' + x.id + '">احذف</button></span></div>';
+      var p = num(x.price), gap = p - R.now, can = gap <= 0, open = (x.id === sel);
+      var pct = p > 0 ? Math.max(0, Math.min(100, Math.round(R.now / p * 100))) : 0;
+      h += '<div class="card wcard' + (open ? " open" : "") + '">'
+        + '<div class="whead" data-wsel="' + x.id + '">'
+        + '<span class="wico">' + (x.e ? esc(x.e) : "🎁") + '</span>'
+        + '<span class="wnm2"><b>' + esc(x.n) + '</b><s>' + fmt(p) + ' ' + esc(cur())
+        + ' — ' + (can ? 'يسعها ما بقي الآن'
+                       : ('ينقصك ' + fmt(gap)
+                          + (x.by ? (' · تريدها خلال ' + arMonths(num(x.by))) : "")))
+        + '</s></span>'
+        + '<span class="wpct ' + (can ? "wok" : "") + '">' + pct + '٪</span></div>'
+        + '<div class="bar"><i style="width:' + pct + '%;background:'
+        + (can ? "var(--ok,#0F7355)" : "var(--accent,#4C3AE3)") + '"></i></div>';
+
+      if(open){
+        h += '<div class="wways"><s class="wlab">طرقُك إليها</s>';
+        wishWays(x, k).forEach(function(o){
+          h += '<div class="wway ' + o.t + '"><span class="wwi">' + o.i + '</span>'
+            + '<span class="wwt"><b>' + o.n + '</b><s>' + o.d + '</s></span>'
+            + (o.b ? ('<button class="mini" ' + o.a + '>' + o.b + '</button>') : "")
+            + '</div>';
+        });
+        h += '</div><div class="wact">'
+          + '<button class="mini' + (can ? " on" : "") + '" data-wbuy="' + x.id
+          + '">اشتريتها</button>'
+          + '<button class="mini" data-wedit="' + x.id + '">عدّلها</button>'
+          + '<button class="mini" data-wdel="' + x.id + '">احذف</button></div>';
+      }
+      h += '</div>';
     });
 
     if(done.length){
-      h += '<div class="mrow off"><span class="mn">اشتريتَها'
-        + '<span class="ms">' + done.map(function(x){
+      h += '<div class="sec"><h2>اشتريتَها</h2></div><div class="card">'
+        + '<div class="mrow off"><span class="mn">'
+        + done.length + ' مشتراة<span class="ms">'
+        + done.map(function(x){
             return (x.e || "🎁") + " " + esc(x.n) + " · " + fmt(num(x.price));
           }).join(" · ") + '</span></span>'
-        + '<button class="mini" data-wclear="1">امسحها</button></div>';
+        + '<button class="mini" data-wclear="1">امسحها</button></div></div>';
     }
-    return h + '</div>';
+    return h;
   }
 
   /* شاشتُها: الخطةُ ما عزمتَ عليه، والأمنيةُ ما لم تعزم عليه بعد —
@@ -8998,6 +9192,62 @@ vertical-align:middle}
     on("[data-togglearch]", function(){ ui.showArch = !ui.showArch; render(); });
     /* لوحة الحاسبة: تُحدَّث في مكانها بلا إعادة رسم — إعادةُ الرسم
        تُفقد الحقلَ تركيزَه وتُبطئ الضغط المتتابع. */
+    /* المسوّدةُ تُحفظ في ui لا في الحقل: إعادةُ الرسم لا تمحو ما كتب */
+    ch("[data-wf]", function(el){
+      ui.wdraft = ui.wdraft || { n: "", e: "🎁", p: "", by: "" };
+      ui.wdraft[el.getAttribute("data-wf")] = el.value;
+    });
+    on("[data-wadd]", function(){
+      var g = function(id){ var e = document.getElementById(id); return e ? e.value : ""; };
+      var nm = String(g("wnm") || "").trim();
+      if(!nm){ toast("اكتب ما تريده أوّلاً"); return; }
+      var w = { id: uid(), n: nm, e: String(g("wemo") || "🎁"),
+                price: num(g("wpr")), by: Math.max(0, Math.round(num(g("wby")))),
+                bought: false, at: Date.now() };
+      wishList().push(w);
+      ui.wdraft = { n: "", e: "🎁", p: "", by: "" };
+      ui.wsel = w.id;                       /* تُفتح على طرقها فوراً */
+      toast("سُجّلت — وهذه طرقُك إليها");
+      save(); render();
+    });
+    on("[data-wsel]", function(b){
+      var id = b.getAttribute("data-wsel");
+      ui.wsel = (ui.wsel === id) ? "" : id;
+      render();
+    });
+    on("[data-wedit]", function(b){
+      var id = b.getAttribute("data-wedit"), w = null;
+      wishList().forEach(function(x){ if(x.id === id) w = x; });
+      if(!w) return;
+      ask({ title: "تعديل «" + w.n + "»",
+        fields: [{ label: "ما هو", value: w.n },
+                 { label: "الثمن", type: "number", value: num(w.price) },
+                 { label: "خلال كم شهر (اختياري)", type: "number", value: w.by || "" }],
+        ok: "احفظ",
+        onOk: function(v){
+          if(!v[0]) return;
+          w.n = String(v[0]); w.price = num(v[1]);
+          w.by = Math.max(0, Math.round(num(v[2])));
+          save();
+        } });
+    });
+    /* تصير هدفاً: تُدَّخر لها كما يُدَّخر لبقيّة أهدافه — بآلته لا بآلةٍ ثانية */
+    on("[data-wgoal]", function(b){
+      var p = b.getAttribute("data-wgoal").split("|"), w = null;
+      wishList().forEach(function(x){ if(x.id === p[0]) w = x; });
+      if(!w) return;
+      var n = Math.max(1, Math.round(num(p[1]) || 1));
+      var per = Math.ceil(num(w.price) / n);
+      var g = { id: uid(), n: w.n, e: w.e || "🎁",
+                c: PALETTE[(state.goals || []).length % PALETTE.length],
+                mode: "fixed", target: num(w.price), mult: 1,
+                saved: 0, m: per, date: "", arch: false };
+      state.goals = state.goals || [];
+      state.goals.push(g);
+      w.goal = g.id;
+      toast("صارت هدفاً · " + fmt(per) + " شهرياً");
+      save(); render();
+    });
     on("[data-addwish]", function(){
       ask({ title: "أمنية أو احتياج",
         msg: "شيءٌ تريده ولم تشترِه بعد. يُقال لك أيسعه شهرك أم ينقصه كذا.",
@@ -10244,7 +10494,7 @@ vertical-align:middle}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+2";
+  var APP_VERSION = "1.5.0-beta+3";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
