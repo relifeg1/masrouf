@@ -353,6 +353,9 @@ input,select,button,textarea{font-family:inherit;font-size:16px;min-width:0;max-
 .wadd .emoface.ro{display:inline-flex;align-items:center;justify-content:center}
 .whint{display:block;font-size:11px;color:var(--ink-3);line-height:1.7;
 text-decoration:none;white-space:normal}
+/* شرحٌ مباشرٌ داخل بطاقة: يأخذ حشوَ الصفوف نفسه فلا يلتصق بالحافّة */
+.card>.whint{padding:11px 16px}
+.card>.whint+.wsch,.card>.whint+.wpxr{margin-top:0}
 .wrdy{border-color:var(--ok)}
 .wrdy .nm{color:var(--ok)}
 .wrdy .sub{text-decoration:none;line-height:1.8;white-space:normal}
@@ -406,8 +409,8 @@ font-variant-numeric:tabular-nums}
 /* إيقاعٌ واحد: الفاصلُ والهامشُ قاعدةٌ للعمود لا لكلّ قسمٍ على حدة */
 .wcol>*{margin:0;padding:10px 0 2px;border-top:1px solid var(--line)}
 .wcol>*:first-child{border-top:0}
-.wcol .wlab,.wcol .whint,.wcol .wpnum,.wcol .wact,.wcol .wstrip{
-  padding-inline:16px}
+.wcol .wlab,.wcol .whint,.wcol .wpnum,.wcol .wact,.wcol .wstrip,
+.wcol .simhead,.wcol .track{padding-inline:16px}
 .wcol .wout .whint{padding-inline:16px}
 @media(max-width:759px){ .wcol:last-child>*:first-child{border-top:1px solid var(--line);
 padding-top:9px} }
@@ -11357,7 +11360,7 @@ vertical-align:middle}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+12";
+  var APP_VERSION = "1.5.0-beta+13";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
