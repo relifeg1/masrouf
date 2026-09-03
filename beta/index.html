@@ -363,6 +363,15 @@ text-decoration:none;white-space:normal}
 .wrdy .mn b{font-size:14.5px;color:var(--ok,#0F7355)}
 .wrdy .mn s{display:block;text-decoration:none;font-size:12px;color:var(--ink-3);
 margin-top:3px;line-height:1.8}
+.wpx{margin-top:13px;padding-top:12px;border-top:1px solid var(--line)}
+.wpxr{display:flex;flex-direction:column;gap:2px;margin-top:6px}
+.pxr{display:flex;gap:9px;align-items:baseline;padding:7px 10px;border-radius:10px;
+background:var(--card-2)}
+.pxr>b{flex:none;font-size:13.5px;font-variant-numeric:tabular-nums;min-width:58px}
+.pxr>s{flex:1 1 0;min-width:0;text-decoration:none;font-size:11.5px;color:var(--ink-3);
+line-height:1.7}
+.pxr.lo>b{color:var(--ok,#0F7355)}
+.wpx .wact{margin-top:8px}
 .wplan{margin-top:13px;padding-top:12px;border-top:1px solid var(--line)}
 .wplan.off{opacity:.72}
 .wpnum{margin:6px 0 8px;font-size:15px;font-variant-numeric:tabular-nums}
@@ -4254,6 +4263,70 @@ vertical-align:middle}
   }
   function wishList(){ return state.wish || (state.wish = []); }
 
+  /* ── أبوابُ الأمنيات ──
+     ليُقال لكلٍّ موسمُه: لا يُبشَّر صاحبُ الثلّاجة بموسم الملابس. */
+  var WKINDS = [
+    { k: "elec", n: "إلكترونيات", d: "الإلكترونيات" },
+    { k: "cloth", n: "ملابس", d: "الملابس" },
+    { k: "home", n: "أثاث ومنزل", d: "الأثاث والمنزل" },
+    { k: "trip", n: "سفر", d: "السفر" },
+    { k: "school", n: "دراسة", d: "الدراسة" },
+    { k: "other", n: "غير ذلك", d: "" }
+  ];
+  /* اسمٌ معرَّفٌ للجملة واسمٌ مجرَّدٌ للقائمة — «أسعارُ سفر» نكرةٌ في
+     موضع تعريف. */
+  function kindName(k, def){
+    for(var i = 0; i < WKINDS.length; i++) if(WKINDS[i].k === k)
+      return def ? WKINDS[i].d : WKINDS[i].n;
+    return "";
+  }
+  /* ── مواسمُ السوق ──
+     عرفٌ لا وعد: يُقال متى يكون الموسمُ وما بابُه، ولا يُقدَّر توفيرٌ
+     برقمٍ مخترع. والرقمُ الوحيدُ الصادق هنا ما سجّله بيده في دفتر السعر. */
+  var SEASONS = [
+    { n: "اليوم الوطنيّ", m: 9,  ks: ["elec", "home", "other"], up: false },
+    { n: "الجمعة البيضاء", m: 11, ks: ["elec", "cloth", "home", "other"], up: false },
+    { n: "تخفيضات نهاية العام", m: 1, ks: ["cloth", "home"], up: false },
+    { n: "نهايةُ موسم الصيف", m: 7, ks: ["cloth"], up: false },
+    { n: "العودةُ إلى المدارس", m: 8, ks: ["school"], up: true },
+    { n: "ذروةُ السفر", m: 6, ks: ["trip"], up: true },
+    { n: "ذروةُ السفر", m: 7, ks: ["trip"], up: true }
+  ];
+  /* رمضانُ والعيدُ من التقويم لا من جدول */
+  function hijriSeason(mk){
+    var h = hijriOf(mk + "-15") || "";
+    if(/رمضان/.test(h)) return { n: "رمضان", ks: ["cloth", "trip", "other"], up: true };
+    if(/شوال/.test(h)) return { n: "العيد", ks: ["cloth", "trip"], up: true };
+    return null;
+  }
+  function nextSeason(k, kind){
+    if(!kind || kind === "other") kind = kind || "";
+    for(var i = 0; i < 12; i++){
+      var mk = shift(k, i), mn = +mk.slice(5), j;
+      for(j = 0; j < SEASONS.length; j++){
+        var S = SEASONS[j];
+        if(S.m === mn && (!kind || S.ks.indexOf(kind) >= 0))
+          return { n: S.n, k: mk, i: i, up: S.up };
+      }
+      var H = hijriSeason(mk);
+      if(H && (!kind || H.ks.indexOf(kind) >= 0))
+        return { n: H.n, k: mk, i: i, up: H.up };
+    }
+    return null;
+  }
+
+  /* ── دفترُ السعر ── */
+  function wishPx(x){
+    var a = (x && x.px) ? x.px.slice() : [];
+    a.sort(function(p, q){ return String(p.d) < String(q.d) ? 1 : -1; });
+    return a;                                   /* الأحدثُ أوّلاً */
+  }
+  function pxLow(x){
+    var a = wishPx(x), lo = null;
+    a.forEach(function(o){ if(!lo || num(o.v) < num(lo.v)) lo = o; });
+    return lo;
+  }
+
   /* خطةُ الشراء: هدفٌ مرتبطٌ بالأمنية — الالتزامُ الذي لا يُرى لا يُتابَع */
   function wishGoal(x){
     if(!x || !x.goal) return null;
@@ -4461,6 +4534,53 @@ vertical-align:middle}
              return "«" + esc(o.c.n) + "» " + fmt(o.avg);
            }).join(" · ") + " شهرياً في المتوسّط. لو حوّلتَها إليها جمعتَها في "
            + arMonths(n2) + " — وخطّتك كما هي، إنّما نُقل ما لم يُصرف." });
+    }
+
+    /* الموسم: عرفٌ لا وعد — ومعه فائضُ شهره من الخريطة */
+    var sea = nextSeason(k, x.kind || "");
+    if(sea){
+      var so = O[sea.i] || null, nowSea = (sea.i === 0);
+      /* موسمُ شهرِه أولى بأن يُقال — لا أن يُسكت عنه لأنّه فيه */
+      if(sea.up){
+        W.push({ t: "warn", i: "◔",
+          n: nowSea ? ("شهرُك موسمُ ارتفاع · " + esc(sea.n))
+                    : ("تجنّب شراءها في " + esc(sea.n)),
+          d: (nowSea ? "أسعارُ " : ("في " + esc(mName(sea.k)) + " — وأسعارُ "))
+             + esc(kindName(x.kind, true) || "بابها") + " ترتفع فيه عرفاً لا وعداً."
+             + (nowSea ? " فأخّرها عنه إن استطعت." : " فقدّمها عليه أو أخّرها عنه.") });
+      } else {
+        W.push({ t: "ok", i: "◷",
+          n: nowSea ? ("موسمُها شهرُك هذا · " + esc(sea.n))
+                    : ("انتظر " + esc(sea.n)),
+          d: (nowSea ? "هو موسمُ " : ("في " + esc(mName(sea.k)) + " — بعد "
+                                       + arMonths(sea.i) + "، وهو موسمُ "))
+             + esc(kindName(x.kind, true) || "التخفيضات")
+             + " عرفاً لا وعداً"
+             + (so ? (". وفائضُ " + (nowSea ? "شهرك " : "ذلك الشهر ")
+                      + fmt(so.sur) + " " + esc(cur())
+                      + (so.sur >= p ? " يسعها وحدَه." : ".")) : ".")
+             + " ولا يُقدَّر لك توفيرٌ برقمٍ مخترع — سجّل السعرَ حين تراه"
+             + " فيُقال لك بالرقم." });
+      }
+    }
+
+    /* وما سجّله بيده: الرقمُ الوحيدُ الصادق عن السوق */
+    var lo = pxLow(x);
+    if(lo && num(lo.v) < p - 0.5){
+      W.push({ t: "ok", i: "◫", n: "رأيتَها بأقلّ",
+        d: "أدنى ما سجّلتَه " + fmt(num(lo.v)) + " " + esc(cur()) + " في "
+           + esc(mName(String(lo.d).slice(0, 7)))
+           + (lo.s ? (" — " + esc(lo.s)) : "")
+           + ". فسعرُ اليوم يزيد عليه " + fmt(p - num(lo.v)) + "." });
+    }
+
+    /* وليس كلُّ تأجيلٍ مجّانياً */
+    if(num(x.wait) > 0 && reach && reach.i > 0){
+      var wm = reach.i + 1;
+      W.push({ t: "cost", i: "⧗", n: "تأجيلُها ليس مجّاناً",
+        d: "قدّرتَ كلفةَ انتظارها " + fmt(num(x.wait)) + " " + esc(cur())
+           + " شهرياً — فتأخيرُها " + arMonths(wm) + " يكلّفك "
+           + fmt(num(x.wait) * wm) + ". احسبها في ثمنها." });
     }
 
     /* التقسيطُ يبلغها اليوم — بمقابلِ التزامٍ لا يُؤجَّل حين يضيق شهر */
@@ -6106,6 +6226,8 @@ vertical-align:middle}
           "ومن عيّن لها «كلفةً شهريّةً بعد شرائها» حُسبت كلفتُها في سنتها الأولى، وصارت بندًا ثابتاً يوم تشتريها فلا تُنسى.",
           "و«اجعلها هدفاً» يجعل الطريقَ خطّةً تُتابَع: ترى ما اجتمع وما بقي ومتى تكتمل، وتوقفها شهراً فيرجع قسطُها إلى جيبك ثمّ تستأنف.",
           "ومتى صارت في متناولك قيل لك في صدر الشاشة وبنقطةٍ على تبويبها — فلا تنتظر أن تسأل.",
+          "و«دفترُ السعر» يسجّل السعر كلّما رأيتَه بتاريخه ومصدره، فيُقال أدنى ما رأيتَه وكم يزيد سعرُ اليوم عليه. وآخرُ ما تسجّله يصير ثمنَها.",
+          "ومن عيّن لها باباً (إلكترونيات · ملابس · سفر …) قيل له موسمُها ومعه فائضُ شهره — وما ترتفع فيه أسعارُ بابها يُقال ليتجنّبه. وهو عرفٌ لا وعد، ولا يُقدَّر لك توفيرٌ برقمٍ مخترع.",
           "ومتى اشتريتَها صارت مصروفاً في بندها بضغطة، فلا تُكتب مرّتين."] },
     { k: "spend", i: "🧾", n: "المصروف",
       w: "ما صرفتَه فعلاً — لا ما نويت. وهنا تُسجَّل الأرقام يومياً.",
@@ -6513,6 +6635,7 @@ vertical-align:middle}
 
       if(open){
         h += wishPlanHTML(x, k);
+        h += wishPxHTML(x);
         h += simHTML(x, k);
         h += outStripHTML(k, p);
         h += '<div class="wways"><s class="wlab">طرقُك إليها</s>';
@@ -6540,6 +6663,27 @@ vertical-align:middle}
           }).join(" · ") + '</span></span>'
         + '<button class="mini" data-wclear="1">امسحها</button></div></div>';
     }
+    return h;
+  }
+
+  /* دفترُ السعر: تاريخٌ للسعر بدل رقمٍ واحد */
+  function wishPxHTML(x){
+    var a = wishPx(x), lo = pxLow(x);
+    var h = '<div class="wpx"><s class="wlab">دفترُ السعر</s>'
+      + '<div class="wpxr">'
+      + (a.length
+          ? a.slice(0, 4).map(function(o){
+              var isLo = lo && o === lo;
+              return '<div class="pxr' + (isLo ? " lo" : "") + '"><b>'
+                + fmt(num(o.v)) + '</b><s>' + esc(mName(String(o.d).slice(0, 7)))
+                + (o.s ? (" · " + esc(o.s)) : "")
+                + (isLo && a.length > 1 ? " · أدنى ما رأيت" : "") + '</s></div>';
+            }).join("")
+          : '<div class="pxr"><s>لم تسجّل سعراً بعد — سجّله كلّما رأيتَه،'
+            + ' فيصير للسعر تاريخٌ بدل رقمٍ واحد.</s></div>')
+      + '</div>'
+      + '<div class="wact"><button class="mini" data-wpx="' + x.id
+      + '">سجّل سعراً رأيتَه</button></div></div>';
     return h;
   }
 
@@ -9567,6 +9711,29 @@ vertical-align:middle}
       toast("فُكّ الارتباط — والهدفُ باقٍ في مكانه بماله");
       save(); render();
     });
+    on("[data-wpx]", function(b){
+      var id = b.getAttribute("data-wpx"), w = null;
+      wishList().forEach(function(x){ if(x.id === id) w = x; });
+      if(!w) return;
+      ask({ title: "سعرٌ رأيتَه لـ«" + w.n + "»",
+        msg: "يُسجَّل بتاريخه ومصدره. وآخرُ ما تسجّله يصير ثمنَها — "
+             + "لأنّ ثمنها ما تدفعه اليوم لا ما رأيتَه مرّة.",
+        fields: [{ label: "السعر", type: "number", value: num(w.price) },
+                 { label: "من أين رأيتَه (اختياري)", value: "", ph: "متجر · تطبيق" },
+                 { label: "التاريخ", type: "date", value: defaultDate() }],
+        ok: "سجّله",
+        onOk: function(v){
+          var val = num(v[0]);
+          if(val <= 0) return;
+          w.px = w.px || [];
+          w.px.push({ v: val, s: String(v[1] || ""), d: String(v[2] || defaultDate()) });
+          /* الأحدثُ هو الثمن — والدفترُ يحفظ ما مضى */
+          var newest = wishPx(w)[0];
+          if(newest) w.price = num(newest.v);
+          toast("سُجّل · دفترُها فيه " + w.px.length);
+          save();
+        } });
+    });
     on("[data-wsel]", function(b){
       var id = b.getAttribute("data-wsel");
       ui.wsel = (ui.wsel === id) ? "" : id;
@@ -9584,7 +9751,13 @@ vertical-align:middle}
                    options: [{ v: "", n: "— بلا بند —" }].concat(catOptions()),
                    value: w.cat || "" },
                  { label: "كلفةٌ شهريّةٌ بعد شرائها (اختياري)", type: "number",
-                   value: w.run || "" }],
+                   value: w.run || "" },
+                 { label: "بابها — ليُقال موسمُها", type: "select",
+                   options: [{ v: "", n: "— بلا باب —" }].concat(
+                     WKINDS.map(function(o){ return { v: o.k, n: o.n }; })),
+                   value: w.kind || "" },
+                 { label: "كلفةُ انتظارها شهرياً (اختياري)", type: "number",
+                   value: w.wait || "" }],
         ok: "احفظ",
         onOk: function(v){
           if(!v[0]) return;
@@ -9592,6 +9765,8 @@ vertical-align:middle}
           w.by = Math.max(0, Math.round(num(v[2])));
           w.cat = String(v[3] || "");
           w.run = Math.max(0, num(v[4]));
+          w.kind = String(v[5] || "");
+          w.wait = Math.max(0, num(v[6]));
           save();
         } });
     });
@@ -10876,7 +11051,7 @@ vertical-align:middle}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+6";
+  var APP_VERSION = "1.5.0-beta+7";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
