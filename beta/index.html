@@ -363,6 +363,10 @@ text-decoration:none;white-space:normal}
 .wrdy .mn b{font-size:14.5px;color:var(--ok,#0F7355)}
 .wrdy .mn s{display:block;text-decoration:none;font-size:12px;color:var(--ink-3);
 margin-top:3px;line-height:1.8}
+.askr{display:flex;gap:9px;align-items:center;padding:9px 10px;border-radius:10px;
+background:var(--card-2);margin-top:6px;flex-wrap:wrap}
+.askr>b{flex:1 1 120px;min-width:0;font-size:13.5px}
+.schr>i.bad{color:var(--warn,#C2407A)}
 .wcap{display:flex;gap:8px;align-items:center;margin-top:10px;padding-top:10px;
 border-top:1px solid var(--line)}
 .wcap .mn{flex:1 1 0;min-width:0}
@@ -4289,6 +4293,45 @@ vertical-align:middle}
   }
   function wishList(){ return state.wish || (state.wish = []); }
 
+  /* ── بعد الشراء ──
+     ما قبلها يعينه بأرقام خطّته، وهذه تعينه بما فعله هو. */
+  function wishBoughtAge(x){
+    return (x && x.bat) ? Math.floor((Date.now() - x.bat) / 86400000) : -1;
+  }
+  /* سرعةُ القرار: كم يوماً بين تسجيلها وشرائها */
+  function wishHaste(x){
+    if(!x || !x.bat || !x.at) return -1;
+    return Math.floor((x.bat - x.at) / 86400000);
+  }
+  /* لا يُسأل قبل الشهر — الشراءُ الجديدُ كلُّه فرح — ولا يُسأل مرّتين */
+  function wishAsk(){
+    return wishList().filter(function(x){
+      return x.bought && x.use === undefined && wishBoughtAge(x) >= 30;
+    });
+  }
+  function wishRecord(){
+    var fast = { n: 0, re: 0 }, slow = { n: 0, re: 0 };
+    wishList().forEach(function(x){
+      if(x.use === undefined) return;
+      var d = wishHaste(x);
+      if(d < 0) return;
+      var b = (d <= 7) ? fast : (d >= 30 ? slow : null);
+      if(!b) return;
+      b.n++;
+      if(num(x.use) === 0) b.re++;          /* لا يستعملها */
+    });
+    return { fast: fast, slow: slow };
+  }
+  /* ما وفّره الانتظار: أعلى سعرٍ سجّله قبل الشراء ناقصَ ما دفع.
+     وما لم يُسجَّل لا يُدَّعى فيه توفير. */
+  function wishSaved(x){
+    if(!x.bought || !x.px || !x.px.length) return 0;
+    var hi = 0;
+    x.px.forEach(function(o){ if(num(o.v) > hi) hi = num(o.v); });
+    var paid = num(x.paid || x.price);
+    return (hi > paid) ? (hi - paid) : 0;
+  }
+
   /* ── المفاضلة ──
      الترتيبُ بالثمن أضعفُ ترتيب: يضع سمّاعةً بمئتين قبل عمليةِ أسنانٍ
      بألفين لأنّها أرخص لا لأنّها أولى. */
@@ -4616,6 +4659,15 @@ vertical-align:middle}
              return "«" + esc(o.c.n) + "» " + fmt(o.avg);
            }).join(" · ") + " شهرياً في المتوسّط. لو حوّلتَها إليها جمعتَها في "
            + arMonths(n2) + " — وخطّتك كما هي، إنّما نُقل ما لم يُصرف." });
+    }
+
+    /* سجلُّه يشهد عليه — لا وعظاً بل سطرٌ من دفتره */
+    var REC = wishRecord(), agT = wishAgeTag(x);
+    if(agT && agT.c === "warn" && REC.fast.n >= 3 && REC.fast.re * 2 > REC.fast.n){
+      W.push({ t: "cost", i: "◑", n: "سجلُّك يشهد",
+        d: "من " + REC.fast.n + " أمنيةٍ اشتريتَها في أسبوعها، " + REC.fast.re
+           + " لا تستعملها اليوم. وهذه سُجّلت قبل " + wishAge(x)
+           + " يوماً — هذا دفترُك لا نصيحتي." });
     }
 
     /* الموسم: عرفٌ لا وعد — ومعه فائضُ شهره من الخريطة */
@@ -6312,6 +6364,7 @@ vertical-align:middle}
           "ومن عيّن لها باباً (إلكترونيات · ملابس · سفر …) قيل له موسمُها ومعه فائضُ شهره — وما ترتفع فيه أسعارُ بابها يُقال ليتجنّبه. وهو عرفٌ لا وعد، ولا يُقدَّر لك توفيرٌ برقمٍ مخترع.",
           "وتُرتَّب أمنياتُك بالأهمّ لا بالأرخص: خمسُ نقاطٍ تقول كم تهمّك. وما سُجّل قبل أقلَّ من شهرٍ يُوسم «حديثة» وما صمد ستّين يوماً يُوسم «صمدت» — وسمٌ لا منع.",
           "و«سقفُ الكماليّات» حدٌّ شهريٌّ اختياريّ لأمنياتك، و«جدولُ الشراء» يوزّعها على أشهرك القادمة بحسب فائض كلّ شهرٍ وأهمّيّة كلّ أمنية.",
+          "وبعد شهرٍ من شرائها تُسأل سؤالاً واحداً: أتستعملها؟ فيُبنى «سجلُّك» — كم اشتريتَ في أسبوعه وكم لا تستعمله — ويُذكَّرك به عند أمنيةٍ حديثة. وتجد الأمنيات في التقارير: ما أنفقتَ وما وفّره الانتظار.",
           "ومتى اشتريتَها صارت مصروفاً في بندها بضغطة، فلا تُكتب مرّتين."] },
     { k: "spend", i: "🧾", n: "المصروف",
       w: "ما صرفتَه فعلاً — لا ما نويت. وهنا تُسجَّل الأرقام يومياً.",
@@ -6642,6 +6695,43 @@ vertical-align:middle}
         + '— كلاهما يُصلَح من تبويب الحسابات.</div>';
     }
     h += '</div>';
+
+    /* الأمنيات: ما أُنفق عليها، وما وفّره الانتظار — من دفتر السعر وحدَه */
+    var inR = {}, WB = [], wpaid = 0, wsav = 0;
+    MS.forEach(function(mk){ inR[mk] = 1; });
+    wishList().forEach(function(x){
+      if(!x.bought || !inR[x.bm]) return;
+      WB.push(x);
+      wpaid += num(x.paid || x.price);
+      wsav += wishSaved(x);
+    });
+    var REC = wishRecord();
+    h += '<div class="sec"><h2>الأمنيات</h2><span class="hint">'
+      + (WB.length ? (WB.length + " في المدّة") : "لا شيء") + '</span></div>'
+      + '<div class="card">';
+    if(!WB.length){
+      h += '<div class="empty"><b>لم تشترِ أمنيةً في هذه المدّة</b>'
+        + 'ما تسجّله في شاشة الأمنيات ثمّ تشتريه يُحسب هنا.</div>';
+    } else {
+      h += '<div class="srow"><span class="sm">أنفقتَ عليها</span>'
+        + '<span class="sn2">' + WB.length + ' أمنيةً في '
+        + arMonths(MS.length) + '</span>'
+        + '<span class="sv">' + fmt(wpaid) + '</span></div>';
+      h += '<div class="srow"><span class="sm">وفّرتَ بالانتظار</span>'
+        + '<span class="sn2">' + (wsav > 0
+            ? "أعلى سعرٍ سجّلتَه قبل الشراء ناقصَ ما دفعت"
+            : "لا سعرَ مسجَّلٌ قبل الشراء — فلا يُدَّعى توفير") + '</span>'
+        + '<span class="sv">' + fmt(wsav) + '</span></div>';
+      if(REC.fast.n + REC.slow.n >= 3){
+        h += '<div class="yhint" style="border-bottom:0">من سجلّك: '
+          + (REC.fast.n ? ('ما اشتريتَه في أسبوعه <b>' + REC.fast.n + '</b> منها <b>'
+                           + REC.fast.re + '</b> لا تستعملها. ') : "")
+          + (REC.slow.n ? ('وما انتظرتَه شهراً <b>' + REC.slow.n + '</b> منها <b>'
+                           + REC.slow.re + '</b> لا تستعملها.') : "")
+          + '</div>';
+      }
+    }
+    h += '</div>';
     return h;
   }
 
@@ -6699,6 +6789,44 @@ vertical-align:middle}
         + '<s>' + rdy.map(function(w){
             return (w.e || "🎁") + " " + esc(w.n) + " · " + fmt(num(w.price));
           }).join(" · ") + '</s></span></div>';
+    }
+
+    var ASK = wishAsk();
+    if(ASK.length){
+      h += '<div class="sec"><h2>سؤالٌ بعد شهر</h2>'
+        + '<span class="hint">' + ASK.length + '</span></div><div class="card">'
+        + '<s class="whint">مضى شهرٌ على شرائها — أتستعملها؟ سؤالٌ واحدٌ '
+        + 'يبني سجلَّك، ولا يُسأل مرّتين.</s>'
+        + ASK.map(function(w){
+            return '<div class="askr"><b>' + (w.e || "🎁") + ' ' + esc(w.n) + '</b>'
+              + '<span class="cmodes">'
+              + '<button class="mini on" data-wuse="' + w.id + '|2">أستعملها</button>'
+              + '<button class="mini" data-wuse="' + w.id + '|1">قليلاً</button>'
+              + '<button class="mini" data-wuse="' + w.id + '|0">لا</button>'
+              + '</span></div>';
+          }).join("")
+        + '</div>';
+    }
+
+    var REC2 = wishRecord();
+    if(REC2.fast.n + REC2.slow.n >= 3){
+      h += '<div class="sec"><h2>سجلُّك</h2>'
+        + '<span class="hint">' + (REC2.fast.n + REC2.slow.n) + ' إجابة</span></div>'
+        + '<div class="card"><div class="wsch">'
+        + (REC2.fast.n
+            ? ('<div class="schr"><b>اشتريتَها في أسبوعها</b>'
+               + '<s>' + REC2.fast.n + ' أمنية</s><i class="'
+               + (REC2.fast.re * 2 > REC2.fast.n ? "bad" : "")
+               + '">' + REC2.fast.re + ' لا تستعملها</i></div>')
+            : "")
+        + (REC2.slow.n
+            ? ('<div class="schr"><b>انتظرتَها شهراً فأكثر</b>'
+               + '<s>' + REC2.slow.n + ' أمنية</s><i class="'
+               + (REC2.slow.re * 2 > REC2.slow.n ? "bad" : "")
+               + '">' + REC2.slow.re + ' لا تستعملها</i></div>')
+            : "")
+        + '</div><s class="whint">بالعدد لا بالنسبة — والعددُ أصدقُ حين '
+        + 'تكون العيّنةُ صغيرة. وهذا دفترُك عن نفسك.</s></div>';
     }
 
     if(!live.length && !done.length){
@@ -9842,6 +9970,14 @@ vertical-align:middle}
       toast("فُكّ الارتباط — والهدفُ باقٍ في مكانه بماله");
       save(); render();
     });
+    on("[data-wuse]", function(b){
+      var p = b.getAttribute("data-wuse").split("|");
+      wishList().forEach(function(x){
+        if(x.id === p[0]){ x.use = Math.round(num(p[1])); x.useAt = Date.now(); }
+      });
+      toast("سُجّلت إجابتُك — تبني سجلَّك");
+      save(); render();
+    });
     on("[data-wimp]", function(b){
       var p = b.getAttribute("data-wimp").split("|");
       wishList().forEach(function(x){ if(x.id === p[0]) x.imp = Math.round(num(p[1])); });
@@ -9975,6 +10111,7 @@ vertical-align:middle}
           m.items.push(it);
           w.bought = true;
           w.bm = ui.month;                    /* ليُحسب في سقف كماليّات شهره */
+          w.bat = Date.now();                 /* وليُسأل عنه بعد شهر */
           w.paid = num(v[1]);
           w.run = Math.max(0, num(v[2]));
           /* الكلفةُ التي لا تنتهي عند الشراء تصير بنداً ثابتاً في حينه */
@@ -11200,7 +11337,7 @@ vertical-align:middle}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+8";
+  var APP_VERSION = "1.5.0-beta+9";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
