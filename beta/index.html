@@ -374,11 +374,9 @@ border-top:1px solid var(--line)}
 .wcap .mn s{display:block;text-decoration:none;font-size:11px;color:var(--ink-3);
 line-height:1.7;margin-top:2px}
 .wtag{display:inline-block;font-size:10.5px;padding:2px 9px;border-radius:99px;
-margin-bottom:8px;border:1px solid var(--line);color:var(--ink-3)}
+border:1px solid var(--line);color:var(--ink-3)}
 .wtag.ok{color:var(--ok,#0F7355);border-color:var(--ok,#0F7355)}
 .wtag.warn{color:var(--warn,#C2407A);border-color:var(--warn,#C2407A)}
-.wimp{margin-top:12px;display:flex;align-items:center;gap:10px}
-.wimp .wlab{margin:0}
 .dots{display:flex;gap:5px}
 .dot{width:15px;height:15px;border-radius:99px;border:1px solid var(--line2,var(--line));
 background:transparent;cursor:pointer;padding:0;transition:.12s}
@@ -393,16 +391,20 @@ text-overflow:ellipsis;white-space:nowrap}
 .schr>i{flex:none;font-style:normal;font-size:12.5px;color:var(--ok,#0F7355);
 font-weight:600}
 .schr.no>i{color:var(--ink-3);font-weight:400}
-.wpx{margin-top:13px;padding-top:12px;border-top:1px solid var(--line)}
+.wpx{margin-top:9px;padding-top:8px;border-top:1px solid var(--line)}
+.wpx.one{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.wpx.one>s{flex:1 1 140px;min-width:0;text-decoration:none;font-size:11px;
+color:var(--ink-3);line-height:1.6}
+.wpx.one>.mini{flex:none}
 .wpxr{display:flex;flex-direction:column;gap:2px;margin-top:6px}
-.pxr{display:flex;gap:9px;align-items:baseline;padding:7px 10px;border-radius:10px;
+.pxr{display:flex;gap:9px;align-items:baseline;padding:5px 9px;border-radius:9px;
 background:var(--card-2)}
 .pxr>b{flex:none;font-size:13.5px;font-variant-numeric:tabular-nums;min-width:58px}
 .pxr>s{flex:1 1 0;min-width:0;text-decoration:none;font-size:11.5px;color:var(--ink-3);
 line-height:1.7}
 .pxr.lo>b{color:var(--ok,#0F7355)}
 .wpx .wact{margin-top:8px}
-.wplan{margin-top:13px;padding-top:12px;border-top:1px solid var(--line)}
+.wplan{margin-top:9px;padding-top:8px;border-top:1px solid var(--line)}
 .wplan.off{opacity:.72}
 .wpnum{margin:6px 0 8px;font-size:15px;font-variant-numeric:tabular-nums}
 .wpnum b{font-size:19px;font-weight:600}
@@ -413,8 +415,13 @@ margin-top:2px;line-height:1.7}
 min-width:16px;height:16px;padding:0 4px;margin-inline-start:6px;border-radius:99px;
 background:var(--ok,#0F7355);color:#fff;font-size:10px;font-style:normal;
 font-variant-numeric:tabular-nums}
-.wsim{margin-top:13px;padding-top:12px;border-top:1px solid var(--line)}
-.simhead{display:flex;align-items:center;gap:10px;margin:6px 0 9px;flex-wrap:wrap}
+.wbody{display:grid;gap:2px;margin-top:2px}
+@media(min-width:760px){
+  .wbody{grid-template-columns:1fr 1fr;gap:0 18px;align-items:start}
+}
+.wmeta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:7px 0 2px}
+.wsim{margin-top:9px;padding-top:8px;border-top:1px solid var(--line)}
+.simhead{display:flex;align-items:center;gap:10px;margin:4px 0 6px;flex-wrap:wrap}
 .simchip{flex:none;font-size:11.5px;padding:3px 11px;border-radius:99px;
 border:1px solid var(--line);color:var(--ink-3)}
 .simchip.ok{background:var(--ok,#0F7355);border-color:var(--ok,#0F7355);color:#fff}
@@ -424,7 +431,7 @@ border:1px solid var(--line);color:var(--ink-3)}
 .simnum b{font-weight:600}
 .simnum s{display:block;text-decoration:none;font-size:11px;color:var(--ink-3);margin-top:1px}
 .simrows{display:flex;flex-direction:column;gap:2px}
-.simr{display:flex;gap:9px;align-items:baseline;padding:7px 10px;border-radius:10px;
+.simr{display:flex;gap:9px;align-items:baseline;padding:5px 9px;border-radius:9px;
 background:var(--card-2)}
 .simr>b{flex:none;font-size:13.5px;font-variant-numeric:tabular-nums;min-width:58px}
 .simr>s{flex:1 1 0;min-width:0;text-decoration:none;font-size:11.5px;color:var(--ink-3);
@@ -432,8 +439,8 @@ line-height:1.7}
 .simr.warn>b{color:var(--warn,#C2407A)}
 .simr.cost{border:1px dashed var(--warn,#C2407A);background:transparent}
 .simr.cost>b{color:var(--warn,#C2407A)}
-.wout{margin-top:13px;padding-top:12px;border-top:1px solid var(--line)}
-.wstrip{display:flex;gap:3px;align-items:flex-end;margin:8px 0 2px;height:62px}
+.wout{margin-top:9px;padding-top:8px;border-top:1px solid var(--line)}
+.wstrip{display:flex;gap:3px;align-items:flex-end;margin:5px 0 1px;height:46px}
 .wb{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;
 justify-content:flex-end;height:100%;cursor:default}
 .wb i{display:block;width:100%;border-radius:4px 4px 0 0;background:var(--track)}
@@ -443,18 +450,18 @@ justify-content:flex-end;height:100%;cursor:default}
 white-space:nowrap;overflow:hidden}
 .wb.hit s{color:var(--ok,#0F7355);font-weight:600}
 .wout .whint{margin-top:4px}
-.wcard{padding-bottom:12px}
-.whead{display:flex;gap:10px;align-items:center;cursor:pointer;margin-bottom:9px}
+.wcard{padding-bottom:10px}
+.whead{display:flex;gap:10px;align-items:center;cursor:pointer;margin-bottom:7px}
 .wico{width:34px;height:34px;flex:none;border-radius:99px;background:var(--card-2);
 display:inline-flex;align-items:center;justify-content:center;font-size:17px}
 .wnm2{flex:1 1 0;min-width:0}
 .wnm2 b{display:block;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wnm2 s{display:block;text-decoration:none;font-size:11.5px;color:var(--ink-3);margin-top:2px}
 .wpct{flex:none;font-size:13px;color:var(--ink-3);font-variant-numeric:tabular-nums}
-.wways{margin-top:12px;display:flex;flex-direction:column;gap:2px}
+.wways{margin-top:9px;display:flex;flex-direction:column;gap:2px}
 .wlab{display:block;text-decoration:none;font-size:11px;color:var(--ink-3);
-letter-spacing:.04em;margin-bottom:4px}
-.wway{display:flex;gap:9px;align-items:flex-start;padding:9px 10px;border-radius:12px;
+letter-spacing:.04em;margin-bottom:2px}
+.wway{display:flex;gap:9px;align-items:flex-start;padding:7px 10px;border-radius:11px;
 background:var(--card-2)}
 .wway .wwi{flex:none;width:22px;height:22px;border-radius:99px;display:inline-flex;
 align-items:center;justify-content:center;font-size:12px;background:var(--track);
@@ -467,7 +474,7 @@ color:var(--ink-3)}
 line-height:1.75}
 .wway.cost{opacity:.82;border:1px dashed var(--line);background:transparent}
 .wway .mini{flex:none;align-self:center}
-.wact{display:flex;gap:6px;margin-top:11px;justify-content:flex-end}
+.wact{display:flex;gap:6px;margin-top:8px;justify-content:flex-end}
 .wok{color:var(--ok,#0F7355)}
 .wno{color:var(--warn,#C2407A)}
 /* DEV:START */
@@ -6855,24 +6862,32 @@ vertical-align:middle}
         + '</s></span>'
         + '<span class="wpct ' + (can ? "wok" : "") + '">' + pct + '٪</span></div>'
         + (function(){
-            var tg = wishAgeTag(x);
-            return tg ? ('<span class="wtag ' + tg.c + '" title="' + esc(tg.t) + '">'
-                         + esc(tg.n) + '</span>') : "";
+            /* الوسمُ والنقاطُ سطرٌ واحد — كانا سطرين */
+            var tg = wishAgeTag(x), r = "";
+            if(!open && !tg) return "";
+            r = '<div class="wmeta">'
+              + (tg ? ('<span class="wtag ' + tg.c + '" title="' + esc(tg.t) + '">'
+                       + esc(tg.n) + '</span>') : "");
+            if(open){
+              r += '<span class="dots" title="كم تهمّك">';
+              for(var q = 1; q <= 5; q++)
+                r += '<button class="dot' + (q <= wishImp(x) ? " on" : "")
+                   + '" data-wimp="' + x.id + '|' + q + '" title="' + q + ' من ٥"></button>';
+              r += '</span>';
+            }
+            return r + '</div>';
           })()
         + '<div class="bar"><i style="width:' + pct + '%;background:'
         + (can ? "var(--ok,#0F7355)" : "var(--accent,#4C3AE3)") + '"></i></div>';
 
       if(open){
-        /* خمسُ نقاطٍ: كم تهمّك — فتُرتَّب بالقيمة لا بالثمن */
-        h += '<div class="wimp"><s class="wlab">كم تهمّك؟</s><span class="dots">';
-        for(var q = 1; q <= 5; q++)
-          h += '<button class="dot' + (q <= wishImp(x) ? " on" : "")
-             + '" data-wimp="' + x.id + '|' + q + '" title="' + q + ' من ٥"></button>';
-        h += '</span></div>';
+        /* عمودان على العريض: ما يُقرأ في جهةٍ وما يُفعل في جهة */
+        h += '<div class="wbody"><div class="wcol">';
         h += wishPlanHTML(x, k);
         h += wishPxHTML(x);
         h += simHTML(x, k);
         h += outStripHTML(k, p);
+        h += '</div><div class="wcol">';
         h += '<div class="wways"><s class="wlab">طرقُك إليها</s>';
         wishWays(x, k).forEach(function(o){
           h += '<div class="wway ' + o.t + '"><span class="wwi">' + o.i + '</span>'
@@ -6884,7 +6899,8 @@ vertical-align:middle}
           + '<button class="mini' + (can ? " on" : "") + '" data-wbuy="' + x.id
           + '">اشتريتها</button>'
           + '<button class="mini" data-wedit="' + x.id + '">عدّلها</button>'
-          + '<button class="mini" data-wdel="' + x.id + '">احذف</button></div>';
+          + '<button class="mini" data-wdel="' + x.id + '">احذف</button></div>'
+          + '</div></div>';
       }
       h += '</div>';
     });
@@ -6928,22 +6944,24 @@ vertical-align:middle}
   /* دفترُ السعر: تاريخٌ للسعر بدل رقمٍ واحد */
   function wishPxHTML(x){
     var a = wishPx(x), lo = pxLow(x);
-    var h = '<div class="wpx"><s class="wlab">دفترُ السعر</s>'
+    /* الفارغُ سطرٌ وزرُّه بجانبه — لا كتلةٌ فارغةٌ تأخذ ثلاثة أسطر */
+    if(!a.length){
+      return '<div class="wpx one"><s>لا سعرَ مسجَّل — سجّله كلّما رأيتَه '
+        + 'فيصير للسعر تاريخ.</s>'
+        + '<button class="mini" data-wpx="' + x.id + '">سجّل سعراً</button></div>';
+    }
+    return '<div class="wpx"><s class="wlab">دفترُ السعر</s>'
       + '<div class="wpxr">'
-      + (a.length
-          ? a.slice(0, 4).map(function(o){
-              var isLo = lo && o === lo;
-              return '<div class="pxr' + (isLo ? " lo" : "") + '"><b>'
-                + fmt(num(o.v)) + '</b><s>' + esc(mName(String(o.d).slice(0, 7)))
-                + (o.s ? (" · " + esc(o.s)) : "")
-                + (isLo && a.length > 1 ? " · أدنى ما رأيت" : "") + '</s></div>';
-            }).join("")
-          : '<div class="pxr"><s>لم تسجّل سعراً بعد — سجّله كلّما رأيتَه،'
-            + ' فيصير للسعر تاريخٌ بدل رقمٍ واحد.</s></div>')
+      + a.slice(0, 3).map(function(o){
+          var isLo = lo && o === lo;
+          return '<div class="pxr' + (isLo ? " lo" : "") + '"><b>'
+            + fmt(num(o.v)) + '</b><s>' + esc(mName(String(o.d).slice(0, 7)))
+            + (o.s ? (" · " + esc(o.s)) : "")
+            + (isLo && a.length > 1 ? " · أدنى ما رأيت" : "") + '</s></div>';
+        }).join("")
       + '</div>'
       + '<div class="wact"><button class="mini" data-wpx="' + x.id
-      + '">سجّل سعراً رأيتَه</button></div></div>';
-    return h;
+      + '">سجّل سعراً</button></div></div>';
   }
 
   /* خطةُ شرائها: ما اجتمع · وما بقي · ومتى تكتمل · وتُوقف وتُستأنف */
@@ -6987,7 +7005,7 @@ vertical-align:middle}
     return '<div class="wout"><s class="wlab">فائضُ الأشهر القادمة</s>'
       + '<div class="wstrip">'
       + O.map(function(o, i){
-          var hh = Math.max(3, Math.round(Math.min(1, Math.abs(o.sur) / mx) * 44));
+          var hh = Math.max(3, Math.round(Math.min(1, Math.abs(o.sur) / mx) * 32));
           var cl = (o.sur <= 0) ? " neg" : (i === hit ? " hit" : "");
           return '<span class="wb' + cl + '" title="' + esc(mName(o.k)) + ' · '
             + fmt(o.sur) + '"><i style="height:' + hh + 'px"></i>'
@@ -9978,7 +9996,9 @@ vertical-align:middle}
       toast("سُجّلت إجابتُك — تبني سجلَّك");
       save(); render();
     });
-    on("[data-wimp]", function(b){
+    on("[data-wimp]", function(b, e){
+      /* النقاطُ داخل رأس البطاقة — فلا تصل الضغطةُ إلى مقبض الفتح */
+      if(e && e.stopPropagation) e.stopPropagation();
       var p = b.getAttribute("data-wimp").split("|");
       wishList().forEach(function(x){ if(x.id === p[0]) x.imp = Math.round(num(p[1])); });
       save(); render();
@@ -11337,7 +11357,7 @@ vertical-align:middle}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+9";
+  var APP_VERSION = "1.5.0-beta+10";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
