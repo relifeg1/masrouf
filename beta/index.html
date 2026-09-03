@@ -363,6 +363,32 @@ text-decoration:none;white-space:normal}
 .wrdy .mn b{font-size:14.5px;color:var(--ok,#0F7355)}
 .wrdy .mn s{display:block;text-decoration:none;font-size:12px;color:var(--ink-3);
 margin-top:3px;line-height:1.8}
+.wcap{display:flex;gap:8px;align-items:center;margin-top:10px;padding-top:10px;
+border-top:1px solid var(--line)}
+.wcap .mn{flex:1 1 0;min-width:0}
+.wcap .mn b{display:block;font-size:13.5px}
+.wcap .mn s{display:block;text-decoration:none;font-size:11px;color:var(--ink-3);
+line-height:1.7;margin-top:2px}
+.wtag{display:inline-block;font-size:10.5px;padding:2px 9px;border-radius:99px;
+margin-bottom:8px;border:1px solid var(--line);color:var(--ink-3)}
+.wtag.ok{color:var(--ok,#0F7355);border-color:var(--ok,#0F7355)}
+.wtag.warn{color:var(--warn,#C2407A);border-color:var(--warn,#C2407A)}
+.wimp{margin-top:12px;display:flex;align-items:center;gap:10px}
+.wimp .wlab{margin:0}
+.dots{display:flex;gap:5px}
+.dot{width:15px;height:15px;border-radius:99px;border:1px solid var(--line2,var(--line));
+background:transparent;cursor:pointer;padding:0;transition:.12s}
+.dot:hover{border-color:var(--acc,#4C3AE3)}
+.dot.on{background:var(--acc,#4C3AE3);border-color:var(--acc,#4C3AE3)}
+.wsch{display:flex;flex-direction:column;gap:2px;margin-top:9px}
+.schr{display:flex;gap:9px;align-items:baseline;padding:8px 10px;border-radius:10px;
+background:var(--card-2)}
+.schr>b{flex:0 1 auto;min-width:0;font-size:13.5px;overflow:hidden;
+text-overflow:ellipsis;white-space:nowrap}
+.schr>s{flex:1 1 0;min-width:0;text-decoration:none;font-size:11px;color:var(--ink-3)}
+.schr>i{flex:none;font-style:normal;font-size:12.5px;color:var(--ok,#0F7355);
+font-weight:600}
+.schr.no>i{color:var(--ink-3);font-weight:400}
 .wpx{margin-top:13px;padding-top:12px;border-top:1px solid var(--line)}
 .wpxr{display:flex;flex-direction:column;gap:2px;margin-top:6px}
 .pxr{display:flex;gap:9px;align-items:baseline;padding:7px 10px;border-radius:10px;
@@ -4263,6 +4289,62 @@ vertical-align:middle}
   }
   function wishList(){ return state.wish || (state.wish = []); }
 
+  /* ── المفاضلة ──
+     الترتيبُ بالثمن أضعفُ ترتيب: يضع سمّاعةً بمئتين قبل عمليةِ أسنانٍ
+     بألفين لأنّها أرخص لا لأنّها أولى. */
+  function wishImp(x){ var v = Math.round(num(x && x.imp)); return v >= 1 && v <= 5 ? v : 3; }
+  function wishSortMode(){ return ui.wsort || state.wsort || "value"; }
+  function wishOrder(a, b){
+    if(wishSortMode() === "price") return num(a.price) - num(b.price);
+    var d = wishImp(b) - wishImp(a);
+    return d ? d : (num(a.price) - num(b.price));
+  }
+  /* عمرُها بالأيّام: الرغبةُ العابرةُ تُعرَف بعمرها — وسمٌ لا منع */
+  function wishAge(x){
+    var t = +(x && x.at) || 0;
+    if(!t) return -1;
+    return Math.floor((Date.now() - t) / 86400000);
+  }
+  function wishAgeTag(x){
+    var d = wishAge(x);
+    if(d < 0) return null;
+    if(d < 30) return { n: "حديثة · " + d + " يوماً", c: "warn",
+                        t: "سُجّلت قبل أقلَّ من شهر — والقاعدةُ أن ينتظر ما ليس ضرورةً شهراً" };
+    if(d >= 60) return { n: "صمدت " + d + " يوماً", c: "ok",
+                         t: "بقيت في قائمتك شهرين فأكثر — فهي رغبةٌ لا نزوة" };
+    return null;
+  }
+  /* سقفُ الكماليّات: فلا تنازع الأمنياتُ البقالةَ في الشهر نفسه */
+  function wishCap(){ return Math.max(0, num(state.wishCap)); }
+  function wishSpent(mk){
+    var t = 0;
+    wishList().forEach(function(x){ if(x.bought && x.bm === mk) t += num(x.paid || x.price); });
+    return t;
+  }
+
+  /* ── جدولُ الشراء ──
+     تُمشى الأشهرُ فيُجمع فائضُ كلٍّ — يقصُّه سقفُ الكماليّات إن وُضع —
+     فكلّما بلغ المجموعُ ثمنَ الأولى حُجزت لشهرها وطُرح ثمنُها. */
+  function wishSchedule(k){
+    var W = wishList().filter(function(x){
+      return !x.bought && num(x.price) > 0;
+    }).sort(wishOrder);
+    var O = outlook(k, 12), cap = wishCap(), pool = 0, out = [], i = 0, j;
+    for(j = 0; j < O.length && i < W.length; j++){
+      var add = Math.max(0, O[j].sur);
+      if(cap > 0) add = Math.min(add, cap);
+      if(j === 0) add = Math.max(0, Math.min(add, wishRoom(k).now));
+      pool += add;
+      while(i < W.length && pool >= num(W[i].price)){
+        pool -= num(W[i].price);
+        out.push({ w: W[i], k: O[j].k });
+        i++;
+      }
+    }
+    for(; i < W.length; i++) out.push({ w: W[i], k: "" });
+    return out;
+  }
+
   /* ── أبوابُ الأمنيات ──
      ليُقال لكلٍّ موسمُه: لا يُبشَّر صاحبُ الثلّاجة بموسم الملابس. */
   var WKINDS = [
@@ -6228,6 +6310,8 @@ vertical-align:middle}
           "ومتى صارت في متناولك قيل لك في صدر الشاشة وبنقطةٍ على تبويبها — فلا تنتظر أن تسأل.",
           "و«دفترُ السعر» يسجّل السعر كلّما رأيتَه بتاريخه ومصدره، فيُقال أدنى ما رأيتَه وكم يزيد سعرُ اليوم عليه. وآخرُ ما تسجّله يصير ثمنَها.",
           "ومن عيّن لها باباً (إلكترونيات · ملابس · سفر …) قيل له موسمُها ومعه فائضُ شهره — وما ترتفع فيه أسعارُ بابها يُقال ليتجنّبه. وهو عرفٌ لا وعد، ولا يُقدَّر لك توفيرٌ برقمٍ مخترع.",
+          "وتُرتَّب أمنياتُك بالأهمّ لا بالأرخص: خمسُ نقاطٍ تقول كم تهمّك. وما سُجّل قبل أقلَّ من شهرٍ يُوسم «حديثة» وما صمد ستّين يوماً يُوسم «صمدت» — وسمٌ لا منع.",
+          "و«سقفُ الكماليّات» حدٌّ شهريٌّ اختياريّ لأمنياتك، و«جدولُ الشراء» يوزّعها على أشهرك القادمة بحسب فائض كلّ شهرٍ وأهمّيّة كلّ أمنية.",
           "ومتى اشتريتَها صارت مصروفاً في بندها بضغطة، فلا تُكتب مرّتين."] },
     { k: "spend", i: "🧾", n: "المصروف",
       w: "ما صرفتَه فعلاً — لا ما نويت. وهنا تُسجَّل الأرقام يومياً.",
@@ -6567,7 +6651,7 @@ vertical-align:middle}
     var W = wishList(), R = wishRoom(k);
     var live = W.filter(function(x){ return !x.bought; });
     var done = W.filter(function(x){ return x.bought; });
-    live.sort(function(a, b){ return num(a.price) - num(b.price); });
+    live.sort(wishOrder);
     var d = ui.wdraft || (ui.wdraft = { n: "", e: "🎁", p: "", by: "" });
     var h = "";
 
@@ -6591,6 +6675,18 @@ vertical-align:middle}
       + (dlg ? "" : emoPanelHTML())
       + '<div class="whint">الشهرُ اختياريّ — إن حدّدتَه حُسبت أقساطُه، وإلّا '
       + 'حُسب أقصرُ طريقٍ يحتمله فائضك.</div>'
+      + '<div class="wcap">'
+      + (wishCap()
+          ? ('<span class="mn"><b>سقفُ الكماليّات · ' + fmt(wishSpent(k))
+             + ' من ' + fmt(wishCap()) + '</b>'
+             + '<s>ما أنفقتَه على أمنياتك هذا الشهر — والباقي '
+             + fmt(Math.max(0, wishCap() - wishSpent(k)))
+             + '. ويقصُّ جدولَ الشراء بقدره.</s></span>'
+             + '<button class="mini" data-wcap="1">عدّله</button>')
+          : ('<span class="mn"><s>لا سقف للكماليّات — ضع سقفاً شهرياً فلا '
+             + 'تنازع أمنياتُك بقالتَك في الشهر نفسه.</s></span>'
+             + '<button class="mini" data-wcap="1">ضع سقفاً</button>'))
+      + '</div>'
       + '<div class="wroom">'
       + '<span><b>' + fmt(R.surplus) + '</b><s>فائض الشهر لو مضى كما خُطّط</s></span>'
       + '<span><b class="' + (R.now < 0 ? "wno" : "wok") + '">' + fmt(R.now)
@@ -6630,10 +6726,21 @@ vertical-align:middle}
                           + (x.by ? (' · تريدها خلال ' + arMonths(num(x.by))) : "")))
         + '</s></span>'
         + '<span class="wpct ' + (can ? "wok" : "") + '">' + pct + '٪</span></div>'
+        + (function(){
+            var tg = wishAgeTag(x);
+            return tg ? ('<span class="wtag ' + tg.c + '" title="' + esc(tg.t) + '">'
+                         + esc(tg.n) + '</span>') : "";
+          })()
         + '<div class="bar"><i style="width:' + pct + '%;background:'
         + (can ? "var(--ok,#0F7355)" : "var(--accent,#4C3AE3)") + '"></i></div>';
 
       if(open){
+        /* خمسُ نقاطٍ: كم تهمّك — فتُرتَّب بالقيمة لا بالثمن */
+        h += '<div class="wimp"><s class="wlab">كم تهمّك؟</s><span class="dots">';
+        for(var q = 1; q <= 5; q++)
+          h += '<button class="dot' + (q <= wishImp(x) ? " on" : "")
+             + '" data-wimp="' + x.id + '|' + q + '" title="' + q + ' من ٥"></button>';
+        h += '</span></div>';
         h += wishPlanHTML(x, k);
         h += wishPxHTML(x);
         h += simHTML(x, k);
@@ -6653,6 +6760,30 @@ vertical-align:middle}
       }
       h += '</div>';
     });
+
+    if(live.length > 1){
+      var SC = wishSchedule(k);
+      h += '<div class="sec"><h2>جدولُ الشراء</h2>'
+        + '<span class="hint">'
+        + (wishSortMode() === "price" ? "بالأرخص" : "بالأهمّ") + '</span></div>'
+        + '<div class="card"><s class="whint">أمنياتُك موزَّعةً على أشهرك: '
+        + 'يُجمع فائضُ كلّ شهر' + (wishCap() ? " (مقصوصاً بسقف الكماليّات)" : "")
+        + '، فكلّما بلغ ثمنَ الأولى حُجزت لذلك الشهر.</s>'
+        + '<div class="wsch">'
+        + SC.map(function(o){
+            return '<div class="schr' + (o.k ? "" : " no") + '">'
+              + '<b>' + (o.w.e || "🎁") + ' ' + esc(o.w.n) + '</b>'
+              + '<s>' + fmt(num(o.w.price)) + ' ' + esc(cur()) + ' · أهمّيّة '
+              + wishImp(o.w) + '/٥</s>'
+              + '<i>' + (o.k ? esc(mName(o.k)) : "لا تبلغها هذه السنة") + '</i></div>';
+          }).join("")
+        + '</div>'
+        + '<div class="wact">'
+        + '<button class="mini' + (wishSortMode() === "value" ? " on" : "")
+        + '" data-wsort="value">رتّب بالأهمّ</button>'
+        + '<button class="mini' + (wishSortMode() === "price" ? " on" : "")
+        + '" data-wsort="price">رتّب بالأرخص</button></div></div>';
+    }
 
     if(done.length){
       h += '<div class="sec"><h2>اشتريتَها</h2></div><div class="card">'
@@ -9711,6 +9842,22 @@ vertical-align:middle}
       toast("فُكّ الارتباط — والهدفُ باقٍ في مكانه بماله");
       save(); render();
     });
+    on("[data-wimp]", function(b){
+      var p = b.getAttribute("data-wimp").split("|");
+      wishList().forEach(function(x){ if(x.id === p[0]) x.imp = Math.round(num(p[1])); });
+      save(); render();
+    });
+    on("[data-wsort]", function(b){
+      ui.wsort = state.wsort = b.getAttribute("data-wsort");
+      save(); render();
+    });
+    on("[data-wcap]", function(){
+      ask({ title: "سقفُ الكماليّات",
+        msg: "أكثرُ ما تسمح بإنفاقه على أمنياتك في الشهر. صفرٌ = بلا سقف.",
+        fields: [{ label: "الشهريّ", type: "number", value: wishCap() || "" }],
+        ok: "احفظ",
+        onOk: function(v){ state.wishCap = Math.max(0, num(v[0])); save(); } });
+    });
     on("[data-wpx]", function(b){
       var id = b.getAttribute("data-wpx"), w = null;
       wishList().forEach(function(x){ if(x.id === id) w = x; });
@@ -9827,6 +9974,8 @@ vertical-align:middle}
           if(pr[1]) it.s = pr[1];
           m.items.push(it);
           w.bought = true;
+          w.bm = ui.month;                    /* ليُحسب في سقف كماليّات شهره */
+          w.paid = num(v[1]);
           w.run = Math.max(0, num(v[2]));
           /* الكلفةُ التي لا تنتهي عند الشراء تصير بنداً ثابتاً في حينه */
           var c = catOf(pr[0]);
@@ -11051,7 +11200,7 @@ vertical-align:middle}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+7";
+  var APP_VERSION = "1.5.0-beta+8";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
