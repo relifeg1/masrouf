@@ -406,6 +406,38 @@ margin-top:2px;line-height:1.7}
 min-width:16px;height:16px;padding:0 4px;margin-inline-start:6px;border-radius:99px;
 background:var(--ok,#0F7355);color:#fff;font-size:10px;font-style:normal;
 font-variant-numeric:tabular-nums}
+/* ── استديو الأمنيات ── */
+.kpis.wtwo{grid-template-columns:repeat(2,minmax(0,1fr))}
+.wgrid{display:grid;gap:14px;grid-template-columns:1fr;margin-bottom:14px}
+@media(min-width:620px){ .wgrid{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media(min-width:920px){ .wgrid{grid-template-columns:repeat(3,minmax(0,1fr))} }
+.wgrid .wcard{margin:0}
+.wcard.open{grid-column:1 / -1}
+.wtile{display:flex;flex-direction:column;align-items:center;gap:5px;
+padding:20px 14px 14px;cursor:pointer;text-align:center}
+.wbig{font-size:34px;line-height:1.1;filter:saturate(1.05)}
+.wnm3{font-size:15px;font-weight:600;max-width:100%;overflow:hidden;
+text-overflow:ellipsis;white-space:nowrap}
+.wpr{text-decoration:none;font-family:"IBM Plex Mono",monospace;font-size:13px;
+color:var(--ink-2);font-weight:600}
+.wchips{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;margin-top:2px}
+.wchip{font-size:10.5px;padding:2px 10px;border-radius:99px;background:var(--card-2);
+color:var(--ink-3);white-space:nowrap}
+.wchip.ok{background:var(--ok-soft);color:var(--ok)}
+.wchip.warn{background:var(--warn-soft);color:var(--warn)}
+.wchip.acc{background:var(--accent-soft);color:var(--accent)}
+.wcard.won .wtile{opacity:.72}
+.wtile .wtrack{width:100%;margin:8px 0 0}
+.wfil{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.wfil .chip i{font-style:normal;margin-inline-start:6px;opacity:.6;
+font-family:"IBM Plex Mono",monospace;font-size:10px}
+.lnk{color:var(--accent);cursor:pointer}
+.wfab{position:fixed;inset-inline-start:18px;bottom:calc(88px + env(safe-area-inset-bottom));
+width:52px;height:52px;border-radius:99px;border:0;z-index:35;cursor:pointer;
+background:var(--accent);color:#fff;font-size:26px;line-height:1;
+box-shadow:0 8px 24px -8px rgba(0,0,0,.5);transition:.14s}
+.wfab:hover{transform:translateY(-2px)}
+@media(min-width:900px){ .wfab{bottom:26px;inset-inline-start:26px} }
 .wbody{display:grid;gap:0;margin-top:2px}
 @media(min-width:760px){
   .wbody{grid-template-columns:1fr 1fr;gap:0 20px;align-items:start}
@@ -451,7 +483,7 @@ justify-content:flex-end;height:100%;cursor:default}
 white-space:nowrap;overflow:hidden}
 .wb.hit s{color:var(--ok,#0F7355);font-weight:600}
 .wout .whint{margin-top:4px}
-.wcard{padding:0}
+.wcard{padding:0;overflow:hidden}
 .whead{cursor:pointer}
 .wico{background:var(--card-2)}
 .wnm2{min-width:0}
@@ -4399,7 +4431,7 @@ vertical-align:middle}
      فكلّما بلغ المجموعُ ثمنَ الأولى حُجزت لشهرها وطُرح ثمنُها. */
   function wishSchedule(k){
     var W = wishList().filter(function(x){
-      return !x.bought && num(x.price) > 0;
+      return wishActive(x) && num(x.price) > 0;
     }).sort(wishOrder);
     var O = outlook(k, 12), cap = wishCap(), pool = 0, out = [], i = 0, j;
     /* أقساطُ الأمنيات ذواتِ الخطط خُصمت من الفائض وهي لهنّ — فتُردّ */
@@ -4489,10 +4521,11 @@ vertical-align:middle}
   /* ما صار في متناوله اليوم: بالباقي أو باكتمال خطّته */
   /* تُحسب معاً لا كلٌّ على حدة: ثلاثٌ بأربعمئةٍ لا تكون كلُّها في
      متناولك وباقيك خمسمئة. فينقص الباقي بقدر ما تأخذه كلُّ واحدة. */
+  function wishActive(x){ return !x.bought && !x.snooze; }
   function wishReady(k){
     var R = wishRoom(k), pool = R.now, out = [];
     wishList().filter(function(x){
-      return !x.bought && num(x.price) > 0;
+      return wishActive(x) && num(x.price) > 0;
     }).sort(wishOrder).forEach(function(x){
       var p = num(x.price), got = wishGot(x);
       if(pool + got < p) return;
@@ -6402,7 +6435,9 @@ vertical-align:middle}
           "«أمنياتك» تقول أيسعُ شهرَك شيءٌ تريده أم ينقصك كذا."] },
     { k: "wish", i: "🎁", n: "أمنياتك",
       w: "ما تريده ولم تشترِه بعد — ويُقال لك أيسعُه شهرك أم ينقصك كذا.",
-      h: ["سجّل الشيء بثمنه، فيُحسب من الباقي بعد خطّتك وادّخارك لا من دخلك.",
+      h: ["شبكةُ بطاقات: بطاقةٌ لكلّ أمنيةٍ فيها رمزُها وثمنُها وحالُها. اضغطها فتتمدّد بتفاصيلها، والزرُّ العائم يضيف جديدة.",
+          "وشريطُ الفلاتر يقلّب بين النشطة والمؤجَّلة والمشتراة — و«أجّلها» ترفعها من النشط بلا حذف، فلا تدخل جدولَ الشراء ولا تُعدّ في متناولك.",
+          "سجّل الشيء بثمنه، فيُحسب من الباقي بعد خطّتك وادّخارك لا من دخلك.",
           "«فائض الشهر» يقول أيسعُها أصلاً، و«ما بقي الآن» أتُشترى اليوم.",
           "واضغطها فتُعرض «طرقُك إليها»: من فائض اليوم أو الشهر أو ادّخارٍ على أشهر أو بندٍ لا تصرفه كاملاً — محسوبةً من أرقامك.",
           "وشريطُ الأشهر القادمة يقول متى: خطّتُك تعرف متى ينتهي قسطُك ومتى تنقضي مدّةُ بندك، فيُقال لك أفضلُ شهرٍ لشرائها وأضيقُ شهرٍ تتجنّبه — بسببه.",
@@ -6781,59 +6816,63 @@ vertical-align:middle}
     return h;
   }
 
-  /* ── شاشةُ الأمنيات ──
-     الصدرُ للتسجيل، ولكلّ أمنيةٍ طرقُها. والنقصُ وحدَه خبرٌ لا حلّ. */
+  /* ── شاشةُ الأمنيات: استديو ──
+     شبكةُ بطاقاتٍ صغيرة، تتمدّد الواحدةُ في مكانها إذا فُتحت. */
+  var WFIL = [["live", "نشطة"], ["snooze", "مؤجَّلة"],
+              ["bought", "مشتراة"], ["all", "الكلّ"]];
+
+  function wishChip(x, k, R){
+    var p = num(x.price), got = wishGot(x);
+    if(x.bought)
+      return { n: x.bm ? ("اشتُريت في " + mName(x.bm)) : "مشتراة", c: "" };
+    if(x.snooze) return { n: "مؤجَّلة", c: "" };
+    if(p <= 0) return { n: "بلا ثمن", c: "warn" };
+    if(R.now + got >= p) return { n: "يسعها ما بقي", c: "ok" };
+    var g = wishGoal(x);
+    if(g){
+      var rest = Math.max(0, p - got), rate = num(g.m) || num(g.pm);
+      if(rate > 0)
+        return { n: "تكتمل في " + mName(shift(k, Math.max(0, Math.ceil(rest / rate) - 1))),
+                 c: "acc" };
+    }
+    return { n: "ينقصك " + fmt(p - (R.now + got)), c: "warn" };
+  }
+
+  function wishTile(x, k, R, open){
+    var p = num(x.price), got = wishGot(x), planned = !!wishGoal(x);
+    var base = planned ? got : Math.min(Math.max(0, R.now), p);
+    var pct = p > 0 ? Math.max(0, Math.min(100, Math.round(base / p * 100))) : 0;
+    var ch = wishChip(x, k, R), tg = x.bought ? null : wishAgeTag(x);
+    return '<div class="wtile" data-wsel="' + x.id + '">'
+      + '<span class="wbig">' + (x.e ? esc(x.e) : "🎁") + '</span>'
+      + '<b class="wnm3">' + esc(x.n) + '</b>'
+      + '<s class="wpr">' + fmt(x.bought ? num(x.paid || p) : p) + ' '
+      + esc(cur()) + '</s>'
+      + '<span class="wchips">'
+      + '<span class="wchip ' + ch.c + '">' + esc(ch.n) + '</span>'
+      + (tg ? ('<span class="wtag ' + tg.c + '" title="' + esc(tg.t) + '">'
+               + esc(tg.n) + '</span>') : "")
+      + '</span>'
+      + (x.bought ? "" : ('<div class="track wtrack"><i style="width:' + pct
+         + '%;background:' + (pct >= 100 ? "var(--ok)" : "var(--accent)")
+         + '"></i></div>'))
+      + '</div>';
+  }
+
   function wishHTML(k){
     var W = wishList(), R = wishRoom(k);
-    var live = W.filter(function(x){ return !x.bought; });
+    var live = W.filter(wishActive);
+    var slept = W.filter(function(x){ return !x.bought && x.snooze; });
     var done = W.filter(function(x){ return x.bought && !x.arch; });
-    var hid = W.filter(function(x){ return x.bought && x.arch; }).length;
+    var hid = W.filter(function(x){ return x.bought && x.arch; });
     live.sort(wishOrder);
-    var d = ui.wdraft || (ui.wdraft = { n: "", e: "🎁", p: "", by: "" });
+    slept.sort(wishOrder);
     var h = "";
 
-    /* ١ · التسجيل: حقولٌ ظاهرة لا زرٌّ يفتح حواراً */
-    h += '<div class="sec"><h2>سجّل أمنيتك</h2>'
-      + '<span class="hint">' + (live.length ? (live.length + " في الانتظار") : "ابدأ")
-      + '</span></div>'
-      /* شريطُ الإدخال نفسه الذي في شاشة المصروف — لا شريطٌ من عندي */
-      + '<div class="qinc wadd">'
-      + (dlg ? ('<span class="emoface ro">' + esc(d.e || "🎁") + '</span>')
-             : ('<button class="emoface" data-emoopen="1" title="اختر رمزاً">'
-                + esc(d.e || "🎁") + '</button>'
-                + '<input type="hidden" id="wemo" data-emofield="1" value="'
-                + esc(d.e || "🎁") + '">'))
-      + '<div class="f grow"><label>ما الذي تريده؟</label>'
-      + '<input class="qi2 wide" id="wnm" data-wf="n" value="' + esc(d.n)
-      + '" placeholder="شنطة · جوّال · رحلة"></div>'
-      + '<div class="f"><label>الثمن</label>'
-      + '<input class="qi2" id="wpr" data-wf="p" type="number" '
-      + 'inputmode="decimal" step="any" value="' + esc(d.p) + '" placeholder="0"></div>'
-      + '<div class="f"><label>خلال كم شهر</label>'
-      + '<input class="qi2" id="wby" data-wf="by" type="number" '
-      + 'inputmode="numeric" value="' + esc(d.by) + '" placeholder="—"></div>'
-      + '<button class="mini on wgo" data-wadd="1">سجّلها</button>'
-      + '<div class="qsum">'
-      + '<div class="qs big"><s>فائض الشهر</s><b>' + fmt(R.surplus) + '</b></div>'
-      + '<div class="qs big"><s>ما بقي الآن</s><b class="'
-      + (R.now < 0 ? "bad" : "ok") + '">' + fmt(R.now) + '</b></div>'
-      + '</div></div>'
-      + (dlg ? "" : emoPanelHTML())
-      + '<div class="card">'
-      + '<div class="mrow wcap"><span class="mn">'
-      + (wishCap()
-          ? ('سقفُ الكماليّات · ' + fmt(wishSpent(k)) + ' من ' + fmt(wishCap())
-             + '<span class="ms">الباقي منه '
-             + fmt(Math.max(0, wishCap() - wishSpent(k)))
-             + ' — ويقصُّ جدولَ الشراء بقدره.</span>')
-          : ('بلا سقفٍ للكماليّات'
-             + '<span class="ms">ضع سقفاً شهرياً فلا تنازع أمنياتُك بقالتَك '
-             + 'في الشهر نفسه.</span>'))
-      + '</span><button class="mini" data-wcap="1">'
-      + (wishCap() ? "عدّله" : "ضع سقفاً") + '</button></div>'
-      + '<div class="mrow"><span class="mn">الشهرُ اختياريّ'
-      + '<span class="ms">إن حدّدتَه حُسبت أقساطُه، وإلّا حُسب أقصرُ طريقٍ '
-      + 'يحتمله فائضك.</span></span></div>'
+    /* ١ · رقمان لا أكثر */
+    h += '<div class="kpis wtwo">'
+      + kpi("◈", "accent", "فائض الشهر", fmt(R.surplus), "", "لو مضى كما خُطّط")
+      + kpi("◇", "ok", "ما بقي الآن", fmt(R.now), "", "وبه تشتري اليوم")
       + '</div>';
 
     var rdy = wishReady(k);
@@ -6850,8 +6889,8 @@ vertical-align:middle}
     if(ASK.length){
       h += '<div class="sec"><h2>سؤالٌ بعد شهر</h2>'
         + '<span class="hint">' + ASK.length + '</span></div><div class="card">'
-        + '<s class="whint">مضى شهرٌ على شرائها — أتستعملها؟ سؤالٌ واحدٌ '
-        + 'يبني سجلَّك، ولا يُسأل مرّتين.</s>'
+        + '<div class="whint">مضى شهرٌ على شرائها — أتستعملها؟ سؤالٌ واحدٌ '
+        + 'يبني سجلَّك، ولا يُسأل مرّتين.</div>'
         + ASK.map(function(w){
             return '<div class="askr"><b>' + (w.e || "🎁") + ' ' + esc(w.n) + '</b>'
               + '<span class="cmodes">'
@@ -6863,114 +6902,107 @@ vertical-align:middle}
         + '</div>';
     }
 
-    var REC2 = wishRecord();
-    if(REC2.fast.n + REC2.slow.n >= 3){
-      h += '<div class="sec"><h2>سجلُّك</h2>'
-        + '<span class="hint">' + (REC2.fast.n + REC2.slow.n) + ' إجابة</span></div>'
-        + '<div class="card"><div class="wsch">'
-        + (REC2.fast.n
-            ? ('<div class="schr"><b>اشتريتَها في أسبوعها</b>'
-               + '<s>' + REC2.fast.n + ' أمنية</s><i class="'
-               + (REC2.fast.re * 2 > REC2.fast.n ? "bad" : "")
-               + '">' + REC2.fast.re + ' لا تستعملها</i></div>')
-            : "")
-        + (REC2.slow.n
-            ? ('<div class="schr"><b>انتظرتَها شهراً فأكثر</b>'
-               + '<s>' + REC2.slow.n + ' أمنية</s><i class="'
-               + (REC2.slow.re * 2 > REC2.slow.n ? "bad" : "")
-               + '">' + REC2.slow.re + ' لا تستعملها</i></div>')
-            : "")
-        + '</div><s class="whint">بالعدد لا بالنسبة — والعددُ أصدقُ حين '
-        + 'تكون العيّنةُ صغيرة. وهذا دفترُك عن نفسك.</s></div>';
+    /* ٢ · الفلاتر */
+    var CNT = { live: live.length, snooze: slept.length,
+                bought: done.length, all: W.length };
+    var fil = ui.wfil || "live";
+    if(!CNT[fil] && CNT.live) fil = "live";
+    var SET = { live: live, snooze: slept, bought: done,
+                all: live.concat(slept, done, hid) };
+    var show = SET[fil] || live;
+
+    h += '<div class="sec"><h2>أمنياتك</h2><span class="hint">'
+      + (wishCap() ? ("سقفُ الكماليّات " + fmt(wishSpent(k)) + " من " + fmt(wishCap()))
+                   : "بلا سقف")
+      + ' · <a class="lnk" data-wcap="1">عدّله</a></span></div>'
+      + '<div class="wfil">'
+      + WFIL.map(function(f){
+          return '<button class="chip sm' + (fil === f[0] ? " on" : "")
+            + '" data-wfil="' + f[0] + '">' + f[1]
+            + '<i>' + (CNT[f[0]] || 0) + '</i></button>';
+        }).join("")
+      + '</div>';
+
+    /* ٣ · الشبكة */
+    var sel = ui.wsel;
+    if(!sel || !show.some(function(x){ return x.id === sel; })) sel = "";
+    if(!show.length){
+      h += '<div class="card"><div class="empty"><b>'
+        + (fil === "live" ? "لا أمنياتٍ نشطة" : "لا شيء هنا")
+        + '</b>' + (fil === "live"
+            ? "اضغط زرَّ الإضافة، فيُقال لك من أين يأتي ثمنُها ومتى تبلغها."
+            : "جرّب فلتراً آخر.") + '</div></div>';
+    } else {
+      h += '<div class="wgrid">';
+      show.forEach(function(x){
+        var open = (x.id === sel);
+        var p = num(x.price), can = (R.now + wishGot(x)) >= p;
+        h += '<div class="card wcard' + (open ? " open" : "")
+           + (x.bought ? " won" : "") + '">'
+          + wishTile(x, k, R, open);
+        if(open){
+          h += '<div class="wbody"><div class="wcol">';
+          h += wishNoteHTML(x);
+          h += wishPlanHTML(x, k);
+          h += simHTML(x, k);
+          h += outStripHTML(k, p);
+          h += '</div><div class="wcol">';
+          if(!x.bought){
+            h += '<div class="wways"><s class="wlab">طرقُك إليها</s>';
+            wishWays(x, k).forEach(function(o){
+              h += '<div class="wway ' + o.t + '"><span class="ic wwi">' + o.i + '</span>'
+                + '<span class="wwt"><b class="nm">' + o.n + '</b>'
+                + '<s class="sub">' + o.d + '</s></span>'
+                + (o.b ? ('<button class="mini" ' + o.a + '>' + o.b + '</button>') : "")
+                + '</div>';
+            });
+            h += '</div>';
+          }
+          h += '</div></div>';
+          h += '<div class="wfoot">'
+            + (function(){
+                var r = '<span class="impx"><s>أهمّيّتها</s><span class="dots">';
+                for(var q = 1; q <= 5; q++)
+                  r += '<button class="dot' + (q <= wishImp(x) ? " on" : "")
+                     + '" data-wimp="' + x.id + '|' + q + '" title="' + q + ' من ٥"></button>';
+                return r + '</span></span>';
+              })()
+            + (x.bought
+                ? ('<button class="mini" data-wundo="' + x.id + '">تراجع عن الشراء</button>'
+                   + '<button class="mini" data-wdel="' + x.id + '">احذف</button>')
+                : ('<button class="mini' + (can ? " on" : "") + '" data-wbuy="' + x.id
+                   + '">اشتريتها</button>'
+                   + '<button class="mini" data-wsnooze="' + x.id + '">'
+                   + (x.snooze ? "أعِدها" : "أجّلها") + '</button>'
+                   + '<button class="mini" data-wedit="' + x.id + '">عدّلها</button>'
+                   + '<button class="mini" data-wdel="' + x.id + '">احذف</button>'))
+            + '</div>';
+        }
+        h += '</div>';
+      });
+      h += '</div>';
     }
 
-    if(!live.length && !done.length){
-      h += '<div class="card"><div class="mrow off"><span class="mn">لا أمنيات بعد'
-        + '<span class="ms">سجّل ما تريده بثمنه، فيُقال لك من أين يأتي: '
-        + 'من فائض اليوم أو فائض الشهر أو ادّخارٍ على أشهر أو بندٍ لا تصرفه '
-        + 'كاملاً. وما لا يُسجَّل ينازع خطّتك في رأسك بلا حساب.</span></span>'
+    if(fil === "bought" && hid.length){
+      h += '<div class="card"><div class="mrow"><span class="mn">'
+        + hid.length + ' مخفيّة<span class="ms">أُخفيت من القائمة وهي باقيةٌ '
+        + 'في سجلّك وتقاريرك — تجدها في «الكلّ».</span></span></div></div>';
+    }
+    if(fil === "bought" && done.length){
+      h += '<div class="card"><div class="wact">'
+        + '<button class="mini" data-wclear="1">أخفِ المشتراة من القائمة</button>'
         + '</div></div>';
     }
 
-    /* ٢ · المفتوحةُ واحدة: الطرقُ تُقرأ ولا تُتصفَّح */
-    var sel = ui.wsel;
-    if(!sel || !live.some(function(x){ return x.id === sel; }))
-      sel = live.length ? live[0].id : "";
-
-    live.forEach(function(x){
-      var p = num(x.price), got0 = wishGot(x), planned = !!wishGoal(x);
-      var gap = p - (R.now + got0), can = gap <= 0, open = (x.id === sel);
-      /* نسبةٌ واحدةٌ بمعنى واحد: المُدَّخرُ لذات الخطّة، وما بقي لغيرها */
-      var base = planned ? got0 : Math.min(R.now, p);
-      var pct = p > 0 ? Math.max(0, Math.min(100, Math.round(base / p * 100))) : 0;
-      h += '<div class="card wcard' + (open ? " open" : "") + '">'
-        + '<div class="whead" data-wsel="' + x.id + '">'
-        + '<span class="ic wico">' + (x.e ? esc(x.e) : "🎁") + '</span>'
-        + '<span class="wnm2"><b class="nm">' + esc(x.n) + '</b>'
-        + '<s class="sub">' + fmt(p) + ' ' + esc(cur())
-        + ' — ' + (can
-              ? (planned ? 'يسعها ما بقي مع مُدَّخرها' : 'يسعها ما بقي الآن')
-              : ('ينقصك ' + fmt(gap)
-                 + (planned ? ' بعد مُدَّخرها' : "")
-                 + (x.by ? (' · تريدها خلال ' + arMonths(num(x.by))) : "")))
-        + (function(){
-            /* الوسمُ في سطر الاسم — هناك يُقرأ مع ثمنها */
-            var tg = wishAgeTag(x);
-            return tg ? ('<span class="wtag ' + tg.c + '" title="' + esc(tg.t) + '">'
-                         + esc(tg.n) + '</span>') : "";
-          })()
-        + '</s></span>'
-        + '<span class="rt wpct"><b class="a' + (can ? " wok" : "") + '">' + pct
-        + '٪</b><b class="b">' + (planned ? "مُدَّخرٌ لها" : "ممّا بقي") + '</b>'
-        + '</span></div>'
-        + '<div class="track wtrack"><i style="width:' + pct + '%;background:'
-        + (can || (planned && got0 >= p) ? "var(--ok)" : "var(--accent)")
-        + '"></i></div>';
-
-      if(open){
-        /* عمودان على العريض: ما يُقرأ في جهةٍ وما يُفعل في جهة */
-        h += '<div class="wbody"><div class="wcol">';
-        h += wishNoteHTML(x);
-        h += wishPlanHTML(x, k);
-        h += simHTML(x, k);
-        h += outStripHTML(k, p);
-        h += '</div><div class="wcol">';
-        h += '<div class="wways"><s class="wlab">طرقُك إليها</s>';
-        wishWays(x, k).forEach(function(o){
-          h += '<div class="wway ' + o.t + '"><span class="ic wwi">' + o.i + '</span>'
-            + '<span class="wwt"><b class="nm">' + o.n + '</b>'
-            + '<s class="sub">' + o.d + '</s></span>'
-            + (o.b ? ('<button class="mini" ' + o.a + '>' + o.b + '</button>') : "")
-            + '</div>';
-        });
-        h += '</div>';                    /* تُغلق الطرق */
-        h += '</div></div>';              /* ثمّ العمودُ فالجسد */
-        /* ذيلٌ يمتدّ تحت العمودين — فتُختم البطاقةُ ولا تُترك معلَّقة */
-        h += '<div class="wfoot">'
-          /* الأهمّيّةُ إدخالٌ كالأزرار — فموضعُها معها */
-          + (function(){
-              var r = '<span class="impx"><s>أهمّيّتها</s><span class="dots">';
-              for(var q = 1; q <= 5; q++)
-                r += '<button class="dot' + (q <= wishImp(x) ? " on" : "")
-                   + '" data-wimp="' + x.id + '|' + q + '" title="' + q + ' من ٥"></button>';
-              return r + '</span></span>';
-            })()
-          + '<button class="mini' + (can ? " on" : "") + '" data-wbuy="' + x.id
-          + '">اشتريتها</button>'
-          + '<button class="mini" data-wedit="' + x.id + '">عدّلها</button>'
-          + '<button class="mini" data-wdel="' + x.id + '">احذف</button></div>';
-      }
-      h += '</div>';
-    });
-
+    /* ٤ · جدولُ الشراء */
     if(live.length > 1){
       var SC = wishSchedule(k);
       h += '<div class="sec"><h2>جدولُ الشراء</h2>'
         + '<span class="hint">'
         + (wishSortMode() === "price" ? "بالأرخص" : "بالأهمّ") + '</span></div>'
-        + '<div class="card"><s class="whint">أمنياتُك موزَّعةً على أشهرك: '
+        + '<div class="card"><div class="whint">أمنياتُك موزَّعةً على أشهرك: '
         + 'يُجمع فائضُ كلّ شهر' + (wishCap() ? " (مقصوصاً بسقف الكماليّات)" : "")
-        + '، فكلّما بلغ ثمنَ الأولى حُجزت لذلك الشهر.</s>'
+        + '، فكلّما بلغ ثمنَ الأولى حُجزت لذلك الشهر.</div>'
         + '<div class="wsch">'
         + SC.map(function(o){
             return '<div class="schr' + (o.k ? "" : " no") + '">'
@@ -6988,26 +7020,30 @@ vertical-align:middle}
         + '" data-wsort="price">رتّب بالأرخص</button></div></div>';
     }
 
-    if(done.length){
-      var USE = { 0: "لا تستعملها", 1: "تستعملها قليلاً", 2: "تستعملها" };
-      h += '<div class="sec"><h2>اشتريتَها</h2><span class="hint">'
-        + done.length + (hid ? (" · " + hid + " مخفيّة") : "") + '</span></div>'
-        + '<div class="card">'
-        + done.map(function(x){
-            return '<div class="row"><span class="ic" style="background:var(--card-2)">'
-              + (x.e || "🎁") + '</span>'
-              + '<span><b class="nm">' + esc(x.n) + '</b><s class="sub">'
-              + (x.bm ? ("اشتُريت في " + esc(mName(x.bm))) : "مشتراة")
-              + ' · ' + (x.use === undefined ? "لم تُسأل عنها بعد" : USE[num(x.use)])
-              + '</s></span>'
-              + '<span class="cmodes"><span class="rt"><b class="a">'
-              + fmt(num(x.paid || x.price)) + '</b></span>'
-              + '<button class="mini" data-wundo="' + x.id + '">تراجع</button>'
-              + '</span></div>';
-          }).join("")
-        + '<div class="wact"><button class="mini" data-wclear="1">'
-        + 'أخفِها من القائمة</button></div></div>';
+    /* ٥ · سجلُّك */
+    var REC2 = wishRecord();
+    if(REC2.fast.n + REC2.slow.n >= 3){
+      h += '<div class="sec"><h2>سجلُّك</h2>'
+        + '<span class="hint">' + (REC2.fast.n + REC2.slow.n) + ' إجابة</span></div>'
+        + '<div class="card"><div class="wsch">'
+        + (REC2.fast.n
+            ? ('<div class="schr"><b>اشتريتَها في أسبوعها</b>'
+               + '<s>' + REC2.fast.n + ' أمنية</s><i class="'
+               + (REC2.fast.re * 2 > REC2.fast.n ? "bad" : "")
+               + '">' + REC2.fast.re + ' لا تستعملها</i></div>')
+            : "")
+        + (REC2.slow.n
+            ? ('<div class="schr"><b>انتظرتَها شهراً فأكثر</b>'
+               + '<s>' + REC2.slow.n + ' أمنية</s><i class="'
+               + (REC2.slow.re * 2 > REC2.slow.n ? "bad" : "")
+               + '">' + REC2.slow.re + ' لا تستعملها</i></div>')
+            : "")
+        + '</div><div class="whint">بالعدد لا بالنسبة — والعددُ أصدقُ حين '
+        + 'تكون العيّنةُ صغيرة. وهذا دفترُك عن نفسك.</div></div>';
     }
+
+    /* ٦ · زرٌّ عائم */
+    h += '<button class="wfab" data-addwish="1" title="أمنيةٌ جديدة">+</button>';
     return h;
   }
 
@@ -9298,7 +9334,8 @@ vertical-align:middle}
      يعبر العمودين: الترويسة · شريط الشهور · المؤشرات · اللافتات
      · المعالج · الشبكات · الجداول العريضة.
      وما بقي يُقسَّم وحدات (عنوان + بطاقته) تُوضع كلٌّ في العمود الأقصر. */
-  var COLTABS = { dash:1, rep:1, year:1, plan:1, accts:1, inv:1, set:1, wish:1 };
+  /* الأمنياتُ شبكةٌ تقسم نفسَها — فلا تُقسَّم بطاقاتُها على عمودين */
+  var COLTABS = { dash:1, rep:1, year:1, plan:1, accts:1, inv:1, set:1 };
   function spansBoth(el){
     var c = el.className || "";
     if(ui.tab === "plan" && /(flag|mixline|wiz)/.test(c)) return false;
@@ -9989,24 +10026,6 @@ vertical-align:middle}
     on("[data-togglearch]", function(){ ui.showArch = !ui.showArch; render(); });
     /* لوحة الحاسبة: تُحدَّث في مكانها بلا إعادة رسم — إعادةُ الرسم
        تُفقد الحقلَ تركيزَه وتُبطئ الضغط المتتابع. */
-    /* المسوّدةُ تُحفظ في ui لا في الحقل: إعادةُ الرسم لا تمحو ما كتب */
-    ch("[data-wf]", function(el){
-      ui.wdraft = ui.wdraft || { n: "", e: "🎁", p: "", by: "" };
-      ui.wdraft[el.getAttribute("data-wf")] = el.value;
-    });
-    on("[data-wadd]", function(){
-      var g = function(id){ var e = document.getElementById(id); return e ? e.value : ""; };
-      var nm = String(g("wnm") || "").trim();
-      if(!nm){ toast("اكتب ما تريده أوّلاً"); return; }
-      var w = { id: uid(), n: nm, e: String(g("wemo") || "🎁"),
-                price: num(g("wpr")), by: Math.max(0, Math.round(num(g("wby")))),
-                bought: false, at: Date.now() };
-      wishList().push(w);
-      ui.wdraft = { n: "", e: "🎁", p: "", by: "" };
-      ui.wsel = w.id;                       /* تُفتح على طرقها فوراً */
-      toast("سُجّلت — وهذه طرقُك إليها");
-      save(); render();
-    });
     /* الإيقافُ ليس أرشفة: القسطُ يُحفظ ليُردّ، لا يُصفَّر فيضيع */
     on("[data-wpause]", function(b){
       var id = b.getAttribute("data-wpause"), w = null;
@@ -10166,20 +10185,33 @@ vertical-align:middle}
       save(); render();
     });
     on("[data-addwish]", function(){
-      ask({ title: "أمنية أو احتياج",
-        msg: "شيءٌ تريده ولم تشترِه بعد. يُقال لك أيسعه شهرك أم ينقصه كذا.",
+      ask({ title: "أمنيةٌ جديدة",
+        msg: "اسمُها وثمنُها يكفيان — وما سواهما في «عدّلها».",
         html: emoPickHTML("🎁"),
-        fields: [{ label: "ما هو", value: "", ph: "شنطة" },
-                 { label: "الرمز", value: "🎁", ph: "🎁" },
-                 { label: "ثمنه التقريبي", type: "number", value: "" }],
+        fields: [{ label: "الرمز", value: "🎁", emo: true, ph: "🎁" },
+                 { label: "ما الذي تريده؟", value: "", ph: "شنطة · جوّال · رحلة" },
+                 { label: "ثمنُه التقريبيّ", type: "number", value: "" }],
         ok: "سجّلها",
         onOk: function(v){
-          if(!v[0]) return;
-          wishList().push({ id: uid(), n: String(v[0]), e: String(v[1] || "🎁"),
-                            price: num(v[2]), bought: false, at: Date.now() });
-          toast("سُجّلت — تجدها في شاشة الخطة");
+          if(!v[1]) return;
+          var w = { id: uid(), n: String(v[1]), e: String(v[0] || "🎁"),
+                    price: num(v[2]), bought: false, at: Date.now() };
+          wishList().push(w);
+          ui.wfil = "live";
+          ui.wsel = w.id;                    /* تُفتح على طرقها فوراً */
+          if(ui.tab !== "wish") ui.tab = "wish";
+          toast("سُجّلت — وهذه طرقُك إليها");
           save();
         } });
+    });
+    on("[data-wfil]", function(b){
+      ui.wfil = b.getAttribute("data-wfil"); ui.wsel = ""; render();
+    });
+    /* التأجيل: تُرفع من النشط بلا حذفٍ ولا شراء */
+    on("[data-wsnooze]", function(b){
+      var id = b.getAttribute("data-wsnooze");
+      wishList().forEach(function(x){ if(x.id === id) x.snooze = !x.snooze; });
+      toast("نُقلت"); save(); render();
     });
     on("[data-wbuy]", function(b){
       var id = b.getAttribute("data-wbuy"), w = null;
@@ -11477,7 +11509,7 @@ vertical-align:middle}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+17";
+  var APP_VERSION = "1.5.0-beta+18";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
