@@ -454,12 +454,22 @@ color:var(--ink-3);white-space:nowrap}
 .wfil .chip i{font-style:normal;margin-inline-start:6px;opacity:.6;
 font-family:"IBM Plex Mono",monospace;font-size:10px}
 .lnk{color:var(--accent);cursor:pointer}
-.wfab{position:fixed;inset-inline-start:18px;bottom:calc(88px + env(safe-area-inset-bottom));
-width:52px;height:52px;border-radius:99px;border:0;z-index:35;cursor:pointer;
+/* الجهةُ الأخرى: بدايةُ السطر عندنا يمينٌ — وهناك يقف الشريطُ الجانبيّ */
+.wfab{position:fixed;inset-inline-end:18px;bottom:calc(88px + env(safe-area-inset-bottom));
+width:52px;height:52px;border-radius:99px;border:0;z-index:45;cursor:pointer;
 background:var(--accent);color:#fff;font-size:26px;line-height:1;
 box-shadow:0 8px 24px -8px rgba(0,0,0,.5);transition:.14s}
 .wfab:hover{transform:translateY(-2px)}
-@media(min-width:900px){ .wfab{bottom:26px;inset-inline-start:26px} }
+@media(min-width:900px){ .wfab{bottom:26px;inset-inline-end:26px} }
+/* بطاقةُ الإضافة: بحجم البطاقات وبحدٍّ منقوط — تُرى ولا تُزاحم */
+.wadd2{display:flex;flex-direction:column;align-items:center;justify-content:center;
+gap:4px;min-height:150px;padding:18px 14px;border-radius:16px;cursor:pointer;
+border:1.5px dashed var(--line2,var(--line));background:transparent;
+color:var(--ink-3);font:inherit;transition:.14s}
+.wadd2:hover{border-color:var(--accent);color:var(--accent)}
+.wadd2 .wplus{font-size:30px;line-height:1;color:var(--accent)}
+.wadd2>b{font-size:14px;color:var(--ink)}
+.wadd2>s{text-decoration:none;font-size:11px}
 .wbody{display:grid;gap:0;margin-top:2px}
 @media(min-width:760px){
   .wbody{grid-template-columns:1fr 1fr;gap:0 20px;align-items:start}
@@ -7034,10 +7044,19 @@ vertical-align:middle}
       h += '<div class="card"><div class="empty"><b>'
         + (fil === "live" ? "لا أمنياتٍ نشطة" : "لا شيء هنا")
         + '</b>' + (fil === "live"
-            ? "اضغط زرَّ الإضافة، فيُقال لك من أين يأتي ثمنُها ومتى تبلغها."
-            : "جرّب فلتراً آخر.") + '</div></div>';
+            ? "سجّل ما تريده بثمنه، فيُقال لك من أين يأتي ومتى تبلغه."
+            : "جرّب فلتراً آخر.")
+        + (fil === "live" || fil === "all"
+            ? '<div class="acts"><button class="act solid" data-addwish="1">'
+              + '+ أمنيةٌ جديدة</button></div>' : "")
+        + '</div></div>';
     } else {
       h += '<div class="wgrid">';
+      /* موضعُ الإضافة في الشبكة نفسِها — لا في زاويةٍ تُغفَل */
+      if(fil === "live" || fil === "all")
+        h += '<button class="wadd2" data-addwish="1">'
+          + '<span class="wplus">+</span><b>أمنيةٌ جديدة</b>'
+          + '<s>اسمُها وثمنُها يكفيان</s></button>';
       show.forEach(function(x){
         var open = (x.id === sel);
         var p = num(x.price), can = (R.now + wishGot(x)) >= p;
@@ -11636,7 +11655,7 @@ vertical-align:middle}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+21";
+  var APP_VERSION = "1.5.0-beta+22";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
