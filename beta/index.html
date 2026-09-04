@@ -1256,6 +1256,26 @@ color:var(--gold);font-variant-numeric:tabular-nums;cursor:help}
   font-family:inherit;cursor:pointer;white-space:nowrap}
 .btnpri:hover{filter:brightness(1.08)}
 /* اسم التطبيق في رأس الشريط — على الحاسب وحده */
+.lgr .rt .a{font-size:14px}
+.lgr .rt .a.wok{color:var(--ok)}
+.lgr .rt .a.wno{color:var(--warn)}
+.lgr .sub{white-space:normal;line-height:1.7}
+.syncchip{display:flex;align-items:center;gap:6px;margin-top:5px;padding:3px 8px;
+border-radius:99px;border:1px solid var(--line);background:transparent;cursor:pointer;
+color:var(--ink-3);font:inherit;font-size:10.5px;max-width:100%}
+.syncchip>i{font-style:normal;font-size:9px;line-height:1}
+.syncchip>s{text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.syncchip:hover{border-color:var(--accent);color:var(--accent)}
+.syncchip.ok{color:var(--ok);border-color:var(--ok-soft)}
+.syncchip.acc{color:var(--accent);border-color:var(--accent-soft)}
+.syncchip.bad{color:var(--warn);border-color:var(--warn-soft)}
+.syncdot{display:inline-flex;align-items:center;justify-content:center;width:30px;
+height:30px;border-radius:99px;border:1px solid var(--line);background:transparent;
+color:var(--ink-3);cursor:pointer;font-size:11px;flex:none}
+.syncdot.ok{color:var(--ok)}
+.syncdot.acc{color:var(--accent)}
+.syncdot.bad{color:var(--warn);border-color:var(--warn)}
+@media (min-width:820px){ .syncdot{display:none} }
 .navbrand{display:none}
 
 @media (min-width:820px){
@@ -2045,6 +2065,7 @@ vertical-align:middle}
     for(var mk in state.months){
       var m = state.months[mk];
       if(!m || typeof m !== "object" || Array.isArray(m)){ delete state.months[mk]; continue; }
+      if(!Array.isArray(m.log)) m.log = [];
       if(!Array.isArray(m.items)) m.items = [];
       else m.items = m.items.filter(function(x){ return x && typeof x === "object"; });
     }
@@ -3139,7 +3160,34 @@ vertical-align:middle}
     return n;
   }
   /* يضبط إجمالي البند على المبلغ المكتوب، ويمتصّ الفرق في عملية «سريعة» واحدة */
+  /* ── سجلُّ التعديلات ──
+     يُقاس بمجموع البند قبلَ التغيير وبعده — فيصحّ الفرقُ مهما كانت
+     آلةُ التغيير: إدخالٌ سريعٌ أو عمليةٌ تُضاف أو تُحذف. */
+  var LOGCAP = 200;
+  function catTotal(mk, ck){ return actuals(mk).by[ck] || 0; }
+  function subTotal(mk, sid){ return actuals(mk).bySub[sid] || 0; }
+  function logAmt(mk, ck, sid, before, after, kind){
+    if(!mk || !ck) return;
+    if(Math.abs(num(after) - num(before)) < 0.005) return;
+    var m = month(mk);
+    if(!Array.isArray(m.log)) m.log = [];
+    m.log.push({ t: Date.now(), c: ck, s: sid || "",
+                 f: Math.round(num(before)), o: Math.round(num(after)),
+                 k: kind || "" });
+    if(m.log.length > LOGCAP) m.log = m.log.slice(-LOGCAP);
+  }
+  /* يُلفّ تغييرٌ بقيدِه: يُقرأ المجموعُ قبلَه وبعده */
+  function withLog(mk, ck, sid, kind, fn){
+    var b = sid ? subTotal(mk, sid) : catTotal(mk, ck);
+    var r = fn();
+    logAmt(mk, ck, sid, b, sid ? subTotal(mk, sid) : catTotal(mk, ck), kind);
+    return r;
+  }
+
   function setQuick(mk, ck, total){
+    return withLog(mk, ck, "", "q", function(){ return setQuickRaw(mk, ck, total); });
+  }
+  function setQuickRaw(mk, ck, total){
     var det = detailSum(mk, ck), q = quickItem(mk, ck), m = month(mk);
     var t = Math.max(0, num(total));
     if(t < det){
@@ -3181,6 +3229,10 @@ vertical-align:middle}
     return t;
   }
   function setQuickSub(mk, ck, sid, total){
+    return withLog(mk, ck, sid, "sub", function(){
+      return setQuickSubRaw(mk, ck, sid, total); });
+  }
+  function setQuickSubRaw(mk, ck, sid, total){
     var det = detailSubSum(mk, ck, sid), q = quickSubItem(mk, ck, sid), m = month(mk);
     var t = Math.max(0, num(total));
     if(t < det){
@@ -5048,8 +5100,10 @@ vertical-align:middle}
       onOk: function(v){
         var amt = num(v[0]);
         if(amt <= 0) return;
+        var _oc = it.c, _bo = catTotal(ui.month, _oc);
         unlinkSpend(it);                       /* نتراجع بالقيم القديمة أولاً */
         var p = String(v[1]).split("|");
+        var _bn = (p[0] === _oc) ? _bo : catTotal(ui.month, p[0]);
         it.a = amt; it.c = p[0];
         if(p[1]) it.s = p[1]; else delete it.s;
         it.t = v[2] || "";
@@ -5057,6 +5111,9 @@ vertical-align:middle}
           if(v[3]) it.acct = v[3]; else delete it.acct;
         }
         linkSpend(it);                         /* ثم نطبّق بالقيم الجديدة */
+        logAmt(ui.month, it.c, it.s || "", _bn, catTotal(ui.month, it.c), "edit");
+        if(_oc !== it.c)
+          logAmt(ui.month, _oc, "", _bo, catTotal(ui.month, _oc), "edit");
         save();
       } });
   }
@@ -5530,6 +5587,7 @@ vertical-align:middle}
           : '<div class="mnav"><button data-nav="-1">‹</button>'
             + '<span class="lbl">' + esc(mName(ui.month)) + '</span>'
             + '<button data-nav="1">›</button></div>')
+      + syncChipHTML(true)
       + '<button class="gear' + (ui.tab === "set" ? " on" : "") + '" data-settab="1" title="الإعدادات">⚙</button>'
       + '</div></div>' + monthStrip();
   }
@@ -5544,7 +5602,8 @@ vertical-align:middle}
       + '<span class="nbt"><b>خطتي الشهرية</b>'
       + '<s class="beta">'
       + (channel() ? 'قناة التجربة' : 'إصدار تجريبي')
-      + ' · ' + esc(verLabel()) + '</s></span></div>'
+      + ' · ' + esc(verLabel()) + '</s>'
+      + syncChipHTML(false) + '</span></div>'
       + tabs.map(function(t){
           /* نقطةٌ حين تبلغ أمنيةٌ متناولَه — يُقال ولا يُنتظر أن يسأل */
           var nd = (t[0] === "wish") ? wishReady(ui.month).length : 0;
@@ -6495,7 +6554,9 @@ vertical-align:middle}
       h: ["«إدخال سريع» جدولٌ تكتب فيه مجموعَ البند، وهو الأسرع.",
           "و«عملية بعملية» لمن يريد تاريخاً ووصفاً ومن أيّ حسابٍ دُفع.",
           "زرُّ ✓ يعني «دفعتُه كما خطّطت» — وضغطةٌ ثانية تتراجع.",
-          "ومقبضُ الفروع يفتحها فتسجّل لكلٍّ منها على حدة."] },
+          "ومقبضُ الفروع يفتحها فتسجّل لكلٍّ منها على حدة.",
+          "و«سجلُّ التعديلات» أسفل الشاشة يقول كيف بلغ الرقمُ ما بلغ: وقتُ كلّ تعديلٍ ويومُه، والبندُ وفرعُه، وكم كان وكم صار والفرق.",
+          "يُقيَّد من كلّ باب — إدخالٌ سريعٌ وصرفُ فرعٍ وزرُّ صحٍّ وعمليةٌ تُضاف أو تُعدَّل أو تُحذف وشراءُ أمنية — وآخرُ مئتَي تعديلٍ تبقى."] },
     { k: "env", i: "🧧", n: "الأظرف",
       w: "كلُّ بندٍ ظرفٌ فيه مبلغُه: يدخله ما خُطّط ويخرج منه ما صُرف.",
       h: ["الطريقةُ نفسها بعينٍ أخرى: من يفكّر بالأظرف يراها هنا.",
@@ -7798,7 +7859,8 @@ vertical-align:middle}
         + 'افتح ' + esc(mName(ui.jumpTo)) + '</button>'
         + '<button class="act" data-clearjump="1">تمام</button></div></div>';
     }
-    if(ui.spendMode === "quick") return h + viewQuick();
+    /* والسجلُّ يتبع الوضعين — لا الوضعَ الطويل وحدَه */
+    if(ui.spendMode === "quick") return h + viewQuick() + spendLogHTML(k);
 
     h += '<div class="card p"><h3 style="font-size:14px;font-weight:600;color:var(--ink-2);margin-bottom:11px">أضف مصروفاً</h3>'
       + '<div class="amt-row">'
@@ -7932,6 +7994,61 @@ vertical-align:middle}
               + '<span class="rt"><span class="a" style="font-size:13.5px">' + fmt(s2) + '</span></span></div>';
           }).join("") + '</div>';
     }
+    h += spendLogHTML(k);
+    return h;
+  }
+
+  /* سجلُّ التعديلات: مجموعاً باليوم، ولكلّ سطرٍ وقتُه ومقدارُه */
+  var LOGKIND = { q: "إدخالٌ سريع", sub: "صرفُ فرع", add: "عمليةٌ جديدة",
+                  edit: "تعديلُ عملية", del: "حذفُ عملية", buy: "شراءُ أمنية" };
+  function clockAr(ts){
+    var d = new Date(ts), hh = d.getHours(), mm = d.getMinutes();
+    var am = hh < 12 ? "ص" : "م";
+    var h12 = hh % 12; if(!h12) h12 = 12;
+    return h12 + ":" + pad(mm) + " " + am;
+  }
+  function dayLabel(ts){
+    var d = new Date(ts), t = new Date();
+    var same = function(a, b){
+      return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth()
+          && a.getDate() === b.getDate();
+    };
+    if(same(d, t)) return "اليوم";
+    var y = new Date(t.getTime() - 86400000);
+    if(same(d, y)) return "أمس";
+    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  }
+  function spendLogHTML(k){
+    var m = state.months[k], L = (m && Array.isArray(m.log)) ? m.log.slice() : [];
+    if(!L.length) return "";
+    /* الأحدثُ أوّلاً بالوقت لا بترتيب الحفظ — فبياناتُ جهازين تُدمج */
+    L.sort(function(a2, b2){ return num(b2.t) - num(a2.t); });
+    L = L.slice(0, 40);
+    var h = '<div class="sec"><h2>سجلُّ التعديلات</h2>'
+      + '<span class="hint">آخرُ ' + L.length + ' في ' + esc(mName(k)) + '</span></div>'
+      + '<div class="card">';
+    var day = "";
+    L.forEach(function(e){
+      var dl = dayLabel(e.t);
+      if(dl !== day){
+        day = dl;
+        h += '<div class="mrow subh"><span class="mn">' + esc(dl) + '</span></div>';
+      }
+      var c = catOf(e.c), sub = e.s ? subOf(c, e.s) : null;
+      var dlt = num(e.o) - num(e.f);
+      h += '<div class="row lgr">'
+        + '<span class="ic" style="background:var(--card-2)">'
+        + esc((c && c.e) || "•") + '</span>'
+        + '<span><b class="nm">' + esc((c && c.n) || "بند محذوف")
+        + (sub ? (' · ' + esc(sub.n)) : "") + '</b>'
+        + '<s class="sub">' + esc(clockAr(e.t)) + ' · '
+        + esc(LOGKIND[e.k] || "تعديل") + ' · '
+        + fmt(e.f) + ' ← ' + fmt(e.o) + '</s></span>'
+        + '<span class="rt"><b class="a ' + (dlt < 0 ? "wno" : "wok") + '">'
+        + (dlt > 0 ? "+" : "−") + fmt(Math.abs(dlt)) + '</b></span></div>';
+    });
+    h += '<div class="wact"><button class="mini" data-logclr="1">'
+      + 'امسح سجلَّ الشهر</button></div></div>';
     return h;
   }
 
@@ -9655,6 +9772,25 @@ vertical-align:middle}
     var ch = function(sel, fn){ q(sel).forEach(function(el){ el.onchange = function(){
       diag("حقل", actName(sel, el)); fn(el); }; }); };
 
+    on("[data-logclr]", function(){
+      ask({ title: "مسحُ سجلّ " + mName(ui.month),
+        msg: "يُمحى سجلُّ التعديلات لهذا الشهر — ولا تُمسّ عملياتُك ولا مبالغُها.",
+        ok: "امسحه", danger: true,
+        onOk: function(){
+          var m = month(ui.month);
+          m.log = [];
+          toast("مُسح السجلّ");
+          save();
+        } });
+    });
+    on("[data-syncchip]", function(){
+      if(!syncOn()){
+        ui.tab = "set"; render();
+        toast("اربط درايف من هنا");
+        return;
+      }
+      syncNow(false);
+    });
     on("[data-tab]", function(b){ ui.tab = b.getAttribute("data-tab");
       try{ sessionStorage.setItem("kh_tab", ui.tab); }catch(e){} render(); });
     on("[data-ledmode]", function(b){ ui.ledger = b.getAttribute("data-ledmode"); render(); });
@@ -10289,7 +10425,9 @@ vertical-align:middle}
           var it = { id: uid(), c: pr[0], a: num(v[1]), t: w.n,
                      d: defaultDate(), at: Date.now() };
           if(pr[1]) it.s = pr[1];
+          var _b = catTotal(ui.month, pr[0]);
           m.items.push(it);
+          logAmt(ui.month, pr[0], pr[1] || "", _b, catTotal(ui.month, pr[0]), "buy");
           w.bought = true;
           w.bm = ui.month;                    /* ليُحسب في سقف كماليّات شهره */
           w.bat = Date.now();                 /* وليُسأل عنه بعد شهر */
@@ -10775,9 +10913,12 @@ vertical-align:middle}
     });
     on("[data-del]", function(b, e){
       e.stopPropagation();
-      var id = b.getAttribute("data-del"), m = month(ui.month);
-      m.items.forEach(function(i){ if(i.id === id) unlinkSpend(i); });
+      var id = b.getAttribute("data-del"), m = month(ui.month), gone = null;
+      m.items.forEach(function(i){ if(i.id === id){ unlinkSpend(i); gone = i; } });
+      var _b = gone ? catTotal(ui.month, gone.c) : 0;
       m.items = m.items.filter(function(i){ return i.id !== id; });
+      if(gone) logAmt(ui.month, gone.c, gone.s || "", _b,
+                      catTotal(ui.month, gone.c), "del");
       save(); render();
     });
 
@@ -11601,7 +11742,7 @@ vertical-align:middle}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+19";
+  var APP_VERSION = "1.5.0-beta+20";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
@@ -12279,6 +12420,61 @@ vertical-align:middle}
   /* سجلُّ الرفع: يبقى بعد الإغلاق، ويحمل ما وقع لا ما نرجوه. وهو
      خارج state عمداً — فالمزامنة تدمج state، ولا يصحّ أن يُدمج سجلُّ
      جهازٍ في جهازٍ آخر. */
+  /* ── حالُ المزامنة ──
+     خمسُ حالاتٍ تُرى: غير مربوط · بانتظار · يُرفع · مرفوع · فشل. */
+  var syncState = "";
+  function agoAr(ts){
+    if(!ts) return "";
+    var s2 = Math.max(0, Math.round((Date.now() - ts) / 1000));
+    if(s2 < 45) return "الآن";
+    var m2 = Math.round(s2 / 60);
+    if(m2 < 60) return "قبل " + (m2 === 1 ? "دقيقة" : (m2 === 2 ? "دقيقتين"
+                 : (m2 <= 10 ? m2 + " دقائق" : m2 + " دقيقة")));
+    var h2 = Math.round(m2 / 60);
+    if(h2 < 24) return "قبل " + (h2 === 1 ? "ساعة" : (h2 === 2 ? "ساعتين"
+                 : (h2 <= 10 ? h2 + " ساعات" : h2 + " ساعة")));
+    var d2 = Math.round(h2 / 24);
+    return "قبل " + (d2 === 1 ? "يوم" : (d2 === 2 ? "يومين"
+           : (d2 <= 10 ? d2 + " أيّام" : d2 + " يوماً")));
+  }
+  function syncInfo(){
+    if(!syncOn()) return { k: "off", i: "⊘", t: "درايف غير مربوط", c: "" };
+    if(syncState === "busy") return { k: "busy", i: "⟳", t: "يُرفع الآن…", c: "acc" };
+    if(syncState === "wait") return { k: "wait", i: "◷", t: "بانتظار الرفع…", c: "acc" };
+    var g = syncLogGet();
+    if(syncState === "err" || (g.fails && !g.ok))
+      return { k: "err", i: "⚠",
+               t: "فشل الرفع" + (g.tryMsg ? (" · " + String(g.tryMsg).slice(0, 34)) : ""),
+               c: "bad" };
+    if(g.okAt) return { k: "ok", i: "●", t: "مرفوع · " + agoAr(g.okAt), c: "ok" };
+    return { k: "idle", i: "○", t: "لم يُرفع بعد", c: "" };
+  }
+  function syncChipHTML(mini){
+    var o = syncInfo();
+    return mini
+      ? ('<button class="syncdot ' + o.c + '" data-syncchip="1" title="'
+         + esc(o.t) + '">' + o.i + '</button>')
+      : ('<button class="syncchip ' + o.c + '" data-syncchip="1" title="'
+         + esc("اضغط لرفع تعديلاتك الآن") + '"><i>' + o.i + '</i>'
+         + '<s>' + esc(o.t) + '</s></button>');
+  }
+  /* يُكتب في عقدته وحدَها: إعادةُ الرسم تُفقد الحقلَ تركيزَه */
+  function syncChipRefresh(){
+    var o = syncInfo();
+    var a = document.querySelectorAll(".syncchip");
+    for(var i = 0; i < a.length; i++){
+      a[i].className = "syncchip " + o.c;
+      a[i].innerHTML = '<i>' + o.i + '</i><s>' + esc(o.t) + '</s>';
+    }
+    var b = document.querySelectorAll(".syncdot");
+    for(var j = 0; j < b.length; j++){
+      b[j].className = "syncdot " + o.c;
+      b[j].textContent = o.i;
+      b[j].title = o.t;
+    }
+  }
+  function syncSet(k){ syncState = k; syncChipRefresh(); }
+
   var SYNCLOG = "kh_synclog_beta";
   function syncLogGet(){
     try{ var r = localStorage.getItem(SYNCLOG); return r ? JSON.parse(r) : {}; }
@@ -12826,18 +13022,22 @@ vertical-align:middle}
     if(!syncOn()){ if(then) then("لا مزامنة"); return; }
     if(syncBusy){ if(then) then(null); return; }
     syncBusy = true;
+    syncSet("busy");
     syncPull(function(row, err){
       if(err === "EMPTY" || (!err && (!row || !row.data))){
         /* لا نسخة هناك بعد: يُرفع ما هنا فيُنشأ */
         syncPush(function(e2){
           syncBusy = false;
+          syncSet(e2 ? "err" : "ok");
           if(!quiet) toast(e2 ? ("تعذّر الرفع: " + cloudErr(e2)) : "جُهّزت سحابتك");
+          else if(!e2) toast("رُفعت تعديلاتك إلى درايف");
           render(); if(then) then(e2 || null);
         });
         return;
       }
       if(err){
         syncBusy = false;
+        syncSet("err");
         if(!quiet) toast(cloudErr(err));
         render(); if(then) then(err);
         return;
@@ -12845,7 +13045,9 @@ vertical-align:middle}
       applyCloud(row, quiet);
       syncPush(function(e3){
         syncBusy = false;
-        if(e3 && !quiet) toast("دُمجت هنا · وتعذّر الرفع: " + cloudErr(e3));
+        syncSet(e3 ? "err" : "ok");
+        if(e3){ if(!quiet) toast("دُمجت هنا · وتعذّر الرفع: " + cloudErr(e3)); }
+        else toast("رُفعت تعديلاتك إلى درايف");
         render(); if(then) then(e3 || null);
       });
     });
@@ -12870,6 +13072,7 @@ vertical-align:middle}
   var cloudPending = null;
   function cloudQueue(){
     if(!syncOn()) return;
+    syncSet("wait");
     clearTimeout(cloudPending);
     cloudPending = setTimeout(function(){
       /* دورةٌ كاملة لا رفعاً وحده: جهازٌ آخر قد كتب بينهما */
@@ -13393,8 +13596,10 @@ vertical-align:middle}
       if(aid){ rec.acct = aid; if(aid !== cAcc) ui.spendAcct = aid; }
     }
     var mk = monthOfDate(rec.d);
+    var _b = catTotal(mk, rec.c);
     month(mk).items.push(rec);
     linkSpend(rec);
+    logAmt(mk, rec.c, rec.s || "", _b, catTotal(mk, rec.c), "add");
     save();
     if(mk !== ui.month){
       ui.jumpTo = mk;                       /* يعرض إشعاراً مع زرّ «افتحه» */
@@ -13402,6 +13607,9 @@ vertical-align:middle}
     }
     render();
   }
+
+  /* «قبل دقيقتين» تصير ثلاثاً بلا أن يلمس شيئاً */
+  setInterval(function(){ try{ syncChipRefresh(); }catch(e){} }, 45000);
 
   /* ═══ إقلاع ═══ */
   storeProbe();           /* قبل كل شيء: أيُحفظ العمل أصلاً؟ */
