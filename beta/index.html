@@ -355,13 +355,17 @@ input,select,button,textarea{font-family:inherit;font-size:16px;min-width:0;max-
 text-decoration:none;white-space:normal}
 /* شرحٌ مباشرٌ داخل بطاقة: يأخذ حشوَ الصفوف نفسه فلا يلتصق بالحافّة */
 .card>.whint{padding:11px 16px}
+/* صفُّ أزرارٍ مباشرٌ في بطاقة: لا عمودَ يحمل عنه حشوَه */
+.card>.wact{padding:0 16px 13px}
 .card>.whint+.wsch,.card>.whint+.wpxr{margin-top:0}
 .wrdy{border-color:var(--ok)}
 .wrdy .nm{color:var(--ok)}
 .wrdy .sub{text-decoration:none;line-height:1.8;white-space:normal}
 .askr{grid-template-columns:minmax(0,1fr) auto}
 .askr>b{min-width:0;font-size:14px;font-weight:500}
+.qinc.wadd{padding:12px 16px 14px}
 .qinc.wadd .f.grow{flex:1 1 200px;min-width:0}
+.qinc.wadd .qsum{gap:20px}
 .qinc.wadd .qi2.wide{width:100%;text-align:start;font-family:inherit;font-weight:400;
 font-size:14px;direction:rtl}
 .qinc.wadd .emoface{align-self:flex-end}
@@ -939,7 +943,8 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
 .qinc .qi2:focus{border-color:var(--accent);background:var(--card)}
 .qinc .qsum{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;
   margin-inline-start:auto}
-.qinc .qs{display:flex;flex-direction:column;gap:1px;text-align:left}
+.qinc .qs{display:flex;flex-direction:column;gap:1px;text-align:left;
+  font-family:"IBM Plex Sans Arabic",system-ui,sans-serif;letter-spacing:normal}
 .qinc .qs s{text-decoration:none;font-size:10px;color:var(--ink-3)}
 .qinc .qs b{font-family:"IBM Plex Mono",monospace;font-size:15px;font-weight:600}
 .qinc .qs b.ok{color:var(--ok)}
@@ -11360,7 +11365,7 @@ vertical-align:middle}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+13";
+  var APP_VERSION = "1.5.0-beta+14";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
