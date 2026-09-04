@@ -406,9 +406,31 @@ margin-top:2px;line-height:1.7}
 min-width:16px;height:16px;padding:0 4px;margin-inline-start:6px;border-radius:99px;
 background:var(--ok,#0F7355);color:#fff;font-size:10px;font-style:normal;
 font-variant-numeric:tabular-nums}
+.wtile{position:relative}
+.wtile.cov{padding-top:0;overflow:hidden}
+.wcov{display:block;width:calc(100% + 28px);margin:0 -14px 8px;aspect-ratio:4/3;
+background:var(--card-2);overflow:hidden}
+.wcov img{width:100%;height:100%;object-fit:cover;display:block}
+.wlink{position:absolute;inset-inline-end:8px;top:8px;z-index:2;width:26px;height:26px;
+border-radius:99px;background:var(--card-2);color:var(--ink-3);display:flex;
+align-items:center;justify-content:center;font-size:13px;text-decoration:none;
+border:1px solid var(--line)}
+.wlink:hover{color:var(--accent);border-color:var(--accent)}
+.covpick{display:flex;gap:12px;align-items:flex-start;margin:12px 0 4px}
+.covprev{flex:none;width:96px;aspect-ratio:4/3;border-radius:12px;overflow:hidden;
+background:var(--card-2);border:1.5px dashed var(--line);display:flex;
+align-items:center;justify-content:center}
+.covprev.has{border-style:solid}
+.covprev>s{text-decoration:none;font-size:10.5px;color:var(--ink-3)}
+.covprev img{width:100%;height:100%;object-fit:cover}
+.covlab{flex:1 1 0;min-width:0}
+.covlab>b{display:block;font-size:13.5px;margin-bottom:2px}
+.covlab>s{display:block;text-decoration:none;font-size:11px;color:var(--ink-3);
+line-height:1.7;margin-bottom:7px}
 /* ── استديو الأمنيات ── */
 .kpis.wtwo{grid-template-columns:repeat(2,minmax(0,1fr))}
-.wgrid{display:grid;gap:14px;grid-template-columns:1fr;margin-bottom:14px}
+.wgrid{display:grid;gap:14px;grid-template-columns:1fr;margin-bottom:14px;
+align-items:start}   /* بطاقةٌ بغلافٍ أطولُ من أختها — ولا تُمطّ الأخرى */
 @media(min-width:620px){ .wgrid{grid-template-columns:repeat(2,minmax(0,1fr))} }
 @media(min-width:920px){ .wgrid{grid-template-columns:repeat(3,minmax(0,1fr))} }
 .wgrid .wcard{margin:0}
@@ -4097,6 +4119,7 @@ vertical-align:middle}
           if(x.type === "hidden")
             return '<input id="df' + i + '" type="hidden"'
               + (x.emo ? ' data-emofield="1"' : '')
+              + (x.hook ? (' data-' + x.hook + '="1"') : "")
               + ' value="' + esc(x.value == null ? "" : x.value) + '">';
           return '<div class="f2"><label>' + esc(x.label) + '</label>'
             + '<input id="df' + i + '" type="' + (x.type || "text") + '"'
@@ -4247,6 +4270,20 @@ vertical-align:middle}
   function iconOf(x){
     if(x && x.img) return '<img class="icimg" src="' + esc(x.img) + '" alt="">';
     return (x && x.e) ? esc(x.e) : "";
+  }
+
+  /* غلافُ الأمنية: صورةٌ من جهازه تُقصّ ٤:٣ — الأمنيةُ شيءٌ رآه بعينه */
+  function coverPickHTML(img){
+    return '<div class="covpick">'
+      + '<div class="covprev' + (img ? " has" : "") + '" id="covprev">'
+      + (img ? ('<img src="' + esc(img) + '" alt="">') : '<s>لا صورة</s>')
+      + '</div>'
+      + '<span class="covlab"><b>صورةُ المنتج</b>'
+      + '<s>اختيارية — ترفعها من جهازك فتظهر على وجه بطاقتها بدل الرمز.</s>'
+      + '<span class="emoup">'
+      + '<button class="mini" data-covpick="1">اختر صورة</button>'
+      + '<button class="mini" data-covclr="1">أزلها</button></span></span>'
+      + '<input type="file" accept="image/*" id="covfile" hidden></div>';
   }
 
   function emoPickHTML(cur){
@@ -6450,7 +6487,7 @@ vertical-align:middle}
           "و«سقفُ الكماليّات» حدٌّ شهريٌّ اختياريّ لأمنياتك، و«جدولُ الشراء» يوزّعها على أشهرك القادمة بحسب فائض كلّ شهرٍ وأهمّيّة كلّ أمنية.",
           "ويوم تشتريها تُسأل: أمن خطّتها تدفع أم من جيبك؟ فيُسحب المُدَّخر أو يُترك، وتُؤرشف خطّتُها فلا يُقتطع لها قسطٌ بعد. وإن أخطأتَ فزرُّ «تراجع» يردّ العملية والبندَ اللاحق وما سُحب.",
           "و«أخفِها من القائمة» ترفع المشتراة من الشاشة ولا تمحوها — فسجلُّك وتقاريرُك تبقى.",
-          "و«عدّلها» فيها رمزُها وملاحظتُك ورابطُها — مقاسٌ أو لونٌ أو متجرٌ رأيتَها فيه، ولا يُعرض زرُّ فتحٍ إلّا لرابطٍ صريح.",
+          "و«عدّلها» فيها رمزُها وصورتُها وملاحظتُك ورابطُها. والصورةُ تظهر على وجه بطاقتها بدل الرمز، والرابطُ سهمٌ صغيرٌ في زاويتها — ولا يُعرض إلّا لعنوانٍ صريح.",
           "وبعد شهرٍ من شرائها تُسأل سؤالاً واحداً: أتستعملها؟ فيُبنى «سجلُّك» — كم اشتريتَ في أسبوعه وكم لا تستعمله — ويُذكَّرك به عند أمنيةٍ حديثة. وتجد الأمنيات في التقارير: ما أنفقتَ وما وفّره الانتظار.",
           "ومتى اشتريتَها صارت مصروفاً في بندها بضغطة، فلا تُكتب مرّتين."] },
     { k: "spend", i: "🧾", n: "المصروف",
@@ -6843,8 +6880,14 @@ vertical-align:middle}
     var base = planned ? got : Math.min(Math.max(0, R.now), p);
     var pct = p > 0 ? Math.max(0, Math.min(100, Math.round(base / p * 100))) : 0;
     var ch = wishChip(x, k, R), tg = x.bought ? null : wishAgeTag(x);
-    return '<div class="wtile" data-wsel="' + x.id + '">'
-      + '<span class="wbig">' + (x.e ? esc(x.e) : "🎁") + '</span>'
+    var u = String(x.url || "").trim();
+    var lnk = /^https?:\/\//i.test(u);
+    return '<div class="wtile' + (x.img ? " cov" : "") + '" data-wsel="' + x.id + '">'
+      + (lnk ? ('<a class="wlink" href="' + esc(u) + '" target="_blank" '
+                + 'rel="noopener noreferrer" title="افتح رابطها">↗</a>') : "")
+      + (x.img
+          ? ('<span class="wcov"><img src="' + esc(x.img) + '" alt=""></span>')
+          : ('<span class="wbig">' + (x.e ? esc(x.e) : "🎁") + '</span>'))
       + '<b class="wnm3">' + esc(x.n) + '</b>'
       + '<s class="wpr">' + fmt(x.bought ? num(x.paid || p) : p) + ' '
       + esc(cur()) + '</s>'
@@ -10132,8 +10175,10 @@ vertical-align:middle}
       wishList().forEach(function(x){ if(x.id === id) w = x; });
       if(!w) return;
       ask({ title: "تعديل «" + w.n + "»",
-        html: emoPickHTML(w.e || "🎁"),
+        html: emoPickHTML(w.e || "🎁") + coverPickHTML(w.img || ""),
         fields: [{ label: "الرمز", value: w.e || "🎁", emo: true, ph: "🎁" },
+                 { label: "الغلاف", type: "hidden", hook: "coverfield",
+                   value: w.img || "" },
                  { label: "ما هو", value: w.n },
                  { label: "الثمن", type: "number", value: num(w.price) },
                  { label: "خلال كم شهر (اختياري)", type: "number", value: w.by || "" },
@@ -10154,16 +10199,17 @@ vertical-align:middle}
                    ph: "https://" }],
         ok: "احفظ",
         onOk: function(v){
-          if(!v[1]) return;
+          if(!v[2]) return;
           w.e = String(v[0] || "🎁");
-          w.n = String(v[1]); w.price = num(v[2]);
-          w.by = Math.max(0, Math.round(num(v[3])));
-          w.cat = String(v[4] || "");
-          w.run = Math.max(0, num(v[5]));
-          w.kind = String(v[6] || "");
-          w.wait = Math.max(0, num(v[7]));
-          w.note = String(v[8] || "");
-          w.url = String(v[9] || "");
+          w.img = String(v[1] || "");
+          w.n = String(v[2]); w.price = num(v[3]);
+          w.by = Math.max(0, Math.round(num(v[4])));
+          w.cat = String(v[5] || "");
+          w.run = Math.max(0, num(v[6]));
+          w.kind = String(v[7] || "");
+          w.wait = Math.max(0, num(v[8]));
+          w.note = String(v[9] || "");
+          w.url = String(v[10] || "");
           save();
         } });
     });
@@ -10389,6 +10435,52 @@ vertical-align:middle}
         rd.readAsDataURL(file);
       };
       f.click();
+    });
+    on("[data-covpick]", function(){
+      var f = document.getElementById("covfile");
+      if(!f) return;
+      f.onchange = function(){
+        var file = f.files && f.files[0];
+        if(!file) return;
+        var rd = new FileReader();
+        rd.onload = function(){
+          var im = new Image();
+          im.onload = function(){
+            try{
+              /* ٤:٣ · ٢٨٠×٢١٠ · webp — وتُخفَّض الجودةُ حتى تصغر */
+              var W = 280, H = 210;
+              var sc = Math.max(W / im.width, H / im.height);
+              var sw = W / sc, sh = H / sc;
+              var cv = document.createElement("canvas");
+              cv.width = W; cv.height = H;
+              cv.getContext("2d").drawImage(im,
+                (im.width - sw) / 2, (im.height - sh) / 2, sw, sh, 0, 0, W, H);
+              var url = cv.toDataURL("image/webp", 0.75);
+              if(url.length > 40000) url = cv.toDataURL("image/webp", 0.5);
+              if(url.length > 40000) url = cv.toDataURL("image/webp", 0.3);
+              if(url.length > 60000){ toast("الصورة كبيرةٌ جداً — جرّب أصغرَ منها"); return; }
+              var el = document.querySelector("[data-coverfield]");
+              if(el) el.value = url;
+              var pv = document.getElementById("covprev");
+              if(pv){ pv.className = "covprev has";
+                      pv.innerHTML = '<img src="' + esc(url) + '" alt="">'; }
+              toast("رُفعت الصورة · " + kb(url.length));
+            }catch(e){ toast("تعذّرت معالجة الصورة"); }
+          };
+          im.onerror = function(){ toast("الملفّ ليس صورةً صالحة"); };
+          im.src = rd.result;
+        };
+        rd.onerror = function(){ toast("تعذّرت قراءة الملفّ"); };
+        rd.readAsDataURL(file);
+      };
+      f.click();
+    });
+    on("[data-covclr]", function(){
+      var el = document.querySelector("[data-coverfield]");
+      if(el) el.value = "";
+      var pv = document.getElementById("covprev");
+      if(pv){ pv.className = "covprev"; pv.innerHTML = "<s>لا صورة</s>"; }
+      toast("أُزيلت الصورة");
     });
     on("[data-imgclear]", function(){
       var el = document.querySelector("[data-emofield]");
@@ -11509,7 +11601,7 @@ vertical-align:middle}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+18";
+  var APP_VERSION = "1.5.0-beta+19";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
