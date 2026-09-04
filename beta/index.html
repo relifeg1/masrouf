@@ -1967,8 +1967,38 @@ vertical-align:middle}
   /* ═══ ترقية البيانات القديمة ═══ */
   function idxOf(k){ for(var i=0;i<state.cats.length;i++) if(state.cats[i].k === k) return i; return -1; }
   function catExists(k){ return idxOf(k) >= 0; }
+  /* ── تقويمُ الشكل ──
+     ما يجب أن يكون مصفوفةً يُجعل مصفوفةً، وما يجب أن يكون كائناً يُجعل
+     كائناً. فحالةٌ نصفُها فاسدةٌ تُصلَح ولا تُميت الشاشة. */
+  function fixShape(){
+    ["cats", "goals", "invest", "wish", "accts", "debts", "notes"].forEach(function(k){
+      if(state[k] === undefined) return;
+      if(!Array.isArray(state[k])) state[k] = [];
+      else state[k] = state[k].filter(function(x){
+        return x && typeof x === "object" && !Array.isArray(x);
+      });
+    });
+    ["months", "income", "conf"].forEach(function(k){
+      if(state[k] === undefined) return;
+      if(!state[k] || typeof state[k] !== "object" || Array.isArray(state[k]))
+        state[k] = (k === "income") ? { salary: 0, extra: 0 } : {};
+    });
+    if(!Array.isArray(state.cats) || !state.cats.length) state.cats = state.cats || [];
+    state.cats.forEach(function(c){
+      if(!Array.isArray(c.subs)) c.subs = [];
+      else c.subs = c.subs.filter(function(x){ return x && typeof x === "object"; });
+    });
+    for(var mk in state.months){
+      var m = state.months[mk];
+      if(!m || typeof m !== "object" || Array.isArray(m)){ delete state.months[mk]; continue; }
+      if(!Array.isArray(m.items)) m.items = [];
+      else m.items = m.items.filter(function(x){ return x && typeof x === "object"; });
+    }
+  }
+
   function migrate(){
-    if(!state.wish) state.wish = [];
+    fixShape();
+    if(!Array.isArray(state.wish)) state.wish = [];
     /* تُستنتج مرّةً وتُحفظ، فلا تتغيّر بتغيّر الشهور بعدها */
     if(!state.planFrom) planFrom();
     state.cats.forEach(function(c){ if(!c.subs) c.subs = []; });
@@ -11447,7 +11477,7 @@ vertical-align:middle}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+16";
+  var APP_VERSION = "1.5.0-beta+17";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
