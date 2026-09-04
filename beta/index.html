@@ -450,6 +450,20 @@ color:var(--ink-3);white-space:nowrap}
 .wchip.acc{background:var(--accent-soft);color:var(--accent)}
 .wcard.won .wtile{opacity:.72}
 .wtile .wtrack{width:100%;margin:8px 0 0}
+.wtile.open{display:grid;grid-template-columns:34px minmax(0,1fr) auto;
+gap:11px;align-items:center;text-align:start;padding:11px 16px 12px;position:relative}
+.wtile.open .wsm{width:34px;height:34px;border-radius:10px;background:var(--card-2);
+display:flex;align-items:center;justify-content:center;font-size:17px;overflow:hidden}
+.wtile.open .wsm .wbig{font-size:17px}
+.wtile.open .wsm .wcov{width:100%;height:100%;margin:0;aspect-ratio:auto}
+.wtile.open .wtx{min-width:0;display:flex;flex-direction:column;gap:3px}
+.wtile.open .wnm3{font-size:15px;font-weight:600}
+.wtile.open .wchips{justify-content:flex-start;margin:0}
+.wtile.open .rt .a{font-family:"IBM Plex Mono",monospace;font-size:14px}
+.wtile.open .wtrack{position:absolute;inset-inline:0;bottom:0;margin:0;border-radius:0}
+.wcard.open .wbody{margin-top:0}
+.wcard.open .wcol>*{padding-top:8px}
+.wcard.open .wfoot{padding:9px 16px}
 .wfil{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
 .wfil .chip i{font-style:normal;margin-inline-start:6px;opacity:.6;
 font-family:"IBM Plex Mono",monospace;font-size:10px}
@@ -6953,24 +6967,33 @@ vertical-align:middle}
     var ch = wishChip(x, k, R), tg = x.bought ? null : wishAgeTag(x);
     var u = String(x.url || "").trim();
     var lnk = /^https?:\/\//i.test(u);
-    return '<div class="wtile' + (x.img ? " cov" : "") + '" data-wsel="' + x.id + '">'
-      + (lnk ? ('<a class="wlink" href="' + esc(u) + '" target="_blank" '
-                + 'rel="noopener noreferrer" title="افتح رابطها">↗</a>') : "")
-      + (x.img
-          ? ('<span class="wcov"><img src="' + esc(x.img) + '" alt=""></span>')
-          : ('<span class="wbig">' + (x.e ? esc(x.e) : "🎁") + '</span>'))
-      + '<b class="wnm3">' + esc(x.n) + '</b>'
-      + '<s class="wpr">' + fmt(x.bought ? num(x.paid || p) : p) + ' '
-      + esc(cur()) + '</s>'
-      + '<span class="wchips">'
+    var link = lnk ? ('<a class="wlink" href="' + esc(u) + '" target="_blank" '
+                      + 'rel="noopener noreferrer" title="افتح رابطها">↗</a>') : "";
+    var icon = x.img
+      ? ('<span class="wcov"><img src="' + esc(x.img) + '" alt=""></span>')
+      : ('<span class="wbig">' + (x.e ? esc(x.e) : "🎁") + '</span>');
+    var chips = '<span class="wchips">'
       + '<span class="wchip ' + ch.c + '">' + esc(ch.n) + '</span>'
       + (tg ? ('<span class="wtag ' + tg.c + '" title="' + esc(tg.t) + '">'
                + esc(tg.n) + '</span>') : "")
-      + '</span>'
-      + (x.bought ? "" : ('<div class="track wtrack"><i style="width:' + pct
-         + '%;background:' + (pct >= 100 ? "var(--ok)" : "var(--accent)")
-         + '"></i></div>'))
-      + '</div>';
+      + '</span>';
+    var bar = x.bought ? ""
+      : ('<div class="track wtrack"><i style="width:' + pct + '%;background:'
+         + (pct >= 100 ? "var(--ok)" : "var(--accent)") + '"></i></div>');
+    var price = fmt(x.bought ? num(x.paid || p) : p) + ' ' + esc(cur());
+    /* مفتوحةً: صفٌّ كصفوف التطبيق — العمودُ يعلو نصفَ الشاشة بلا داعٍ */
+    if(open)
+      return '<div class="wtile open" data-wsel="' + x.id + '">' + link
+        + '<span class="wsm">' + icon + '</span>'
+        + '<span class="wtx"><b class="wnm3">' + esc(x.n) + '</b>' + chips + '</span>'
+        + '<span class="rt"><b class="a">' + price + '</b>'
+        + '<b class="b">' + (x.bought ? "مدفوع" : (pct + '٪')) + '</b></span>'
+        + bar + '</div>';
+    return '<div class="wtile' + (x.img ? " cov" : "") + '" data-wsel="' + x.id + '">'
+      + link + icon
+      + '<b class="wnm3">' + esc(x.n) + '</b>'
+      + '<s class="wpr">' + price + '</s>'
+      + chips + bar + '</div>';
   }
 
   function wishHTML(k){
@@ -10225,7 +10248,7 @@ vertical-align:middle}
       if(!w) return;
       ask({ title: "تعديل «" + w.n + "»",
         html: emoPickHTML(w.e || "🎁") + coverPickHTML(w.img || ""),
-        fields: [{ label: "الرمز", value: w.e || "🎁", emo: true, ph: "🎁" },
+        fields: [{ label: "الرمز", type: "hidden", emo: true, value: w.e || "🎁" },
                  { label: "الغلاف", type: "hidden", hook: "coverfield",
                    value: w.img || "" },
                  { label: "ما هو", value: w.n },
@@ -10283,14 +10306,16 @@ vertical-align:middle}
       ask({ title: "أمنيةٌ جديدة",
         msg: "اسمُها وثمنُها يكفيان — وما سواهما في «عدّلها».",
         html: emoPickHTML("🎁"),
-        fields: [{ label: "الرمز", value: "🎁", emo: true, ph: "🎁" },
+        fields: [{ label: "الرمز", type: "hidden", emo: true, value: "🎁" },
                  { label: "ما الذي تريده؟", value: "", ph: "شنطة · جوّال · رحلة" },
-                 { label: "ثمنُه التقريبيّ", type: "number", value: "" }],
+                 { label: "ثمنُه التقريبيّ", type: "number", value: "" },
+                 { label: "رابطُها (اختياري)", value: "", ph: "https://" }],
         ok: "سجّلها",
         onOk: function(v){
           if(!v[1]) return;
           var w = { id: uid(), n: String(v[1]), e: String(v[0] || "🎁"),
-                    price: num(v[2]), bought: false, at: Date.now() };
+                    price: num(v[2]), url: String(v[3] || ""),
+                    bought: false, at: Date.now() };
           wishList().push(w);
           ui.wfil = "live";
           ui.wsel = w.id;                    /* تُفتح على طرقها فوراً */
@@ -11655,7 +11680,7 @@ vertical-align:middle}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+22";
+  var APP_VERSION = "1.5.0-beta+23";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
