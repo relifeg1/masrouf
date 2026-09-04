@@ -6551,8 +6551,8 @@ vertical-align:middle}
           "ومتى اشتريتَها صارت مصروفاً في بندها بضغطة، فلا تُكتب مرّتين."] },
     { k: "spend", i: "🧾", n: "المصروف",
       w: "ما صرفتَه فعلاً — لا ما نويت. وهنا تُسجَّل الأرقام يومياً.",
-      h: ["«إدخال سريع» جدولٌ تكتب فيه مجموعَ البند، وهو الأسرع.",
-          "و«عملية بعملية» لمن يريد تاريخاً ووصفاً ومن أيّ حسابٍ دُفع.",
+      h: ["جدولٌ واحد: تكتب فيه مجموعَ ما صرفتَه في كلّ بند، فيُحسب الباقي.",
+          "و«عملياتُ الشهر» تحته للمراجعة لا للإدخال — فيها ما سُجّل تلقائياً وما جاء من أمنيةٍ اشتريتَها، تُضغط فتُعدَّل أو تُحذف.",
           "زرُّ ✓ يعني «دفعتُه كما خطّطت» — وضغطةٌ ثانية تتراجع.",
           "ومقبضُ الفروع يفتحها فتسجّل لكلٍّ منها على حدة.",
           "و«سجلُّ التعديلات» أسفل الشاشة يقول كيف بلغ الرقمُ ما بلغ: وقتُ كلّ تعديلٍ ويومُه، والبندُ وفرعُه، وكم كان وكم صار والفرق.",
@@ -7847,11 +7847,6 @@ vertical-align:middle}
     var picked = ui.cat ? catOf(ui.cat) : null;
     var pSubs = picked && picked.subs ? picked.subs : [];
 
-    h += '<div class="modesw">'
-      + '<button class="' + (ui.spendMode === "quick" ? "on" : "") + '" data-smode="quick">'
-      + '⚡ إدخال سريع</button>'
-      + '<button class="' + (ui.spendMode === "quick" ? "" : "on") + '" data-smode="list">'
-      + '🧾 عملية بعملية</button></div>';
     if(ui.jumpTo && ui.jumpTo !== ui.month){
       h += '<div class="flag ok">آخر عملية حُفظت في <b>' + esc(mName(ui.jumpTo))
         + '</b> — لأن تاريخها هناك، لا لأنك تراه.'
@@ -7859,114 +7854,17 @@ vertical-align:middle}
         + 'افتح ' + esc(mName(ui.jumpTo)) + '</button>'
         + '<button class="act" data-clearjump="1">تمام</button></div></div>';
     }
-    /* والسجلُّ يتبع الوضعين — لا الوضعَ الطويل وحدَه */
-    if(ui.spendMode === "quick") return h + viewQuick() + spendLogHTML(k);
+    /* بابٌ واحدٌ: الجدولُ السريع. وتحته العملياتُ للمراجعة لا للإدخال —
+       فمنها ما يجيء من بندٍ ثابتٍ أو أمنيةٍ تُشترى، ولا بابَ غيرها
+       لتصحيحه أو حذفه. */
+    h += viewQuick();
 
-    h += '<div class="card p"><h3 style="font-size:14px;font-weight:600;color:var(--ink-2);margin-bottom:11px">أضف مصروفاً</h3>'
-      + '<div class="amt-row">'
-      + '<input id="amt" class="amt" type="text" inputmode="decimal" placeholder="0">'
-      + '<button class="go calcbtn" data-calcamt="1" title="حاسبة">🧮</button>'
-      + '<button id="go" class="go">إضافة</button></div>'
-      + '<div class="calchint" id="amthint"></div>'
-      + '<div class="daterow"><label for="sdate">تاريخ العملية</label>'
-      + '<input id="sdate" class="dinp" type="date" value="' + esc(defaultDate()) + '">'
-      + '<span class="dhint" id="dhint"></span></div>'
-      + '<div class="chips">' + visibleCats().map(function(c){
-          return '<button class="chip' + (ui.cat === c.k ? " on" : "") + '" data-pick="' + c.k + '">'
-            + '<span class="dot" style="background:' + c.c + '"></span>' + esc(c.n) + '</button>';
-        }).join("") + '</div>';
-
-    if(pSubs.length){
-      h += '<div class="subpick"><div class="lab">أي بند فرعي داخل ' + esc(picked.n) + '؟</div><div class="chips">'
-        + '<button class="chip sm' + (ui.sub ? "" : " on") + '" data-picksub="">بدون تحديد</button>'
-        + pSubs.map(function(x){
-            return '<button class="chip sm' + (ui.sub === x.id ? " on" : "") + '" data-picksub="' + x.id + '">'
-              + esc(x.n) + '</button>';
-          }).join("") + '</div></div>';
-    }
-
-    if(trackSrc() && accts().length){
-      var cA = ui.cat ? catOf(ui.cat).acct : "";
-      var defA = (cA && acctOf(cA)) ? cA : (ui.spendAcct || state.salaryAcct || "");
-      h += '<div class="srcpick"><div class="lab">من أي حساب دُفع؟ <span style="color:var(--ink-3)">'
-        + (cA && acctOf(cA) ? "— حساب «" + esc(catOf(ui.cat).n) + "» المخصَّص" : "— يُخصم منه تلقائياً")
-        + '</span></div>'
-        + '<select class="sel" id="srcacct">'
-        + acctPickOptions().map(function(o){
-            return '<option value="' + esc(o.v) + '"' + (o.v === defA ? " selected" : "") + '>'
-              + esc(o.n) + '</option>';
-          }).join("")
-        + '</select></div>';
-    }
-    h += '<input id="note" class="note" placeholder="ملاحظة (اختياري)"></div>';
-
-    var pend = autoPending(k);
-    if(pend.length){
-      var pt2 = 0; pend.forEach(function(x){ pt2 += x.a; });
-      h += '<div class="autobar">⟳ <span><b>' + pend.length + '</b> بنداً ثابتاً لم يُسجَّل بعد ('
-        + fmt(pt2) + ' ريال)</span>'
-        + '<button class="act solid" data-autorec="1">سجّلها</button></div>';
-    }
-
-    var maxV = 0; visibleCats().forEach(function(c){ maxV = Math.max(maxV, a.by[c.k]||0, effPlan(c, k)); });
-    h += '<div class="sec"><h2>الفعلي مقابل المخطط</h2><span class="hint">اضغط البند لترى عملياته</span></div><div class="card">';
-    h += visibleCats().map(function(c){
-      var v = a.by[c.k]||0, cry = carryOf(c, k), p = catPlan(c, k) + cry;
-      var open = !!ui.open[c.k], subs = c.subs || [];
-      var ratio = p ? v / p : 0;
-      var over = p && v > p, near = p && !over && ratio >= nearRatio();
-      var col = over ? "var(--warn)" : (near ? "var(--gold)" : c.c);
-      var s = '<div class="row tap' + (v ? "" : " zero") + '" data-open="' + c.k + '">'
-        + '<span class="ic" style="background:' + c.c + '22;color:' + c.c + '">' + iconOf(c) + '</span>'
-        + '<span><span class="nm">' + esc(c.n) + (subs.length ? "" : typePill(c, k))
-        + '<span class="chev">' + (open ? "▾" : "▸") + '</span></span>'
-        + '<span class="sub">من أصل ' + fmt(p)
-        + (cry ? ' <span class="carry' + (cry < 0 ? " neg" : "") + '">مرحّل ' + fmt(cry) + '</span>' : "")
-        + (over ? " · تجاوزت بـ " + fmt(v-p) : (near ? " · اقتربت من الحد" : "")) + '</span>'
-        + '<span class="track"><i style="width:' + (maxV ? Math.min(100, v/maxV*100) : 0) + '%;background:'
-        + col + '"></i></span></span>'
-        + '<span class="rt"><span class="a" style="color:'
-        + (over ? "var(--warn)" : (near ? "var(--gold)" : "var(--ink)")) + '">' + fmt(v) + '</span>'
-        + '<span class="b">' + (p ? Math.round(ratio*100) + '٪' : "—") + '</span></span></div>';
-      if(open){
-        s += '<div class="subs">';
-        if(subs.length){
-          s += subs.map(function(x){
-            var sv = a.bySub[x.id] || 0, sp = linePlan(x, k, lineKey(c.k, x.id));
-            return '<div class="subrow"><span class="tick" style="background:' + c.c + ';opacity:.3"></span>'
-              + '<span class="sn">' + esc(x.n) + '</span>'
-              + '<span class="sv" style="color:' + (sp && sv > sp ? "var(--warn)" : "var(--ink-3)") + '">'
-              + fmt(sv) + ' / ' + fmt(sp) + '</span>'
-              + '<span style="width:28px"></span></div>';
-          }).join("");
-        }
-        var sp2 = sparkline(c.k);
-        if(sp2) s += '<div class="subrow" style="display:block;padding-top:11px;padding-bottom:13px">'
-          + '<div class="sn" style="color:var(--ink-3);font-size:12px;margin-bottom:2px">اتجاه آخر '
-          + catHistory(c.k, 6).length + ' أشهر</div>' + sp2 + '</div>';
-        var ops = m.items.filter(function(it){ return it.c === c.k; }).slice().reverse();
-        if(ops.length){
-          s += ops.map(function(it){
-            var sx = it.s ? subOf(c, it.s) : null;
-            return '<div class="item tap" data-edit="' + it.id + '">'
-              + '<span class="d" style="background:' + c.c + '"></span>'
-              + '<span class="t"><b>' + (sx ? esc(sx.n) : esc(c.n)) + '</b>'
-              + (it.auto ? '<span class="au">تلقائي</span>' : "")
-              + '<s>' + esc(it.t || it.d) + '</s></span>'
-              + '<span class="a">' + fmt(it.a) + '</span>'
-              + '<button class="del" data-del="' + it.id + '">×</button></div>';
-          }).join("");
-        } else {
-          s += '<div class="empty" style="padding:14px">لا عمليات في هذا البند هذا الشهر</div>';
-        }
-        s += '</div>';
-      }
-      return s;
-    }).join("") + '</div>';
-
-    h += '<div class="sec"><h2>العمليات</h2><span class="hint">' + m.items.length + ' هذا الشهر</span></div><div class="card">';
+    h += '<div class="sec"><h2>عملياتُ الشهر</h2><span class="hint">'
+      + m.items.length + ' للمراجعة</span></div><div class="card">';
     if(!m.items.length){
-      h += '<div class="empty"><b>لا يوجد شيء بعد</b>اكتب المبلغ فوق واختر التصنيف.<br>واضغط أي عملية لتعديلها.</div>';
+      h += '<div class="empty"><b>لا عمليات بعد</b>'
+        + 'اكتب المبالغَ في الجدول أعلاه — وما يُسجَّل تلقائياً أو يجيء من '
+        + 'أمنيةٍ تشتريها يظهر هنا لتراجعه.</div>';
     } else {
       h += m.items.slice().reverse().map(function(it){
         var c = catOf(it.c), sx = it.s ? subOf(c, it.s) : null;
@@ -9896,10 +9794,6 @@ vertical-align:middle}
           save();
         });
     });
-    on("[data-smode]", function(b){
-      ui.spendMode = b.getAttribute("data-smode");
-      render();
-    });
     /* الوميض تأكيدُ حفظٍ لا زينة: الحقل يُحفظ عند مغادرته بلا نافذة،
        فيلزم أثرٌ يُرى. يُمسح بعد لحظة بلا إعادة رسم. */
     var flashRow = function(key){
@@ -11742,7 +11636,7 @@ vertical-align:middle}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+20";
+  var APP_VERSION = "1.5.0-beta+21";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
