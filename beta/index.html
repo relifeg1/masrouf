@@ -370,8 +370,9 @@ text-decoration:none;white-space:normal}
 font-size:14px;direction:rtl}
 .qinc.wadd .emoface{align-self:flex-end}
 .qinc.wadd .wgo{align-self:flex-end;margin-bottom:2px}
-.wtag{display:inline-block;font-size:10.5px;padding:2px 9px;border-radius:99px;
-border:1px solid var(--line);color:var(--ink-3)}
+.wtag{display:inline-block;font-size:10.5px;padding:1px 9px;border-radius:99px;
+margin-inline-start:8px;border:1px solid var(--line);color:var(--ink-3);
+vertical-align:1px}
 .wtag.ok{color:var(--ok,#0F7355);border-color:var(--ok,#0F7355)}
 .wtag.warn{color:var(--warn,#C2407A);border-color:var(--warn,#C2407A)}
 .dots{display:flex;gap:5px}
@@ -422,8 +423,9 @@ padding-top:9px} }
 flex-wrap:wrap;padding:9px 16px 0}
 .impx{display:inline-flex;align-items:center;gap:8px}
 .impx>s{text-decoration:none;font-size:10.5px;color:var(--ink-3)}
-.wfoot{display:flex;gap:6px;justify-content:flex-end;padding:11px 16px;
-border-top:1px solid var(--line)}
+.wfoot{display:flex;gap:6px;align-items:center;justify-content:flex-end;
+padding:11px 16px;border-top:1px solid var(--line);flex-wrap:wrap}
+.wfoot .impx{margin-inline-end:auto}
 .wsim{}
 .simhead{display:flex;align-items:center;gap:10px;margin:4px 0 6px;flex-wrap:wrap}
 .simchip{flex:none;font-size:11.5px;padding:3px 11px;border-radius:99px;
@@ -4321,16 +4323,6 @@ vertical-align:middle}
     });
     return { fast: fast, slow: slow };
   }
-  /* ما وفّره الانتظار: أعلى سعرٍ سجّله قبل الشراء ناقصَ ما دفع.
-     وما لم يُسجَّل لا يُدَّعى فيه توفير. */
-  function wishSaved(x){
-    if(!x.bought || !x.px || !x.px.length) return 0;
-    var hi = 0;
-    x.px.forEach(function(o){ if(num(o.v) > hi) hi = num(o.v); });
-    var paid = num(x.paid || x.price);
-    return (hi > paid) ? (hi - paid) : 0;
-  }
-
   /* ── المفاضلة ──
      الترتيبُ بالثمن أضعفُ ترتيب: يضع سمّاعةً بمئتين قبل عمليةِ أسنانٍ
      بألفين لأنّها أرخص لا لأنّها أولى. */
@@ -4350,11 +4342,19 @@ vertical-align:middle}
   function wishAgeTag(x){
     var d = wishAge(x);
     if(d < 0) return null;
-    if(d < 30) return { n: "حديثة · " + d + " يوماً", c: "warn",
+    if(d < 30) return { n: "حديثة · " + (d <= 0 ? "اليوم"
+                             : (d === 1 ? "أمس" : ("قبل " + arDays(d)))),
+                        c: "warn",
                         t: "سُجّلت قبل أقلَّ من شهر — والقاعدةُ أن ينتظر ما ليس ضرورةً شهراً" };
-    if(d >= 60) return { n: "صمدت " + d + " يوماً", c: "ok",
+    if(d >= 60) return { n: "صمدت " + arMonths(Math.floor(d / 30)), c: "ok",
                          t: "بقيت في قائمتك شهرين فأكثر — فهي رغبةٌ لا نزوة" };
     return null;
+  }
+  function arDays(n){
+    n = Math.abs(Math.round(n));
+    if(n === 2) return "يومين";
+    if(n <= 10) return n + " أيّام";
+    return n + " يوماً";
   }
   /* سقفُ الكماليّات: فلا تنازع الأمنياتُ البقالةَ في الشهر نفسه */
   function wishCap(){ return Math.max(0, num(state.wishCap)); }
@@ -4442,18 +4442,6 @@ vertical-align:middle}
     return null;
   }
 
-  /* ── دفترُ السعر ── */
-  function wishPx(x){
-    var a = (x && x.px) ? x.px.slice() : [];
-    a.sort(function(p, q){ return String(p.d) < String(q.d) ? 1 : -1; });
-    return a;                                   /* الأحدثُ أوّلاً */
-  }
-  function pxLow(x){
-    var a = wishPx(x), lo = null;
-    a.forEach(function(o){ if(!lo || num(o.v) < num(lo.v)) lo = o; });
-    return lo;
-  }
-
   /* خطةُ الشراء: هدفٌ مرتبطٌ بالأمنية — الالتزامُ الذي لا يُرى لا يُتابَع */
   function wishGoal(x){
     if(!x || !x.goal) return null;
@@ -4469,12 +4457,19 @@ vertical-align:middle}
   function wishOwn(x, mk){ var g = wishGoal(x); return g ? goalMonthly(g, mk) : 0; }
   function wishNeed(x){ return Math.max(0, num(x.price) - wishGot(x)); }
   /* ما صار في متناوله اليوم: بالباقي أو باكتمال خطّته */
+  /* تُحسب معاً لا كلٌّ على حدة: ثلاثٌ بأربعمئةٍ لا تكون كلُّها في
+     متناولك وباقيك خمسمئة. فينقص الباقي بقدر ما تأخذه كلُّ واحدة. */
   function wishReady(k){
-    var R = wishRoom(k);
-    return wishList().filter(function(x){
-      if(x.bought || num(x.price) <= 0) return false;
-      return (R.now + wishGot(x)) >= num(x.price);
+    var R = wishRoom(k), pool = R.now, out = [];
+    wishList().filter(function(x){
+      return !x.bought && num(x.price) > 0;
+    }).sort(wishOrder).forEach(function(x){
+      var p = num(x.price), got = wishGot(x);
+      if(pool + got < p) return;
+      pool -= Math.max(0, p - got);
+      out.push(x);
     });
+    return out;
   }
 
   /* ما لا يُصرف من البنود: بمتوسّط ستّة أشهرٍ مضت لا بالظنّ. فمن قيل له
@@ -4543,8 +4538,11 @@ vertical-align:middle}
   function simHTML(x, k){
     var o = wishSim(x, k);
     if(o.p <= 0) return "";
+    /* لا يُعرض إلّا إذا كان فيه تحذير — وإلّا فهو خبرٌ قالته الطرقُ قبله */
+    var worth = (o.lvl >= 1) || (o.cat && o.cat.over > 0) || num(x.run) > 0;
+    if(!worth) return "";
     var L = SIMLVL[o.lvl];
-    var h = '<div class="wsim"><s class="wlab">لو اشتريتَها اليوم</s>'
+    var h = '<div class="wsim"><s class="wlab">أثرُ شرائها اليوم</s>'
       + '<div class="simhead"><span class="simchip ' + L.c + '">' + L.n + '</span>'
       + '<span class="simnum">' + fmt(o.now) + ' <b>←</b> '
       + '<b class="' + (o.after < 0 ? "wno" : "wok") + '">' + fmt(o.after) + '</b>'
@@ -4724,16 +4722,6 @@ vertical-align:middle}
              + " ولا يُقدَّر لك توفيرٌ برقمٍ مخترع — سجّل السعرَ حين تراه"
              + " فيُقال لك بالرقم." });
       }
-    }
-
-    /* وما سجّله بيده: الرقمُ الوحيدُ الصادق عن السوق */
-    var lo = pxLow(x);
-    if(lo && num(lo.v) < p - 0.5){
-      W.push({ t: "ok", i: "◫", n: "رأيتَها بأقلّ",
-        d: "أدنى ما سجّلتَه " + fmt(num(lo.v)) + " " + esc(cur()) + " في "
-           + esc(mName(String(lo.d).slice(0, 7)))
-           + (lo.s ? (" — " + esc(lo.s)) : "")
-           + ". فسعرُ اليوم يزيد عليه " + fmt(p - num(lo.v)) + "." });
     }
 
     /* وليس كلُّ تأجيلٍ مجّانياً */
@@ -6388,16 +6376,16 @@ vertical-align:middle}
           "«فائض الشهر» يقول أيسعُها أصلاً، و«ما بقي الآن» أتُشترى اليوم.",
           "واضغطها فتُعرض «طرقُك إليها»: من فائض اليوم أو الشهر أو ادّخارٍ على أشهر أو بندٍ لا تصرفه كاملاً — محسوبةً من أرقامك.",
           "وشريطُ الأشهر القادمة يقول متى: خطّتُك تعرف متى ينتهي قسطُك ومتى تنقضي مدّةُ بندك، فيُقال لك أفضلُ شهرٍ لشرائها وأضيقُ شهرٍ تتجنّبه — بسببه.",
-          "و«لو اشتريتَها اليوم» يقول من أين يأتي المال: من فائضٍ حرٍّ لا يمسّ شيئاً، أو من محجوزٍ لبنودٍ لم تصرفها، أو من ادّخارك — وهي في الرصيد سواءٌ وليست سواءً.",
+          "و«أثرُ شرائها اليوم» لا يظهر إلّا إذا كان فيه تحذير: مالٌ يُؤخذ من محجوزٍ لبنودٍ لم تصرفها أو من ادّخارك، أو بندٌ يتجاوز خطّته، أو كلفةٌ شهريّةٌ تتبع الشراء.",
           "ومن عيّن لها «كلفةً شهريّةً بعد شرائها» حُسبت كلفتُها في سنتها الأولى، وصارت بندًا ثابتاً يوم تشتريها فلا تُنسى.",
           "و«اجعلها هدفاً» يجعل الطريقَ خطّةً تُتابَع: ترى ما اجتمع وما بقي ومتى تكتمل، وتوقفها شهراً فيرجع قسطُها إلى جيبك ثمّ تستأنف.",
           "ومتى صارت في متناولك قيل لك في صدر الشاشة وبنقطةٍ على تبويبها — فلا تنتظر أن تسأل.",
-          "و«دفترُ السعر» يسجّل السعر كلّما رأيتَه بتاريخه ومصدره، فيُقال أدنى ما رأيتَه وكم يزيد سعرُ اليوم عليه. وآخرُ ما تسجّله يصير ثمنَها.",
           "ومن عيّن لها باباً (إلكترونيات · ملابس · سفر …) قيل له موسمُها ومعه فائضُ شهره — وما ترتفع فيه أسعارُ بابها يُقال ليتجنّبه. وهو عرفٌ لا وعد، ولا يُقدَّر لك توفيرٌ برقمٍ مخترع.",
           "وتُرتَّب أمنياتُك بالأهمّ لا بالأرخص: خمسُ نقاطٍ تقول كم تهمّك. وما سُجّل قبل أقلَّ من شهرٍ يُوسم «حديثة» وما صمد ستّين يوماً يُوسم «صمدت» — وسمٌ لا منع.",
           "و«سقفُ الكماليّات» حدٌّ شهريٌّ اختياريّ لأمنياتك، و«جدولُ الشراء» يوزّعها على أشهرك القادمة بحسب فائض كلّ شهرٍ وأهمّيّة كلّ أمنية.",
           "ويوم تشتريها تُسأل: أمن خطّتها تدفع أم من جيبك؟ فيُسحب المُدَّخر أو يُترك، وتُؤرشف خطّتُها فلا يُقتطع لها قسطٌ بعد. وإن أخطأتَ فزرُّ «تراجع» يردّ العملية والبندَ اللاحق وما سُحب.",
           "و«أخفِها من القائمة» ترفع المشتراة من الشاشة ولا تمحوها — فسجلُّك وتقاريرُك تبقى.",
+          "و«عدّلها» فيها رمزُها وملاحظتُك ورابطُها — مقاسٌ أو لونٌ أو متجرٌ رأيتَها فيه، ولا يُعرض زرُّ فتحٍ إلّا لرابطٍ صريح.",
           "وبعد شهرٍ من شرائها تُسأل سؤالاً واحداً: أتستعملها؟ فيُبنى «سجلُّك» — كم اشتريتَ في أسبوعه وكم لا تستعمله — ويُذكَّرك به عند أمنيةٍ حديثة. وتجد الأمنيات في التقارير: ما أنفقتَ وما وفّره الانتظار.",
           "ومتى اشتريتَها صارت مصروفاً في بندها بضغطة، فلا تُكتب مرّتين."] },
     { k: "spend", i: "🧾", n: "المصروف",
@@ -6731,13 +6719,12 @@ vertical-align:middle}
     h += '</div>';
 
     /* الأمنيات: ما أُنفق عليها، وما وفّره الانتظار — من دفتر السعر وحدَه */
-    var inR = {}, WB = [], wpaid = 0, wsav = 0;
+    var inR = {}, WB = [], wpaid = 0;
     MS.forEach(function(mk){ inR[mk] = 1; });
     wishList().forEach(function(x){
       if(!x.bought || !inR[x.bm]) return;
       WB.push(x);
       wpaid += num(x.paid || x.price);
-      wsav += wishSaved(x);
     });
     var REC = wishRecord();
     h += '<div class="sec"><h2>الأمنيات</h2><span class="hint">'
@@ -6751,11 +6738,6 @@ vertical-align:middle}
         + '<span class="sn2">' + WB.length + ' أمنيةً في '
         + arMonths(MS.length) + '</span>'
         + '<span class="sv">' + fmt(wpaid) + '</span></div>';
-      h += '<div class="srow"><span class="sm">وفّرتَ بالانتظار</span>'
-        + '<span class="sn2">' + (wsav > 0
-            ? "أعلى سعرٍ سجّلتَه قبل الشراء ناقصَ ما دفعت"
-            : "لا سعرَ مسجَّلٌ قبل الشراء — فلا يُدَّعى توفير") + '</span>'
-        + '<span class="sv">' + fmt(wsav) + '</span></div>';
       if(REC.fast.n + REC.slow.n >= 3){
         h += '<div class="yhint" style="border-bottom:0">من سجلّك: '
           + (REC.fast.n ? ('ما اشتريتَه في أسبوعه <b>' + REC.fast.n + '</b> منها <b>'
@@ -6901,27 +6883,16 @@ vertical-align:middle}
               : ('ينقصك ' + fmt(gap)
                  + (planned ? ' بعد مُدَّخرها' : "")
                  + (x.by ? (' · تريدها خلال ' + arMonths(num(x.by))) : "")))
+        + (function(){
+            /* الوسمُ في سطر الاسم — هناك يُقرأ مع ثمنها */
+            var tg = wishAgeTag(x);
+            return tg ? ('<span class="wtag ' + tg.c + '" title="' + esc(tg.t) + '">'
+                         + esc(tg.n) + '</span>') : "";
+          })()
         + '</s></span>'
         + '<span class="rt wpct"><b class="a' + (can ? " wok" : "") + '">' + pct
         + '٪</b><b class="b">' + (planned ? "مُدَّخرٌ لها" : "ممّا بقي") + '</b>'
         + '</span></div>'
-        + (function(){
-            /* الوسمُ والنقاطُ سطرٌ واحد — كانا سطرين */
-            var tg = wishAgeTag(x), r = "";
-            if(!open && !tg) return "";
-            r = '<div class="wmeta">'
-              + (tg ? ('<span class="wtag ' + tg.c + '" title="' + esc(tg.t) + '">'
-                       + esc(tg.n) + '</span>') : '<span></span>');
-            if(open){
-              /* خمسُ دوائرَ بلا اسمٍ تُقرأ ولا تُفهم */
-              r += '<span class="impx"><s>الأهمّيّة</s><span class="dots">';
-              for(var q = 1; q <= 5; q++)
-                r += '<button class="dot' + (q <= wishImp(x) ? " on" : "")
-                   + '" data-wimp="' + x.id + '|' + q + '" title="' + q + ' من ٥"></button>';
-              r += '</span></span>';
-            }
-            return r + '</div>';
-          })()
         + '<div class="track wtrack"><i style="width:' + pct + '%;background:'
         + (can || (planned && got0 >= p) ? "var(--ok)" : "var(--accent)")
         + '"></i></div>';
@@ -6929,9 +6900,10 @@ vertical-align:middle}
       if(open){
         /* عمودان على العريض: ما يُقرأ في جهةٍ وما يُفعل في جهة */
         h += '<div class="wbody"><div class="wcol">';
+        h += wishNoteHTML(x);
         h += wishPlanHTML(x, k);
-        h += wishPxHTML(x);
         h += simHTML(x, k);
+        h += outStripHTML(k, p);
         h += '</div><div class="wcol">';
         h += '<div class="wways"><s class="wlab">طرقُك إليها</s>';
         wishWays(x, k).forEach(function(o){
@@ -6941,11 +6913,18 @@ vertical-align:middle}
             + (o.b ? ('<button class="mini" ' + o.a + '>' + o.b + '</button>') : "")
             + '</div>';
         });
-        h += '</div>';
-        h += outStripHTML(k, p);          /* الشريطُ يوازن العمودَ القصير */
-        h += '</div></div>';
+        h += '</div>';                    /* تُغلق الطرق */
+        h += '</div></div>';              /* ثمّ العمودُ فالجسد */
         /* ذيلٌ يمتدّ تحت العمودين — فتُختم البطاقةُ ولا تُترك معلَّقة */
         h += '<div class="wfoot">'
+          /* الأهمّيّةُ إدخالٌ كالأزرار — فموضعُها معها */
+          + (function(){
+              var r = '<span class="impx"><s>أهمّيّتها</s><span class="dots">';
+              for(var q = 1; q <= 5; q++)
+                r += '<button class="dot' + (q <= wishImp(x) ? " on" : "")
+                   + '" data-wimp="' + x.id + '|' + q + '" title="' + q + ' من ٥"></button>';
+              return r + '</span></span>';
+            })()
           + '<button class="mini' + (can ? " on" : "") + '" data-wbuy="' + x.id
           + '">اشتريتها</button>'
           + '<button class="mini" data-wedit="' + x.id + '">عدّلها</button>'
@@ -7002,29 +6981,16 @@ vertical-align:middle}
     return h;
   }
 
-  /* دفترُ السعر: تاريخٌ للسعر بدل رقمٍ واحد */
-  function wishPxHTML(x){
-    var a = wishPx(x), lo = pxLow(x);
-    /* الفارغُ سطرٌ وزرُّه بجانبه — لا كتلةٌ فارغةٌ تأخذ ثلاثة أسطر */
-    if(!a.length){
-      return '<div class="wpx"><s class="wlab">دفترُ السعر</s>'
-        + '<div class="pxr one"><s>لا سعرَ مسجَّل — سجّله كلّما رأيتَه '
-        + 'فيصير للسعر تاريخ.</s>'
-        + '<button class="mini" data-wpx="' + x.id + '">سجّل سعراً</button>'
-        + '</div></div>';
-    }
-    return '<div class="wpx"><s class="wlab">دفترُ السعر</s>'
-      + '<div class="wpxr">'
-      + a.slice(0, 3).map(function(o){
-          var isLo = lo && o === lo;
-          return '<div class="pxr' + (isLo ? " lo" : "") + '"><b>'
-            + fmt(num(o.v)) + '</b><s>' + esc(mName(String(o.d).slice(0, 7)))
-            + (o.s ? (" · " + esc(o.s)) : "")
-            + (isLo && a.length > 1 ? " · أدنى ما رأيت" : "") + '</s></div>';
-        }).join("")
-      + '</div>'
-      + '<div class="wact"><button class="mini" data-wpx="' + x.id
-      + '">سجّل سعراً</button></div></div>';
+  /* ملاحظتُها ورابطُها: مقاسٌ ولونٌ ومتجرٌ رأيتَها فيه */
+  function wishNoteHTML(x){
+    var nt = String(x.note || "").trim(), u = String(x.url || "").trim();
+    var ok = /^https?:\/\//i.test(u);          /* لا يُفتح إلّا رابطٌ صريح */
+    if(!nt && !ok) return "";
+    return '<div class="wnote"><s class="wlab">ملاحظتُك</s>'
+      + '<div class="pxr one"><s>' + (nt ? esc(nt) : "رابطٌ محفوظ") + '</s>'
+      + (ok ? ('<a class="mini" href="' + esc(u) + '" target="_blank" '
+               + 'rel="noopener noreferrer">افتح الرابط</a>') : "")
+      + '</div></div>';
   }
 
   /* خطةُ شرائها: ما اجتمع · وما بقي · ومتى تكتمل · وتُوقف وتُستأنف */
@@ -10107,29 +10073,6 @@ vertical-align:middle}
         ok: "احفظ",
         onOk: function(v){ state.wishCap = Math.max(0, num(v[0])); save(); } });
     });
-    on("[data-wpx]", function(b){
-      var id = b.getAttribute("data-wpx"), w = null;
-      wishList().forEach(function(x){ if(x.id === id) w = x; });
-      if(!w) return;
-      ask({ title: "سعرٌ رأيتَه لـ«" + w.n + "»",
-        msg: "يُسجَّل بتاريخه ومصدره. وآخرُ ما تسجّله يصير ثمنَها — "
-             + "لأنّ ثمنها ما تدفعه اليوم لا ما رأيتَه مرّة.",
-        fields: [{ label: "السعر", type: "number", value: num(w.price) },
-                 { label: "من أين رأيتَه (اختياري)", value: "", ph: "متجر · تطبيق" },
-                 { label: "التاريخ", type: "date", value: defaultDate() }],
-        ok: "سجّله",
-        onOk: function(v){
-          var val = num(v[0]);
-          if(val <= 0) return;
-          w.px = w.px || [];
-          w.px.push({ v: val, s: String(v[1] || ""), d: String(v[2] || defaultDate()) });
-          /* الأحدثُ هو الثمن — والدفترُ يحفظ ما مضى */
-          var newest = wishPx(w)[0];
-          if(newest) w.price = num(newest.v);
-          toast("سُجّل · دفترُها فيه " + w.px.length);
-          save();
-        } });
-    });
     on("[data-wsel]", function(b){
       var id = b.getAttribute("data-wsel");
       ui.wsel = (ui.wsel === id) ? "" : id;
@@ -10140,7 +10083,9 @@ vertical-align:middle}
       wishList().forEach(function(x){ if(x.id === id) w = x; });
       if(!w) return;
       ask({ title: "تعديل «" + w.n + "»",
-        fields: [{ label: "ما هو", value: w.n },
+        html: emoPickHTML(w.e || "🎁"),
+        fields: [{ label: "الرمز", value: w.e || "🎁", emo: true, ph: "🎁" },
+                 { label: "ما هو", value: w.n },
                  { label: "الثمن", type: "number", value: num(w.price) },
                  { label: "خلال كم شهر (اختياري)", type: "number", value: w.by || "" },
                  { label: "من أيّ بند (اختياري)", type: "select",
@@ -10153,16 +10098,23 @@ vertical-align:middle}
                      WKINDS.map(function(o){ return { v: o.k, n: o.n }; })),
                    value: w.kind || "" },
                  { label: "كلفةُ انتظارها شهرياً (اختياري)", type: "number",
-                   value: w.wait || "" }],
+                   value: w.wait || "" },
+                 { label: "ملاحظة (مقاس · لون · متجر)", value: w.note || "",
+                   ph: "مقاسٌ أو لونٌ أو أين رأيتَها" },
+                 { label: "رابطها (اختياري)", value: w.url || "",
+                   ph: "https://" }],
         ok: "احفظ",
         onOk: function(v){
-          if(!v[0]) return;
-          w.n = String(v[0]); w.price = num(v[1]);
-          w.by = Math.max(0, Math.round(num(v[2])));
-          w.cat = String(v[3] || "");
-          w.run = Math.max(0, num(v[4]));
-          w.kind = String(v[5] || "");
-          w.wait = Math.max(0, num(v[6]));
+          if(!v[1]) return;
+          w.e = String(v[0] || "🎁");
+          w.n = String(v[1]); w.price = num(v[2]);
+          w.by = Math.max(0, Math.round(num(v[3])));
+          w.cat = String(v[4] || "");
+          w.run = Math.max(0, num(v[5]));
+          w.kind = String(v[6] || "");
+          w.wait = Math.max(0, num(v[7]));
+          w.note = String(v[8] || "");
+          w.url = String(v[9] || "");
           save();
         } });
     });
@@ -11495,7 +11447,7 @@ vertical-align:middle}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+15";
+  var APP_VERSION = "1.5.0-beta+16";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
