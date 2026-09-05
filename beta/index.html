@@ -6857,7 +6857,7 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
   }
   function allocDlg(){
     var mk = ui.month, un = income(mk) - allocated();
-    if(un <= 0){ toast("لا مبلغ بلا وجهة"); return; }
+    if(un <= 0){ toast("كلُّ دخلِك موزَّعٌ على بنودك وأهدافك — لا شيءَ بلا وجهةٍ ليُوزَّع"); return; }
     var FT = flexTargets(mk), GT = goalTargets(mk);
     var opts = [];
     FT.forEach(function(x){ opts.push({ v: x.d, n: x.n + " · الآن " + fmt(x.w) }); });
@@ -7149,7 +7149,10 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
   var clsDraft = null;
   function classifyDlg(){
     var CS = visibleCats();
-    if(!CS.length){ toast("لا بنود بعد"); return; }
+    if(!CS.length){
+      toast("لا بنودَ لتُصنَّف — أضِف بنداً من شاشة الخطة أوّلاً");
+      return;
+    }
     clsDraft = {};
     CS.forEach(function(c){ clsDraft[c.k] = clsSuggest(c); });
     ask({ title: "صنّف بنودك",
@@ -10784,7 +10787,10 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
       var c = catOf(b.getAttribute("data-envmove")), ac = catAcct(c), src = salaryAcct();
       if(!ac || !src){ toast("اربط حساباً للبند أولاً"); return; }
       var amt = catPlan(c, ui.month);
-      if(amt <= 0){ toast("لا مبلغ مخطَّط لهذا البند"); return; }
+      if(amt <= 0){
+        toast("خطّةُ هذا البند صفر — اكتب له مبلغاً شهريّاً ثمّ حوّله");
+        return;
+      }
       confirmDlg("تحويل " + fmt(amt) + " إلى «" + ac.n + "»؟",
         "من <b>" + esc(src.n) + "</b> (رصيده " + fmt(src.bal) + ") إلى حساب بند <b>"
         + esc(c.n) + "</b>.", "حوّل", function(){
@@ -11293,8 +11299,13 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
     /* التأجيل: تُرفع من النشط بلا حذفٍ ولا شراء */
     on("[data-wsnooze]", function(b){
       var id = b.getAttribute("data-wsnooze");
+      var _w = byId(wishList(), id);
       wishList().forEach(function(x){ if(x.id === id) x.snooze = !x.snooze; });
-      toast("نُقلت"); save(); render();
+      /* الزرُّ نفسُه يؤجّل ويستأنف — فيُقال أيُّهما وقع */
+      toast(_w && _w.snooze
+              ? ("أُجّلت «" + _w.n + "» — لا تدخل جدولَ الشراء ولا «في متناولك»")
+              : ("رجعت «" + ((_w && _w.n) || "الأمنية") + "» إلى النشطة"));
+      save(); render();
     });
     on("[data-wbuy]", function(b){
       var id = b.getAttribute("data-wbuy"), w = null;
@@ -12430,7 +12441,11 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
     });
     on("[data-updlater]", function(){ swWaiting = null; render(); });
     on("[data-install]", function(){
-      if(!installPrompt){ toast("غير متاح الآن"); return; }
+      if(!installPrompt){
+        toast("متصفّحُك لم يعرض خيارَ التثبيت — جرّبه من قائمة المتصفّح: "
+              + "«تثبيت التطبيق» أو «أضِف إلى الشاشة الرئيسيّة»");
+        return;
+      }
       installPrompt.prompt();
       installPrompt.userChoice.then(function(){ installPrompt = null; render(); })
         ["catch"](function(){});
@@ -12607,7 +12622,10 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
     });
     on("[data-unify]", function(){
       var OW = ownMonths();
-      if(!OW.length){ toast("لا شهر يخالف"); return; }
+      if(!OW.length){
+        toast("كلُّ شهورك تقرأ خطّتَك الأساسيّة أصلاً — لا شيءَ لتوحيده");
+        return;
+      }
       confirmDlg("وحِّد " + OW.length + " شهراً على العامّ",
         "سيُحذف من هذه الشهور دخلُها الخاصّ وخطتُها الخاصة، فتقرأ الافتراضي. "
         + "<b>حركات المصروف لا تُمسّ</b> — لكن تقاريرك ستتغيّر لأن دخل تلك الشهور "
@@ -12656,7 +12674,7 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
     });
     on("[data-spread]", function(b){
       var mk = ui.month, un = income(mk) - allocated();
-      if(un <= 0){ toast("لا مبلغ بلا وجهة"); return; }
+      if(un <= 0){ toast("كلُّ دخلِك موزَّعٌ على بنودك وأهدافك — لا شيءَ بلا وجهةٍ ليُوزَّع"); return; }
       var kind = b.getAttribute("data-spread");
       var got = spreadOver(kind === "goals" ? goalTargets(mk) : flexTargets(mk), un, mk);
       dlg = null;
@@ -12781,7 +12799,7 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+36";
+  var APP_VERSION = "1.5.0-beta+37";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
@@ -14038,7 +14056,7 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
           ? ("دُمجت · وصل " + (after - before) + " سجلّاً جديداً")
           : "دُمجت · لا جديد");
       }
-    }catch(e){ toast("تعذّر الدمج"); }
+    }catch(e){ toast("تعذّر دمجُ الملفّ — تأكّد أنّه نسخةُ «مصروف» ولم يُعدَّل"); }
     render();
   }
 
