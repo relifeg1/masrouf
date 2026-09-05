@@ -3485,8 +3485,21 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
   }
   /* إيداع الاستثمار: يُسجَّل في التوزيع وحده — قيمة المحفظة تُقرأ
      من إقفالها الشهري لا من الإيداع، فلا يُضاف هنا شيء إلى قيمة. */
+  /* الإيداعُ يصل إلى المحفظة كما يصل إلى الهدف: بالفرق لا بالمجموع،
+     فتصحيحُ الرقم لا يُضاعفه. ويزيد ما ساهمتَ به وقيمتَها معاً —
+     فالمالُ الذي وضعتَه فيها منها، والربحُ يُقاس على ما ساهمت. */
   function setInvQuick(mk, vid, total){
-    distMap(mk)["i:" + vid] = Math.max(0, money(total));
+    var v = byId(state.invest, vid);
+    var d = distMap(mk), key = "i:" + vid;
+    var prev = num(d[key]), t = Math.max(0, money(total));
+    d[key] = t;
+    if(v && !invFromAccts(v)){
+      var dif = t - prev;
+      v["in"] = money(Math.max(0, num(v["in"]) + dif));
+      /* والقيمةُ كذلك: تُقدَّر بما وضعتَ حتى تكتب الحقيقيّةَ آخر الشهر */
+      v.val = money(Math.max(0, num(v.val) + dif));
+    }
+    return t;
   }
   function setGoalQuick(mk, gid, total){
     var g = goalOf(gid);
@@ -5707,8 +5720,11 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
     var c = catOf(ck), mk = ui.month, tr = carryTrail(c, mk), bal = carryOf(c, mk);
     var body;
     if(!tr.length){
-      body = '<div class="empty" style="padding:14px 0">لا شهور سابقة فيها حركة بعد.<br>'
-           + 'يبدأ الرصيد بالتراكم من أول شهر تسجّل فيه مصروفاً.</div>';
+      body = '<div class="empty" style="padding:14px 0"><b>لا شهور سابقة بعد</b>'
+           + 'هنا يظهر رصيدُ هذا البند شهراً بشهر: ما خطّطتَ وما صرفتَ وما '
+           + 'تبقّى وانتقل. يبدأ التراكمُ من أوّل شهرٍ تسجّل فيه مصروفاً.'
+           + '<div class="acts"><button class="act solid" data-tab="spend">'
+           + 'سجّل مصروفَ هذا الشهر</button></div></div>';
     } else {
       body = '<ul class="trail"><li class="hd"><span>الشهر</span>'
            + '<span class="n">المخطط</span><span class="n">صرفت</span><span class="n">الرصيد</span></li>'
@@ -6994,9 +7010,11 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
       + '<div class="card">';
     if(!R.length){
       h += '<div class="empty"><b>لم تضع قاعدة بعد</b>'
-        + 'القاعدة حدٌّ تكتبه أنت بالنسبة المئوية من دخلك — مثل «الادخار لا يقلّ '
-        + 'عن ٢٠٪» أو «المطاعم لا تتجاوز ١٠٪». النظام لا يقترح رقماً، بل يقيس عليه '
-        + 'ويحذّرك حين تخالفه.</div>';
+        + 'القاعدةُ حدٌّ تكتبه أنت بالنسبة المئويّة من دخلك — مثل «الادّخار لا '
+        + 'يقلّ عن ٢٠٪» أو «المطاعم لا تتجاوز ١٠٪». لا يقترح التطبيقُ رقماً؛ '
+        + 'يقيس على رقمك ويحذّرك حين تخالفه.'
+        + '<div class="acts"><button class="act solid" data-addrule="1">'
+        + '+ أضف قاعدتَك الأولى</button></div></div>';
     } else {
       h += R.map(function(r){
         var v = ruleCheck(r, mk), br = v && v.gap > 0;
@@ -7364,8 +7382,11 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
           : "لا أشهر فيها حركة بعد") + '</span></div>';
 
     if(!MS.length){
-      h += '<div class="card"><div class="empty"><b>لا بيانات للتقرير</b>'
-        + 'سجّل مصروف شهر واحد على الأقل، ثم عد إلى هنا.</div></div>';
+      h += '<div class="card"><div class="empty"><b>لا شيءَ يُقاس بعد</b>'
+        + 'هنا تُقرأ أرقامُك: أين يذهب راتبُك · ودقّةُ خطّتك · وما تغيّر بين '
+        + 'شهرٍ وشهر. ويكفي مصروفُ شهرٍ واحدٍ لتبدأ الصورةُ بالظهور.'
+        + '<div class="acts"><button class="act solid" data-tab="spend">'
+        + 'سجّل مصروفَ هذا الشهر</button></div></div></div>';
       return h;
     }
 
@@ -7463,7 +7484,9 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
       + '<span class="hint">الخطة مقابل الواقع في ' + arMonths(MS.length) + '</span></div>'
       + '<div class="card">';
     if(!AC.length){
-      h += '<div class="empty">لا خطة سابقة تُقارن بها بعد.</div>';
+      h += '<div class="empty"><b>لا شهرَ سابقاً يُقارن به</b>'
+        + 'يقيس هذا القسمُ فرقَ ما خطّطتَه عمّا صرفتَه، ليقول أيَّ بنودك '
+        + 'تُقدّرها بدقّةٍ وأيَّها تُخطئ فيها. يظهر بعد شهرٍ كاملٍ مسجَّل.</div>';
     } else {
       h += AC.map(function(x){
         var b = Math.round(x.bias * 100), d = Math.round(x.dev * 100);
@@ -7514,9 +7537,10 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
       + '<span class="hint">' + (LEAK.length ? LEAK.length + " شهراً" : "لا فروق") + '</span></div>'
       + '<div class="card">';
     if(!LEAK.length){
-      h += '<div class="empty"><b>لا فرق غير مفسَّر</b>'
-        + 'إمّا أن أرصدتك تطابق خطتك في كل شهر، أو أنك لم تحفظ لقطات أرصدة '
-        + 'لهذه الأشهر — والتسوية تحتاج لقطة أول الشهر وآخره.</div>';
+      h += '<div class="empty"><b>لا فرقَ غير مفسَّر ✓</b>'
+        + 'كلُّ ريالٍ في أرصدتك يُفسّره ما سجّلتَه — وهذا ما ينبغي.'
+        + '<br>وإن كنتَ تتوقّع فرقاً ولا تراه، فقد لا تكون حفظتَ لقطاتِ '
+        + 'الأرصدة: التسويةُ تحتاج لقطةَ أوّل الشهر وآخره.</div>';
     } else {
       h += LEAK.map(function(x){
         return '<div class="srow"><span class="sm">' + esc(mName(x.k)) + '</span>'
@@ -7546,7 +7570,10 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
       + '<div class="card">';
     if(!WB.length){
       h += '<div class="empty"><b>لم تشترِ أمنيةً في هذه المدّة</b>'
-        + 'ما تسجّله في شاشة الأمنيات ثمّ تشتريه يُحسب هنا.</div>';
+        + 'يقول هذا القسمُ كم أنفقتَ على ما اشتهيتَه، وكم وفّر عليك '
+        + 'الانتظار. سجّل ما تريده في «أمنياتك» — ويوم تشتريه يُحسب هنا.'
+        + '<div class="acts"><button class="act solid" data-tab="wish">'
+        + 'افتح أمنياتك</button></div></div>';
     } else {
       h += '<div class="srow"><span class="sm">أنفقتَ عليها</span>'
         + '<span class="sn2">' + WB.length + ' أمنيةً في '
@@ -7700,7 +7727,8 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
         + (fil === "live" ? "لا أمنياتٍ نشطة" : "لا شيء هنا")
         + '</b>' + (fil === "live"
             ? "سجّل ما تريده بثمنه، فيُقال لك من أين يأتي ومتى تبلغه."
-            : "جرّب فلتراً آخر.")
+            : "لا شيءَ في هذا الباب — والأبوابُ فوقَه تقلّب بين النشطة "
+              + "والمؤجَّلة والمشتراة.")
         + (fil === "live" || fil === "all"
             ? '<div class="acts"><button class="act solid" data-addwish="1">'
               + '+ أمنيةٌ جديدة</button></div>' : "")
@@ -8436,6 +8464,7 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
                   + '<span class="qn"><span class="qt"><b>'
                   + (v.kind === "auto" ? "🤖 " : "📊 ") + esc(v.n) + '</b>'
                   + '<s>قيمتُها الآن ' + fmt(invVal(v))
+                  + (pu2 ? (' · أودعتَ فيها ' + fmt(pu2) + ' هذا الشهر') : "")
                   + (invGoal(v) ? (' · تحمل هدف «' + esc(invGoal(v).n) + '»') : "")
                   + '</s></span></span>'
                   + '<span class="qv' + (mo2 ? "" : " dim") + '">' + fmt(mo2) + '</span>'
@@ -8673,7 +8702,10 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
       + '</div><div class="card">';
 
     if(!show.length){
-      h += '<div class="empty"><b>لا شيء في هذا الباب</b>جرّب باباً آخر.</div>';
+      h += '<div class="empty"><b>لا شيءَ في هذا الباب</b>'
+        + 'لم يجرِ في ' + esc(mName(k)) + ' شيءٌ من هذا النوع بعد.'
+        + '<div class="acts"><button class="act" data-logfil="">'
+        + 'أرِني كلَّ ما جرى</button></div></div>';
     }
     var day = "";
     show.forEach(function(r){
@@ -9682,8 +9714,11 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
       + '</div>';
 
     if(!Y.months){
-      h += '<div class="empty"><b>لا بيانات في ' + esc(y) + '</b>'
-        + 'سجّل دخل شهر أو مصروفاً، ثم عد إلى هنا.</div>';
+      h += '<div class="empty"><b>لا شيءَ في ' + esc(y) + ' بعد</b>'
+        + 'هذه الشاشةُ دفترُ سنتك: دخلُ كلّ شهرٍ وصرفُه، وكلُّ بندٍ عبر '
+        + 'الاثني عشر شهراً. يكفي دخلُ شهرٍ أو مصروفٌ واحدٌ لتبدأ.'
+        + '<div class="acts"><button class="act solid" data-tab="spend">'
+        + 'سجّل مصروفَ هذا الشهر</button></div></div>';
       return h;
     }
 
@@ -10780,7 +10815,12 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
     ch("[data-iquick]", function(el){
       var vid = el.getAttribute("data-iquick"), _b2 = num(distMap(ui.month)["i:" + vid]);
       setInvQuick(ui.month, vid, el.value);
-      logAmt(ui.month, "i:" + vid, "", _b2, num(distMap(ui.month)["i:" + vid]), "i");
+      var _a2 = num(distMap(ui.month)["i:" + vid]);
+      logAmt(ui.month, "i:" + vid, "", _b2, _a2, "i");
+      var _v2 = byId(state.invest, vid);
+      if(_v2 && _a2 !== _b2)
+        toast((_a2 > _b2 ? "أُودع " : "نُقص ") + fmt(Math.abs(_a2 - _b2))
+              + " · قيمةُ «" + _v2.n + "» الآن " + fmt(invVal(_v2)));
       flashRow("i:" + vid); save(); render();
     });
     ch("[data-quick]", function(el){
@@ -12726,7 +12766,7 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+34";
+  var APP_VERSION = "1.5.0-beta+35";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
