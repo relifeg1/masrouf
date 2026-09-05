@@ -410,6 +410,16 @@ color:var(--ok);font-weight:600}
 .wpnum s{display:block;text-decoration:none;font-size:11.5px;color:var(--ink-3);
 margin-top:2px;line-height:1.7}
 .wplan .wact{margin-top:10px}
+/* وسمُ الشاشة التجريبيّة: نقطةٌ في القائمة وكلمةٌ في الصدر.
+   ولونُه لونُ التنبيه لا لونُ اللهجة — فهو خبرٌ لا زينة.
+   وهي نقطةٌ سطريّةٌ كأختِها `ndot` — فزرُّ القائمة ليس موضعَ إسنادٍ
+   للمطلق، ولو أُطلقت لعلّقت نفسَها على أوّل مسنِدٍ أعلى منه. */
+.nav button .bdot{display:inline-block;width:6px;height:6px;border-radius:50%;
+margin-inline-start:5px;background:var(--warn);vertical-align:middle}
+.brand .btag{display:inline-block;margin-inline-start:8px;padding:2px 7px;
+border:1px solid var(--warn);border-radius:99px;background:var(--warn-soft);
+color:var(--warn);font-size:10.5px;font-weight:600;vertical-align:middle;
+letter-spacing:.2px;line-height:1.5}
 .nav button .ndot{display:inline-flex;align-items:center;justify-content:center;
 min-width:16px;height:16px;padding:0 4px;margin-inline-start:6px;border-radius:99px;
 background:var(--ok,#0F7355);color:#fff;font-size:10px;font-style:normal;
@@ -6954,7 +6964,11 @@ white-space:nowrap}
   function topbar(){
     var H = headInfo();
     return '<div class="topbar">'
-      + '<div class="htxt"><div class="brand">' + esc(H.t) + '</div>'
+      + '<div class="htxt"><div class="brand">' + esc(H.t)
+      + (tabBeta(ui.tab)
+          ? '<span class="btag" title="شاشةٌ تجريبيّة — ما زالت تتغيّر">تجريبيّ</span>'
+          : "")
+      + '</div>'
       + '<div class="hsub">' + H.s
       + (hijriOn() ? ' <span class="hj">' + esc(hijriOf(null)) + '</span>' : "")
       + '</div></div>'
@@ -6976,6 +6990,10 @@ white-space:nowrap}
       + '<button class="gear' + (ui.tab === "set" ? " on" : "") + '" data-settab="1" title="الإعدادات">⚙</button>'
       + '</div></div>' + monthStrip();
   }
+  /* شاشاتٌ لم تستقرّ بعد. والقائمةُ واحدةٌ: لو وُسمت في موضعين
+     بيدين مختلفتين لتفرّقا عند أوّل تعديل. */
+  var BETA_TABS = { inv: 1 };
+  function tabBeta(k){ return !!BETA_TABS[k]; }
   function navbar(){
     var tabs = [["dash","🏠","اللوحة"],["rep","📊","التقارير"],["year","📅","السنة"],
                 ["plan","🧭","الخطة"],["wish","🎁","أمنياتك"],
@@ -6992,8 +7010,10 @@ white-space:nowrap}
       + tabs.map(function(t){
           /* نقطةٌ حين تبلغ أمنيةٌ متناولَه — يُقال ولا يُنتظر أن يسأل */
           var nd = (t[0] === "wish") ? wishReady(ui.month).length : 0;
-          return '<button data-tab="' + t[0] + '" class="' + (ui.tab === t[0] ? "on" : "") + '">'
+          return '<button data-tab="' + t[0] + '" class="' + (ui.tab === t[0] ? "on" : "") + '"'
+            + (tabBeta(t[0]) ? ' title="شاشةٌ تجريبيّة — ما زالت تتغيّر"' : "") + '>'
             + '<span class="g">' + t[1] + '</span>' + t[2]
+            + (tabBeta(t[0]) ? '<i class="bdot" aria-hidden="true"></i>' : "")
             + (nd ? ('<i class="ndot">' + nd + '</i>') : "") + '</button>';
         }).join("")
       + navUpdate()
@@ -13704,7 +13724,7 @@ white-space:nowrap}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+47";
+  var APP_VERSION = "1.5.0-beta+49";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
