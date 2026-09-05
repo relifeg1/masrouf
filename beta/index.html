@@ -1790,6 +1790,20 @@ color:var(--ink-3);text-align:center;margin-top:5px;direction:ltr}
 color:var(--ink-3)}
 .vslg b{font-family:"IBM Plex Mono",monospace;color:var(--ink-2);font-weight:600}
 /* قسمةُ مالك: شريطٌ واحدٌ ومفتاحُه */
+/* بطاقةُ الزكاة */
+.zrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;
+align-items:baseline;padding:8px 0;border-bottom:1px solid var(--line)}
+.zrow:last-of-type{border-bottom:0}
+.zrow .zl{font-size:13px;color:var(--ink-2)}
+.zrow .zv{font-family:"IBM Plex Mono",monospace;font-size:19px;font-weight:600;
+text-align:left}
+.zrow.big .zv{font-size:25px}
+.zrow .zv.ok{color:var(--ok)}
+.zrow .zv.dim{color:var(--ink-3)}
+.zrow .zs{grid-column:1/-1;text-decoration:none;font-size:11px;color:var(--ink-3)}
+.card.zdue{border-color:var(--ok)}
+.zgrid{display:grid;grid-template-columns:1fr;gap:0 12px;margin-top:10px}
+@media(min-width:560px){ .zgrid{grid-template-columns:1fr 1fr} }
 .alloc{display:flex;height:14px;border-radius:99px;overflow:hidden;
 background:var(--card-2);margin-top:6px}
 .alloc i{display:block;height:100%}
@@ -2076,7 +2090,7 @@ margin-top:2px}
              openBank: {}, openAcct: {}, showArch: false,
              acctQ: "", hideZero: false, showArchAcct: false, year: null, openEnv: {},
              spendMode: "quick", openQ: {}, openGoal: {}, sort: "manual", zopen: false, openLog: {},
-             openInv: {}, stripYear: null, jumpTo: null, ledger: "plan", setSec: 0, planLayer: null, showPrev: false, repN: 6, flash: null, invLog: {}, invMv: {} };
+             openInv: {}, stripYear: null, jumpTo: null, ledger: "plan", setSec: 0, planLayer: null, showPrev: false, repN: 6, flash: null, invLog: {}, invMv: {}, zakHide: false };
   var PALETTE = ["#E2703A","#3E8E7E","#4C3AE3","#2F80ED","#B4542B","#C2407A","#7A5AF8",
                  "#D9A227","#0F7355","#B4342B","#1F7A8C","#8E44AD","#16A085","#8A92A0"];
 
@@ -3079,6 +3093,11 @@ margin-top:2px}
       + '>قيمةٌ إجماليّةٌ واحدة</option>'
       + '<option value="hold"' + (invTrack(v) === "hold" ? " selected" : "")
       + '>ممتلكاتٌ بكمّيّةٍ وسعر</option></select></div>'
+      + '<div class="f2"><label>الزكاة</label><select class="sel" '
+      + 'data-invzak="' + v.id + '">'
+      + '<option value="1"' + (invZak(v) ? " selected" : "") + '>تُزكّى</option>'
+      + '<option value="0"' + (invZak(v) ? "" : " selected") + '>لا تُزكّى</option>'
+      + '</select></div>'
       + '<div class="f2"><label>هدفُها (اختياريّ)</label>'
       + '<input class="ni" type="number" inputmode="numeric" data-invtgt="' + v.id
       + '" value="' + (num(v.tgt) || "") + '" placeholder="مثلاً 100000"></div>'
@@ -3226,6 +3245,36 @@ margin-top:2px}
     }
     return money(t);
   }
+  /* ═══ الزكاة: حاسبةٌ على اختيارك ═══ */
+  var HAWL = 354;                      /* أيّامُ السنة القمريّة */
+  function zakConf(){
+    if(!state.zak || typeof state.zak !== "object") state.zak = {};
+    return state.zak;
+  }
+  function zakPot(){
+    var t = 0;
+    (state.invest || []).forEach(function(v){ if(invZak(v)) t += invVal(v); });
+    return money(t);
+  }
+  function zakDays(){
+    var st = zakConf().start;
+    if(!st) return null;
+    var d = new Date(st + "T12:00:00");
+    if(isNaN(d.getTime())) return null;
+    return Math.floor((Date.now() - d.getTime()) / 86400000);
+  }
+  function zakInfo(){
+    var c = zakConf(), pot = zakPot(), nis = num(c.nisab);
+    var days = zakDays();
+    var left = days === null ? null : Math.max(0, HAWL - days);
+    return {
+      pot: pot, nisab: nis, days: days, left: left,
+      /* بلغ النصابَ؟ ومن لم يكتب نصابَه لا يُحكم عليه */
+      over: nis > 0 ? pot >= nis : null,
+      due: (nis > 0 && pot >= nis && days !== null && days >= HAWL),
+      amount: money(pot * 0.025)
+    };
+  }
   function invSparkAll(){
     var set = {};
     (state.invest || []).forEach(function(v){
@@ -3336,7 +3385,74 @@ margin-top:2px}
                 + ' من مالك المستثمَر.</div>') : "")
       + '</div>';
   }
+  /* بطاقةُ الزكاة — تحسب وتذكّر، ولا تُفتي ولا تقتطع */
+  function zakCard(){
+    var z = zakInfo(), c = zakConf();
+    var n = 0;
+    (state.invest || []).forEach(function(v){ if(invZak(v)) n++; });
+    if(!state.invest || !state.invest.length) return "";
+    return '<div class="sec"><h2>زكاةُ مالك المستثمَر</h2>'
+      + '<span class="hint">حاسبةٌ على اختيارك — لا فتوى</span></div>'
+      + '<div class="card' + (z.due ? " zdue" : "") + '" style="padding:14px 16px">'
+      + '<div class="zrow"><span class="zl">الوعاء</span>'
+      + '<b class="zv">' + fmt(z.pot) + '</b>'
+      + '<s class="zs">' + n + ' من محافظك وسمتَها بالزكاة</s></div>'
+      + (z.due
+          ? ('<div class="zrow big"><span class="zl">زكاتُك</span>'
+             + '<b class="zv ok">' + fmt(z.amount) + '</b>'
+             + '<s class="zs">ربعُ العشر · ٢٫٥٪ — والإخراجُ بيدك</s></div>')
+          : ('<div class="zrow"><span class="zl">لو حلّت اليوم</span>'
+             + '<b class="zv dim">' + fmt(z.amount) + '</b>'
+             + '<s class="zs">٢٫٥٪ من الوعاء</s></div>'))
+      + '<div class="zgrid">'
+      + '<div class="f2"><label>بدءُ حولك</label>'
+      + '<input class="ni" type="date" data-zakstart="1" value="'
+      + esc(c.start || "") + '"></div>'
+      + '<div class="f2"><label>النصاب (قيمةُ ٨٥ جراماً من الذهب)</label>'
+      + '<input class="ni" type="number" inputmode="numeric" data-zaknisab="1" value="'
+      + (num(c.nisab) || "") + '" placeholder="اكتبه بنفسك"></div>'
+      + '</div>'
+      + '<div class="ahint" style="padding:8px 0 0">'
+      + (!c.start ? "اكتب بدءَ حولك ليُعرف متى يحول. "
+                  : (z.left > 0 ? ("يحول حولُك بعد " + z.left + " يوماً"
+                                   + (hijriOn() && hijriOf(null)
+                                       ? (" · اليوم " + esc(hijriOf(null))) : "")
+                                   + ". ")
+                                : "حال حولُك. "))
+      + (!num(c.nisab) ? "والنصابُ يُكتب بيدك: سعرُ الذهب لا يُجلب من "
+                         + "الإنترنت لأنّ التطبيق يعمل بلا اتّصال. "
+                       : (z.over === false
+                           ? ("ووعاؤك دون النصاب (" + fmt(num(c.nisab)) + "). ")
+                           : ""))
+      + 'وأحكامُ الزكاة يختلف فيها أهلُ العلم — فالوسمُ والحسابُ '
+      + 'على اختيارك، والإخراجُ بيدك.</div>'
+      + '</div>';
+  }
   /* مقارنةُ محافظك — بالنسبة لا بالمبلغ */
+  /* محافظُ لم تُكتب قيمتُها هذا الشهر — والقيمةُ تتغيّر وحدَها */
+  function invStale(){
+    return (state.invest || []).filter(function(v){
+      if(invFromAccts(v)) return false;         /* قيمتُها رصيدُ حسابها */
+      if(invTrack(v) === "hold") return false;  /* تُحسب من ممتلكاتها */
+      if(!invVal(v) && !num(v["in"])) return false;   /* لم تبدأ بعد */
+      return invValAt(v, ui.month) === null
+          || !(v.hist && v.hist[ui.month] !== undefined);
+    });
+  }
+  function invStaleCard(){
+    var L = invStale();
+    if(!L.length || ui.zakHide) return "";
+    return '<div class="flag"><b>' + arNum2(L.length)
+      + ' لم تكتب قيمتَها في ' + esc(mName(ui.month)) + '</b>'
+      + 'قيمةُ المحفظة تتغيّر وحدَها — ومن لم يكتبها قرأ رقماً قديماً '
+      + 'وظنّه اليوم. اكتبها كلَّها في دقيقة.'
+      + '<div class="acts"><button class="act solid" data-invall="1">'
+      + 'اكتب قيمَها الآن</button>'
+      + '<button class="act" data-invlater="1">لاحقاً</button></div></div>';
+  }
+  function arNum2(n){
+    return n === 1 ? "محفظةٌ واحدة" : n === 2 ? "محفظتان" : (n + " محافظ");
+  }
   function invCompare(){
     var L = (state.invest || []).slice();
     if(L.length < 2) return "";
@@ -9642,8 +9758,9 @@ margin-top:2px}
 
     /* الأرقام · السقف · المحافظ · تصنيفها · ثم الشرح */
     /* الملخّصان (النوعان والسقف) قبل التفصيل (المحافظ)، والشرح أخيراً */
-    PART.charts = invVsChart() + invSplitChart() + invCompare();
-    return ["kpi", "edu", "port", "charts"]
+    PART.stale = invStaleCard();
+    PART.charts = invVsChart() + invSplitChart() + invCompare() + zakCard();
+    return ["stale", "kpi", "edu", "port", "charts"]
       .map(function(nm){ return PART[nm] || ""; }).join("");
   }
 
@@ -12294,6 +12411,46 @@ margin-top:2px}
     on("[data-mighide]", function(){
       state.migHide = true; toast("تجده في الإعدادات متى شئت"); save(); render();
     });
+    ch("[data-invzak]", function(el){
+      var v = byId(state.invest, el.getAttribute("data-invzak"));
+      if(!v) return;
+      v.zak = el.value === "1";
+      save(); render();
+    });
+    ch("[data-zakstart]", function(el){
+      zakConf().start = String(el.value || "");
+      save(); render();
+    });
+    ch("[data-zaknisab]", function(el){
+      var n = Math.max(0, money(el.value));
+      if(n) zakConf().nisab = n; else delete zakConf().nisab;
+      save(); render();
+    });
+    on("[data-invlater]", function(){ ui.zakHide = true; render(); });
+    on("[data-invall]", function(){
+      var L = invStale();
+      if(!L.length) return;
+      ask({ title: "قيمُ محافظك في " + mName(ui.month),
+        msg: "اكتب ما تراه في تطبيق كلِّ جهة. وما تتركه فارغاً يبقى كما هو.",
+        fields: L.map(function(v){
+          return { key: v.id, label: v.n + " — كانت " + fmt(invVal(v)),
+                   type: "number", value: "" };
+        }),
+        ok: "احفظها",
+        onOk: function(vv, by){
+          var n = 0;
+          L.forEach(function(v){
+            var x = by[v.id];
+            if(x === "" || x === undefined) return;
+            var val = Math.max(0, money(x));
+            if(setInvValue(v, ui.month, val)){
+              invMove(v, "val", val, ui.month, "");
+              n++;
+            }
+          });
+          if(n){ toast("حُدّثت " + arNum2(n)); save(); render(); }
+        } });
+    });
     ch("[data-invtrack]", function(el){
       var v = byId(state.invest, el.getAttribute("data-invtrack"));
       if(!v) return;
@@ -13504,7 +13661,7 @@ margin-top:2px}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+43";
+  var APP_VERSION = "1.5.0-beta+44";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
