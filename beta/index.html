@@ -1817,11 +1817,14 @@ margin-inline-end:5px;vertical-align:middle}
 margin-top:2px}
 /* مقابضُ اللوح في سطرٍ واحدٍ لا كلٌّ في سطر */
 .itogs{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
-/* المقابضُ في سطرٍ: تُلغى كتلتُها وعرضُها الكامل.
-   و`1 1 auto` تجعل ما لفَّ منها يملأ سطرَه — فلا يبقى واحدٌ مُعلَّقاً */
+/* المقابضُ في سطرٍ: تُلغى كتلتُها وعرضُها الكامل */
 .itogs .logtog{display:inline-flex;align-items:center;justify-content:center;
-gap:5px;width:auto;margin:0;flex:1 1 auto;padding:6px 9px;font-size:11px;
+gap:5px;width:auto;margin:0;flex:1 1 auto;padding:6px 10px;font-size:11.5px;
 white-space:nowrap}
+/* والمطُّ لا يُطلب إلّا حيث يضيق: على السعة يأخذ الزرُّ قَدرَ كلمته */
+@media(min-width:560px){ .itogs .logtog{flex:0 0 auto} }
+/* ولوحُ المفتوح تحت الصفّ بعرضِ اللوح كلِّه */
+.ibody > .iwide{margin-top:10px}
 .itogs .logtog>i{font-style:normal;font-size:8px;line-height:1}
 .f2grid.tight{gap:0 10px}
 .f2grid.tight .f2{margin-bottom:7px}
@@ -3078,13 +3081,16 @@ white-space:nowrap}
       + invClose(v, ui.month)
       + invHoldHTML(v)
       + '<div class="itogs">'
-      + invHist(v)
-      + invLedger(v)
+      + invHistBtn(v)
+      + invMvBtn(v)
       + '<button class="logtog' + (op ? " on" : "") + '" data-invset="' + v.id
       + '"><i>▾</i> إعداداتُها</button>'
       + (invFromAccts(v) ? ""
           : '<button class="logtog" data-invout="' + v.id + '">− سحبتُ منها</button>')
       + '</div>'
+      /* المفتوحُ تحت الصفّ بعرضِ اللوح — لا عنصراً في الصفّ فينضغط */
+      + invHistBody(v)
+      + invMvBody(v)
       + (op ? invSetHTML(v, many) : "")
       + '</div></div>';
   }
@@ -3182,14 +3188,20 @@ white-space:nowrap}
       + '</div>';
   }
   /* دفترُ الحركات: يُطوى ويُفتح — تفصيلٌ لا يُقرأ كلَّ مرّة */
-  function invLedger(v){
-    var L = invMoves(v).slice().sort(function(a, b){ return num(b.t) - num(a.t); });
+  function invMvList(v){
+    return invMoves(v).slice().sort(function(a, b){ return num(b.t) - num(a.t); });
+  }
+  function invMvBtn(v){
+    var L = invMvList(v);
     if(!L.length) return "";
     var op = !!ui.invMv[v.id];
-    var h = '<button class="logtog' + (op ? " on" : "") + '" data-invmv="' + v.id
+    return '<button class="logtog' + (op ? " on" : "") + '" data-invmv="' + v.id
       + '"><i>▾</i> حركاتُها · ' + L.length + '</button>';
-    if(!op) return h;
-    return h + '<div class="card" style="margin-top:8px">'
+  }
+  function invMvBody(v){
+    var L = invMvList(v);
+    if(!L.length || !ui.invMv[v.id]) return "";
+    return '<div class="card iwide">'
       + L.slice(0, 40).map(function(x){
           var isOut = x.k === "out";
           return '<div class="row"><span class="ic" style="background:'
@@ -3521,16 +3533,24 @@ white-space:nowrap}
         + '<em>' + mk.slice(5) + '</em></span>';
     }).join("") + '</div>';
   }
-  function invHist(v){
-    var ms = invMonthsOf(v).filter(function(mk){
+  /* أشهرُ السجلّ — يحتاجها الزرُّ لعدِّها واللوحُ لعرضها */
+  function invHistMonths(v){
+    return invMonthsOf(v).filter(function(mk){
       return num(invValAt(v, mk)) || invGainOf(v, mk) || invPut(v, mk);
     }).slice(-6);
+  }
+  /* السجلّ تفصيلٌ لا يُقرأ كل مرة — يُطوى ويُفتح بطلبه.
+     والزرُّ منفصلٌ عن لوحه: ذاك في صفِّ المقابض، وهذا تحته بعرضِ اللوح. */
+  function invHistBtn(v){
+    var ms = invHistMonths(v);
     if(!ms.length) return "";
-    /* السجلّ تفصيلٌ لا يُقرأ كل مرة — يُطوى ويُفتح بطلبه */
     var op = !!ui.invLog[v.id];
-    var head = '<button class="logtog' + (op ? " on" : "") + '" data-invlog="' + v.id + '">'
+    return '<button class="logtog' + (op ? " on" : "") + '" data-invlog="' + v.id + '">'
       + (op ? "▾" : "▸") + ' السجلّ · ' + arMonths(ms.length) + '</button>';
-    if(!op) return head;
+  }
+  function invHistBody(v){
+    var ms = invHistMonths(v);
+    if(!ms.length || !ui.invLog[v.id]) return "";
     var rows = ms.map(function(mk){
       var val = invValAt(v, mk), g = invGainOf(v, mk), put = invPut(v, mk);
       var prev = invValAt(v, shift(mk, -1)); if(prev === null) prev = 0;
@@ -3541,7 +3561,7 @@ white-space:nowrap}
         + '<td class="v ' + (g >= 0 ? "gp" : "gn") + '">' + (g >= 0 ? "+" : "−") + fmt(Math.abs(g)) + '</td>'
         + '<td class="v">' + (base > 0 ? pctTxt(g / base) : "—") + '</td></tr>';
     }).join("");
-    return head + '<div class="ygrid" style="margin-top:10px">'
+    return '<div class="ygrid iwide">'
       + '<table><thead><tr><th class="cn">الشهر</th><th>القيمة</th><th>أودعت</th>'
       + '<th>الربح</th><th>٪</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
   }
@@ -13684,7 +13704,7 @@ white-space:nowrap}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+46";
+  var APP_VERSION = "1.5.0-beta+47";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
