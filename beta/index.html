@@ -6586,7 +6586,7 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
       var tAv = 0, tSp = 0, tCr = 0;
       ENV.forEach(function(x){ tAv += x.avail; tSp += x.spent; tCr += x.carry; });
       h += '<div class="sec"><h2>حسابات بنودك</h2>'
-        + '<span class="hint">رصيد كل بند الآن</span></div><div class="card">';
+        + '<span class="hint">ما بقي في كلّ بندٍ من خطّة الشهر</span></div><div class="card">';
       /* المكشوفة أولاً — الأشدّ كشفاً فالأقلّ — ثم الأكبر رصيداً */
       var ENVtop = ENV.slice().sort(function(p, q){
         if((p.left < 0) !== (q.left < 0)) return p.left < 0 ? -1 : 1;
@@ -7422,7 +7422,7 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
       if(!x.c.cls) unsure += x.v;
     });
     h += '<div class="sec"><h2>احتياج · كمالي · التزام</h2>'
-      + '<span class="hint">من صرفك في الفترة</span></div><div class="card">';
+      + '<span class="hint">نسبةُ كلّ نوعٍ من مجموع ما صرفتَه</span></div><div class="card">';
     if(unsure > 0){
       h += '<div class="clsnag"><b>' + fmt(unsure) + ' ريال (' + per(unsure)
         + '٪) على تصنيف افتراضي لم تؤكّده</b>'
@@ -7469,7 +7469,7 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
 
     /* ── ٣ · ادخارك الحقيقي والتسريب ── */
     h += '<div class="sec"><h2>ادخارك الحقيقي</h2>'
-      + '<span class="hint">المخطط مقابل ما وصل</span></div><div class="card">';
+      + '<span class="hint">ما خطّطتَ لادّخاره مقابل ما وضعتَه فعلاً</span></div><div class="card">';
     h += MS.map(function(mk){
       var d = state.months[mk] && state.months[mk].dist, mv = 0;
       if(d) for(var key in d){
@@ -8280,7 +8280,7 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
        شاشة الشهر حيث الإقفال والإرجاع للأساسية. */
     var MM = month(k);
     h += '<div class="sec"><h2>هذا الشهر وحده</h2>'
-      + '<span class="hint">أفعال لا تتعدّاه</span></div><div class="card">'
+      + '<span class="hint">تغييراتٌ تخصّ هذا الشهر ولا تمسّ خطّتك الأساسيّة</span></div><div class="card">'
       + mrow("عمليات " + mName(k), (MM.items || []).length + " عملية",
              '<button class="mini bad" data-clearmonth="1">امسحها</button>')
       + mrow("دخل " + mName(k),
@@ -8467,7 +8467,7 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
     if(QG.length){
       var GT = 0, GD = 0;
       h += '<div class="sec"><h2>الأهداف والادخار</h2>'
-        + '<span class="hint">كم وضعت فيها فعلاً</span></div><div class="card">';
+        + '<span class="hint">المخطّطُ من دخلك مقابل ما حوّلتَه فعلاً</span></div><div class="card">';
       h += '<div class="qtab head"><span>الهدف</span><span>المخطط</span>'
         + '<span>وضعت</span><span>المتبقي</span></div>';
       h += QG.map(function(g){
@@ -8501,7 +8501,7 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
     if(QI.length){
       var IT = 0, IP = 0;
       h += '<div class="sec"><h2>الاستثمار</h2>'
-        + '<span class="hint">كم أودعت فعلاً</span></div><div class="card">';
+        + '<span class="hint">المخطّطُ لمحافظك مقابل ما أودعتَه فعلاً</span></div><div class="card">';
       h += '<div class="qtab head"><span>الجهة</span><span>المخطط</span>'
         + '<span>أودعت</span><span>المتبقي</span></div>';
       h += QI.map(function(v){
@@ -9627,7 +9627,7 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
     var months = yearMonths(y), now = todayKey(), mode = ledgerMode();
     var cats = visibleCats();
     var h = '<div class="sec"><h2>الدفتر</h2>'
-      + '<span class="hint">اكتب في أي خانة — بلا مغادرة الصفحة</span></div>'
+      + '<span class="hint">دخلُك وصرفُك شهراً بشهر — تُصحّح أيَّ خانةٍ في مكانها</span></div>'
       + '<div class="card">'
       + '<div class="ledbar"><div class="chips">'
       + '<button class="chip sm' + (mode === "plan" ? " on" : "") + '" data-ledmode="plan">الخطة</button>'
@@ -10014,7 +10014,7 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
     /* ── وبطاقةٌ ثالثة لا تظهر إلا عند عطل ── */
     if(gdReady() && cloudAllowed() && (gdStale() || (syncLogGet().fails || 0) > 0)){
       h += '<div class="sec"><h2>إن تعذّر الدخول بجوجل</h2>'
-        + '<span class="hint">تشخيص</span></div><div class="card">'
+        + '<span class="hint">ما يمنع الدخول عادةً وكيف يُعرف</span></div><div class="card">'
         + '<div class="mrow"><span class="mn">سطران في مشروعك'
         + '<span class="ms">يجب أن يكونا في بيانات العميل عندك — حرفاً بحرف:'
         + '</span>'
@@ -10076,7 +10076,7 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
 
     /* ── التحكّم اليوميّ ── */
     h += '<div class="sec"><h2>المظهر والفتح</h2>'
-      + '<span class="hint">كيف يفتح ويبدو</span></div><div class="card">'
+      + '<span class="hint">الشاشةُ التي يبدأ بها والخطُّ والألوان</span></div><div class="card">'
       + '<div class="mrow"><span class="mn">السمة'
       + '<span class="ms">«يتبع النظام» يتغيّر مع إعداد جهازك</span></span>'
       + '<span class="cmodes">'
@@ -10112,7 +10112,7 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
         }).join("") + '</span></div></div>';
 
     h += '<div class="sec"><h2>التنبيه والتسجيل</h2>'
-      + '<span class="hint">عتبات وأيّام</span></div><div class="card">'
+      + '<span class="hint">متى ينبّهك التطبيق وأيَّ يومٍ يسجّل الثابت</span></div><div class="card">'
       + '<div class="mrow"><span class="mn">«اقتربت» عند'
       + '<span class="ms">تحذير البند قبل تجاوزه — بالنسبة من خطته</span></span>'
       + '<input class="ni s" type="text" inputmode="numeric" data-nearpct="1" value="'
@@ -10134,7 +10134,7 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
       + '</div>';
 
     h += '<div class="sec"><h2>الترحيل بين الشهور</h2>'
-      + '<span class="hint">ما ينتقل من رصيد البند</span></div><div class="card">'
+      + '<span class="hint">ما تبقّى في بندٍ أو تجاوزتَه: أينتقل إلى الشهر التالي أم يُصفَّر؟</span></div><div class="card">'
       + '<div class="mrow"><span class="mn">ما الذي ينتقل'
       + '<span class="ms">رصيد البند = خطته ناقص ما صُرف. وما يتبقّى منه — أو يزيد '
       + 'عليه — إلى أين يذهب؟</span></span>'
@@ -12672,7 +12672,7 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+32";
+  var APP_VERSION = "1.5.0-beta+33";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
