@@ -1773,6 +1773,34 @@ border-inline-start:2px solid var(--accent);border-bottom:1px solid var(--line)}
 .ispark.big{padding:12px 16px 6px;margin-bottom:14px;background:var(--card);
 border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
 .ispark.big .sb{flex:1 1 0;max-width:52px}
+/* رسمُ «ما وضعتَه مقابل ما صار»: عمودٌ مركَّبٌ لكلّ شهر */
+.vschart{padding:14px 16px 10px}
+.vsbars{display:flex;align-items:flex-end;gap:8px;justify-content:center}
+.vb{flex:1 1 0;max-width:64px;min-width:0;display:flex;flex-direction:column;
+justify-content:flex-end;align-items:stretch;gap:0}
+.vb i{display:block;width:100%}
+.vb .vn{display:block;font-family:"IBM Plex Mono",monospace;font-size:10.5px;
+font-weight:600;text-align:center;margin-bottom:4px;color:var(--ok)}
+.vb.neg .vn{color:var(--warn)}
+.vb i.gap.up{background:var(--ok);border-radius:4px 4px 0 0}
+.vb i.gap.dn{background:var(--warn);border-radius:4px 4px 0 0;opacity:.85}
+.vb em{font-family:"IBM Plex Mono",monospace;font-style:normal;font-size:10px;
+color:var(--ink-3);text-align:center;margin-top:5px;direction:ltr}
+.vslg{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:11px;
+color:var(--ink-3)}
+.vslg b{font-family:"IBM Plex Mono",monospace;color:var(--ink-2);font-weight:600}
+/* قسمةُ مالك: شريطٌ واحدٌ ومفتاحُه */
+.alloc{display:flex;height:14px;border-radius:99px;overflow:hidden;
+background:var(--card-2);margin-top:6px}
+.alloc i{display:block;height:100%}
+.alleg{display:flex;gap:14px;flex-wrap:wrap;margin-top:9px;font-size:11.5px;
+color:var(--ink-2)}
+.alleg i{display:inline-block;width:10px;height:10px;border-radius:3px;
+margin-inline-end:5px;vertical-align:middle}
+.alleg b{font-family:"IBM Plex Mono",monospace;font-weight:600}
+.alleg s{text-decoration:none;color:var(--ink-3);font-family:"IBM Plex Mono",monospace}
+.ygrid .tsub{display:block;text-decoration:none;font-size:10px;color:var(--ink-3);
+margin-top:2px}
 .ni.hp{width:88px;padding:5px 6px;font-size:13px;text-align:center}
 .ygrid .v.z{opacity:.65}
 .ygrid .gp{color:var(--ok)}
@@ -3165,6 +3193,39 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
   /* مسار القيمة عبر الأشهر — الرقم وحده لا يقول أصاعدٌ أم هابط */
   /* مسارُ محافظك مجتمعةً — الصورةُ التي كانت ناقصة: رقمٌ واحدٌ لا
      يقول أصاعدٌ أنت أم هابط، وثمانيةُ أشهرٍ تقول. */
+  /* صافي ما وضعتَه في محفظةٍ حتى شهرٍ ما — يُرجَع بالحركات من اليوم
+     إلى الوراء، فيصحّ لمن كانت له محافظُ قبل الدفتر. */
+  function invNetAt(v, mk){
+    var net = num(v["in"]);
+    invMoves(v).forEach(function(x){
+      if(String(x.m || "") <= mk) return;      /* ما قبلَه أو فيه محسوبٌ */
+      if(x.k === "in") net -= num(x.a);
+      else if(x.k === "inx" || x.k === "out") net += num(x.a);
+    });
+    return money(net);
+  }
+  function investNetAt(mk){
+    var t = 0;
+    (state.invest || []).forEach(function(v){ t += invNetAt(v, mk); });
+    return money(t);
+  }
+  function investValAt(mk){
+    var t = 0;
+    (state.invest || []).forEach(function(v){
+      var x = invValAt(v, mk);
+      if(x !== null) t += num(x);
+    });
+    return money(t);
+  }
+  /* ما أودعتَه في محفظةٍ خلال سنة */
+  function invPutYear(v, y){
+    var t = 0;
+    for(var mk in (state.months || {})){
+      if(mk.slice(0, 4) !== String(y)) continue;
+      t += invPut(v, mk);
+    }
+    return money(t);
+  }
   function invSparkAll(){
     var set = {};
     (state.invest || []).forEach(function(v){
@@ -3189,6 +3250,122 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
         + esc(mName(mk)) + ' · ' + fmt(vals[i]) + '"></i>'
         + '<em>' + mk.slice(5) + '</em></span>';
     }).join("") + '</div>';
+  }
+  /* ربحُك شهراً بشهر — بمقياسه هو لا بمقياس رأس المال.
+     جُرّب أوّلاً بعمودٍ مركَّبٍ (ما وضعتَ أسفلَه وربحُك فوقه)، فكان
+     ربحُ ٨٠٠ على ٢٥٬٨٠٠ شريحةً من بكسلين: صادقةً في النسبة، عمياءَ
+     عن السؤال. والسؤالُ هنا «أينمو مالي؟» لا «كم نسبةُ ربحي من
+     رأسي». فصار الربحُ نفسُه هو الرسم، ورأسُ المال في السطر تحته. */
+  function invVsChart(){
+    var set = {};
+    (state.invest || []).forEach(function(v){
+      invMonthsOf(v).forEach(function(mk){ set[mk] = 1; }); });
+    var ms = Object.keys(set).sort().slice(-10);
+    if(ms.length < 2) return "";
+    var rows = ms.map(function(mk){
+      return { mk: mk, val: investValAt(mk), net: investNetAt(mk) };
+    });
+    var mx = 1;
+    rows.forEach(function(r){
+      var g = Math.abs(r.val - r.net);
+      if(g > mx) mx = g; });
+    var H = 52, last = rows[rows.length - 1];
+    return '<div class="sec"><h2>ربحُك شهراً بشهر</h2>'
+      + '<span class="hint">ما زاد مالُك عمّا وضعتَه — بمقياس الربح '
+      + 'لا بمقياس رأس مالك</span></div>'
+      + '<div class="card vschart">'
+      + '<div class="vsbars">'
+      + rows.map(function(r){
+          var g = money(r.val - r.net);
+          var hh = Math.max(g === 0 ? 2 : 4, Math.round(Math.abs(g) / mx * H));
+          return '<span class="vb' + (g < 0 ? " neg" : "") + '" title="'
+            + esc(mName(r.mk)) + ' · وضعتَ ' + fmt(r.net) + ' · صارت '
+            + fmt(r.val) + '">'
+            + '<b class="vn">' + (g > 0 ? "+" : g < 0 ? "−" : "") + fmt(Math.abs(g))
+            + '</b>'
+            + '<i class="gap ' + (g >= 0 ? "up" : "dn") + '" style="height:'
+            + hh + 'px"></i>'
+            + '<em>' + r.mk.slice(5) + '</em></span>';
+        }).join("")
+      + '</div>'
+      + '<div class="vslg"><span>آخرَ شهر: وضعتَ <b>' + fmt(last.net)
+      + '</b> وصارت <b>' + fmt(last.val) + '</b></span></div>'
+      + '</div>';
+  }
+  /* قسمةُ مالك — تقول ما هو ولا تنصح */
+  function invSplitChart(){
+    var VAL = investVal();
+    if(!(VAL > 0)) return "";
+    function group(keyFn, list){
+      var by = {};
+      (state.invest || []).forEach(function(v){
+        var k = keyFn(v);
+        by[k] = (by[k] || 0) + invVal(v); });
+      return list.filter(function(t){ return by[t.k] > 0; })
+        .map(function(t){ return { n: t.n, c: t.c, v: by[t.k] }; })
+        .sort(function(a, b){ return b.v - a.v; });
+    }
+    var RK = group(function(v){ return invRiskOf(v).k; }, INVRISK);
+    var TP = group(function(v){ return invTypeOf(v).k; },
+                   INVTYPES.map(function(t){ return { k: t.k, n: t.n, c: "" }; }));
+    /* تركّزٌ: محفظةٌ واحدةٌ تحمل أكثرَ من نصف مالك — حقيقةٌ لا رأي */
+    var big = null;
+    (state.invest || []).forEach(function(v){
+      if(invVal(v) > VAL / 2 && (!big || invVal(v) > invVal(big))) big = v; });
+    function bar(rows, pal){
+      return '<div class="alloc">'
+        + rows.map(function(r, i){
+            return '<i style="width:' + (r.v / VAL * 100) + '%;background:'
+              + (r.c || pal[i % pal.length]) + '" title="' + esc(r.n) + ' · '
+              + fmt(r.v) + '"></i>'; }).join("")
+        + '</div><div class="alleg">'
+        + rows.map(function(r, i){
+            return '<span><i style="background:' + (r.c || pal[i % pal.length])
+              + '"></i>' + esc(r.n) + ' <b>' + pctTxt(r.v / VAL) + '</b>'
+              + ' <s>' + fmt(r.v) + '</s></span>'; }).join("")
+        + '</div>';
+    }
+    return '<div class="sec"><h2>قسمةُ مالك</h2>'
+      + '<span class="hint">أين يقعد مالُك — على المخاطرة وعلى النوع</span></div>'
+      + '<div class="card" style="padding:14px 16px">'
+      + '<div class="lab">على المخاطرة</div>' + bar(RK, PALETTE)
+      + '<div class="lab" style="margin-top:14px">على النوع</div>'
+      + bar(TP, PALETTE.slice(3))
+      + (big ? ('<div class="ahint" style="padding:10px 0 0">«' + esc(big.n)
+                + '» وحدَها تحمل ' + pctTxt(invVal(big) / VAL)
+                + ' من مالك المستثمَر.</div>') : "")
+      + '</div>';
+  }
+  /* مقارنةُ محافظك — بالنسبة لا بالمبلغ */
+  function invCompare(){
+    var L = (state.invest || []).slice();
+    if(L.length < 2) return "";
+    var VAL = investVal(), y = String(ui.month || todayKey()).slice(0, 4);
+    var rows = L.map(function(v){
+      var val = invVal(v), net = num(v["in"]), pr = money(val - net);
+      return { v: v, val: val, net: net, pr: pr,
+               pc: net > 0 ? pr / net : 0, put: invPutYear(v, y) };
+    }).sort(function(a, b){ return b.pc - a.pc; });
+    return '<div class="sec"><h2>مقارنةُ محافظك</h2>'
+      + '<span class="hint">مرتَّبةٌ بنسبة الربح لا بمبلغه — فالمبلغُ '
+      + 'يكبر بكبر المحفظة</span></div>'
+      + '<div class="card"><div class="ygrid"><table><thead><tr>'
+      + '<th class="cn">المحفظة</th><th>قيمتُها</th><th>نصيبُها</th>'
+      + '<th>ربحُها</th><th>٪</th><th>أودعتَ في ' + esc(y) + '</th>'
+      + '</tr></thead><tbody>'
+      + rows.map(function(r){
+          return '<tr><td class="cn">' + esc(r.v.n)
+            + '<s class="tsub">' + esc(invTypeOf(r.v).n) + ' · '
+            + esc(invRiskOf(r.v).n) + '</s></td>'
+            + '<td class="v">' + fmt(r.val) + '</td>'
+            + '<td class="v z">' + (VAL > 0 ? pctTxt(r.val / VAL) : "—") + '</td>'
+            + '<td class="v ' + (r.pr >= 0 ? "gp" : "gn") + '">'
+            + (r.pr >= 0 ? "+" : "−") + fmt(Math.abs(r.pr)) + '</td>'
+            + '<td class="v ' + (r.pr >= 0 ? "gp" : "gn") + '">'
+            + (r.net > 0 ? pctTxt(r.pc) : "—") + '</td>'
+            + '<td class="v z">' + fmt(r.put) + '</td></tr>';
+        }).join("")
+      + '</tbody></table></div></div>';
   }
   function invSpark(v){
     var ms = invMonthsOf(v).filter(function(mk){ return invValAt(v, mk) !== null; }).slice(-8);
@@ -9465,7 +9642,8 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
 
     /* الأرقام · السقف · المحافظ · تصنيفها · ثم الشرح */
     /* الملخّصان (النوعان والسقف) قبل التفصيل (المحافظ)، والشرح أخيراً */
-    return ["kpi", "edu", "port"]
+    PART.charts = invVsChart() + invSplitChart() + invCompare();
+    return ["kpi", "edu", "port", "charts"]
       .map(function(nm){ return PART[nm] || ""; }).join("");
   }
 
@@ -13326,7 +13504,7 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+42";
+  var APP_VERSION = "1.5.0-beta+43";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
