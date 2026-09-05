@@ -247,7 +247,15 @@ h1,h2,h3{font-family:"Alexandria","IBM Plex Sans Arabic",sans-serif;margin:0;lin
 .row.zero{opacity:.45}
 .row.tap{cursor:pointer}
 .row.tap:hover{background:var(--card-2)}
-.chev{font-size:13px;color:var(--ink-3);margin-inline-start:5px}
+/* حبّةُ التوسّع: حدٌّ يقول إنّها تُضغط، ودورانٌ يقول إنّها فُتحت */
+.chev{display:inline-flex;align-items:center;justify-content:center;
+width:20px;height:20px;flex:none;border-radius:99px;border:1px solid var(--line);
+color:var(--ink-3);font-size:9px;line-height:1;margin-inline-start:6px;
+vertical-align:middle;transition:transform .18s,border-color .14s,color .14s}
+.chev.on{transform:rotate(-180deg);border-color:var(--accent);color:var(--accent)}
+.tap:hover>.chev,.tap:hover .chev,.ecard:hover .chev,.bankhead:hover .chev{
+border-color:var(--accent);color:var(--accent)}
+@media(prefers-reduced-motion:reduce){ .chev{transition:none} }
 
 /* بنود فرعية */
 .subs{background:var(--card-2);border-bottom:1px solid var(--line)}
@@ -1581,7 +1589,10 @@ font:600 10px/1 inherit;padding:4px 8px;border-radius:99px;cursor:pointer;
 vertical-align:middle;transition:.14s}
 .qtab .qsx>i{font-style:normal;font-size:8px;line-height:1;display:inline-block;
 transition:transform .18s}
-.qtab .qsx:hover{border-color:var(--accent);color:var(--accent)}
+.qtab .qt.has{cursor:pointer;border-radius:9px;margin-inline-start:-5px;
+padding-inline-start:5px;transition:background .14s}
+.qtab .qt.has:hover{background:var(--card-2)}
+.qtab .qt.has:hover .qsx{border-color:var(--accent);color:var(--accent)}
 .qtab .qsx.on{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
 .qtab .qsx.on>i{transform:rotate(-180deg)}
 /* لوحُ الفروع: مُزاحٌ عن أبيه، له عمودٌ في جهة الاسم يجمعه */
@@ -1613,6 +1624,18 @@ color:var(--ink-3);font-variant-numeric:tabular-nums;direction:ltr}
 .lgn.to>b{color:var(--ink)}
 .lgmv>i{font-style:normal;color:var(--ink-3);font-size:12px}
 .subh .ds{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--ink-3)}
+.lfil{margin-bottom:10px}
+.lgn.out{background:var(--warn-soft)}
+.lgn.out>b{color:var(--warn)}
+.lgr.itr{cursor:pointer}
+.lgr.itr:hover{background:var(--card-2)}
+.lgr .del{width:26px;height:26px;border-radius:9px;border:1px solid var(--line);
+background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:pointer}
+.lgr .del:hover{border-color:var(--warn);color:var(--warn)}
+.lgnote{font-size:10.5px;color:var(--ink-3);margin-inline-start:10px;line-height:1.7}
+.gacts{display:flex;gap:6px;margin-inline-start:auto;flex-wrap:wrap}
+.mini.bad{border-color:var(--warn-soft);color:var(--warn)}
+.mini.bad:hover{border-color:var(--warn);background:var(--warn-soft)}
 @media(max-width:620px){
   .lgr{grid-template-columns:34px minmax(0,1fr) auto;gap:4px 10px}
   .lgr>.ic{grid-row:1}
@@ -2016,6 +2039,14 @@ color:var(--ink-3);font-variant-numeric:tabular-nums;direction:ltr}
   function esc(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){
     return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]; }); }
   function num(v){ var n = parseFloat(v); return isNaN(n) ? 0 : n; }
+  /* المالُ قرشان لا أكثر — يُقرَّب عند الكتابة لا عند العرض، فما يدخل
+     البيانات يبقى كما يُقرأ. (٤٤٢ − ٢٧١٫٠٥ كانت تُخزَّن
+     170.95000000000002 وتظهر خاماً في الحقل.) */
+  function money(v){
+    var n = parseFloat(v);
+    if(!isFinite(n)) return 0;
+    return Math.round(n * 100) / 100;
+  }
   /* ── الحقل يحسب: «120+45+30» تصير 195 ──
      مُقيِّم صغير باليد لا eval: سياسة الأمان في الأرتفاكت تمنع eval،
      والمدخل مصدره المستخدم فلا يُمرَّر إلى مفسّر عام على أي حال.
@@ -2134,6 +2165,7 @@ color:var(--ink-3);font-variant-numeric:tabular-nums;direction:ltr}
 
   function migrate(){
     fixShape();
+    fixCents();
     if(!Array.isArray(state.wish)) state.wish = [];
     /* تُستنتج مرّةً وتُحفظ، فلا تتغيّر بتغيّر الشهور بعدها */
     if(!state.planFrom) planFrom();
@@ -3233,7 +3265,7 @@ color:var(--ink-3);font-variant-numeric:tabular-nums;direction:ltr}
     var m = month(mk);
     if(!Array.isArray(m.log)) m.log = [];
     m.log.push({ t: Date.now(), c: ck, s: sid || "",
-                 f: Math.round(num(before)), o: Math.round(num(after)),
+                 f: money(before), o: money(after),
                  k: kind || "" });
     if(m.log.length > LOGCAP) m.log = m.log.slice(-LOGCAP);
   }
@@ -3250,19 +3282,20 @@ color:var(--ink-3);font-variant-numeric:tabular-nums;direction:ltr}
   }
   function setQuickRaw(mk, ck, total){
     var det = detailSum(mk, ck), q = quickItem(mk, ck), m = month(mk);
-    var t = Math.max(0, num(total));
+    var t = Math.max(0, money(total));
     if(t < det){
       toast("مسجَّل تفصيلياً " + fmt(det) + " — الإجمالي لا يقل عنه");
       t = det;
     }
-    var rest = t - det;
+    var rest = money(t - det);
     if(q) unlinkSpend(q);
     if(rest <= 0){
       if(q) m.items = m.items.filter(function(x){ return x.id !== q.id; });
       return t;
     }
     if(!q){
-      q = { id: uid(), c: ck, a: rest, t: "إدخال سريع", d: mk + "-01", q: true };
+      q = { id: uid(), c: ck, a: rest, t: "إدخال سريع", d: mk + "-01",
+            q: true, at: Date.now() };
       var ca = catOf(ck).acct;
       if(trackSrc() && ca && acctOf(ca)) q.acct = ca;
       m.items.push(q);
@@ -3295,19 +3328,20 @@ color:var(--ink-3);font-variant-numeric:tabular-nums;direction:ltr}
   }
   function setQuickSubRaw(mk, ck, sid, total){
     var det = detailSubSum(mk, ck, sid), q = quickSubItem(mk, ck, sid), m = month(mk);
-    var t = Math.max(0, num(total));
+    var t = Math.max(0, money(total));
     if(t < det){
       toast("مسجَّل تفصيلياً " + fmt(det) + " — الإجمالي لا يقل عنه");
       t = det;
     }
-    var rest = t - det;
+    var rest = money(t - det);
     if(q) unlinkSpend(q);
     if(rest <= 0){
       if(q) m.items = m.items.filter(function(x){ return x.id !== q.id; });
       return t;
     }
     if(!q){
-      q = { id: uid(), c: ck, s: sid, a: rest, t: "إدخال سريع", d: mk + "-01", q: true };
+      q = { id: uid(), c: ck, s: sid, a: rest, t: "إدخال سريع", d: mk + "-01",
+            q: true, at: Date.now() };
       var c0 = catOf(ck), ca = c0 && c0.acct;
       if(trackSrc() && ca && acctOf(ca)) q.acct = ca;
       m.items.push(q);
@@ -3325,16 +3359,16 @@ color:var(--ink-3);font-variant-numeric:tabular-nums;direction:ltr}
   /* إيداع الاستثمار: يُسجَّل في التوزيع وحده — قيمة المحفظة تُقرأ
      من إقفالها الشهري لا من الإيداع، فلا يُضاف هنا شيء إلى قيمة. */
   function setInvQuick(mk, vid, total){
-    distMap(mk)["i:" + vid] = Math.max(0, num(total));
+    distMap(mk)["i:" + vid] = Math.max(0, money(total));
   }
   function setGoalQuick(mk, gid, total){
     var g = goalOf(gid);
     if(!g) return 0;
     var d = distMap(mk), key = "g:" + gid;
-    var prev = num(d[key]), t = Math.max(0, num(total));
+    var prev = num(d[key]), t = Math.max(0, money(total));
     d[key] = t;
     /* الهدف بلا حساب مرتبط: مُدَّخره رقم يدوي، فنحرّكه بالفرق */
-    if(!goalFromAccts(g)) g.saved = num(g.saved) + (t - prev);
+    if(!goalFromAccts(g)) g.saved = money(num(g.saved) + (t - prev));
     return t;
   }
 
@@ -4436,6 +4470,39 @@ color:var(--ink-3);font-variant-numeric:tabular-nums;direction:ltr}
      لا فائض — ومن عدّها فائضاً اشترى أمنيته بمال بقالته. */
   /* فائضُ شهرٍ — حسابٌ واحدٌ لا حسابان. وكان ثانياً هنا يخالف شاشة
      الخطة: يتجاهل المخفيّ، ويعدّ الاستثمار مرّتين حين يكون بنداً. */
+  /* حقولُ المال وحدَها — لا نسبةَ ولا مضاعفَ ولا عددَ أشهر */
+  var CENTF = ["p", "cap", "full", "a", "m", "pm", "saved", "target", "val",
+               "bal", "open", "price", "paid", "run", "wait", "salary", "extra"];
+  function fixCents(){
+    function walk(o){
+      if(!o || typeof o !== "object") return;
+      if(Array.isArray(o)){ o.forEach(walk); return; }
+      for(var k in o){
+        var v = o[k];
+        if(v && typeof v === "object"){ walk(v); continue; }
+        if(typeof v !== "number") continue;
+        if(CENTF.indexOf(k) < 0) continue;
+        var r = money(v);
+        if(r !== v) o[k] = r;
+      }
+    }
+    ["cats", "goals", "invest", "accts", "wish", "debts"].forEach(function(k){
+      if(Array.isArray(state[k])) walk(state[k]);
+    });
+    walk(state.income);
+    for(var mk in (state.months || {})){
+      var m = state.months[mk];
+      if(!m) continue;
+      walk(m.inc); walk(m.items); walk(m.log);
+      /* الموزَّعُ والخطّةُ المعدَّلة: خريطتا مالٍ بمفاتيحَ حرّة */
+      ["dist", "plan"].forEach(function(f){
+        var d = m[f];
+        if(!d || typeof d !== "object") return;
+        for(var dk in d){ if(typeof d[dk] === "number") d[dk] = money(d[dk]); }
+      });
+    }
+  }
+
   function monthSurplus(mk){
     var inc = income(mk), plan = 0, save = 0;
     state.cats.forEach(function(c){ plan += catPlan(c, mk); });
@@ -7460,7 +7527,7 @@ color:var(--ink-3);font-variant-numeric:tabular-nums;direction:ltr}
           })()
         + (cry ? '<button class="carrybtn' + (cry < 0 ? " neg" : "") + '" data-carry="' + c.k + '">'
                  + (cry > 0 ? "مُرحَّل +" : "مُرحَّل −") + fmt(Math.abs(cry)) + '</button>' : "")
-        + '<span class="chev">' + (open ? "▾" : "▸") + '</span></b>'
+        + '<span class="chev' + (open ? " on" : "") + '">▾</span></b>'
         + '<s>' + (subs.length ? subs.length + ' فروع · ' : "")
         + (catAcct(c) ? "💳 " + esc(catAcct(c).n) + " · " : "")
         + (inc ? Math.round(avail/inc*100) + '٪ من الدخل' : "&nbsp;") + '</s>'
@@ -7637,7 +7704,7 @@ color:var(--ink-3);font-variant-numeric:tabular-nums;direction:ltr}
         + (gMode(g) !== "fixed"
             ? '<span class="gmode ' + (gMode(g) === "endless" ? "endless" : "calc") + '">'
               + gModeName(gMode(g)) + '</span>' : "")
-        + '<span class="chev">' + (open ? "▾" : "▸") + '</span></b>'
+        + '<span class="chev' + (open ? " on" : "") + '">▾</span></b>'
         + '<s>' + esc(sub) + '</s>'
         + (tg > 0 ? '<span class="track"><i style="width:' + (p * 100) + '%;background:'
             + (done ? "var(--ok)" : g.c) + '"></i></span>' : "")
@@ -7651,7 +7718,11 @@ color:var(--ink-3);font-variant-numeric:tabular-nums;direction:ltr}
           + 'شهرياً <b>' + fmt(num(g.m)) + '</b>'
           + '<span class="sep">·</span>' + (tg > 0 ? 'المستهدف <b>' + fmt(tg) + '</b>' : 'بلا مستهدف')
           + (tg > 0 && !done ? '<span class="sep">·</span>المتبقي <b>' + fmt(tg - sv) + '</b>' : "")
-          + '<button class="mini" data-geditb="' + g.id + '">تعديل</button></div>'
+          + '<span class="gacts">'
+          + '<button class="mini" data-geditb="' + g.id + '">تعديل</button>'
+          + (g.arch ? "" : ('<button class="mini" data-goarch="' + g.id + '">أرشفه</button>'))
+          + '<button class="mini bad" data-delgoal="' + g.id + '">احذفه</button>'
+          + '</span></div>'
           + (goalWhy(g) ? '<div class="gcalc" style="border-top:0;margin-top:0">' + goalWhy(g) + '</div>' : "")
           + '<div class="linkrow"><div class="lab">الحساب الذي يُحفظ فيه هذا الهدف</div>'
           + acctSelect("data-gsel", g.id, "g:" + g.id)
@@ -7664,9 +7735,8 @@ color:var(--ink-3);font-variant-numeric:tabular-nums;direction:ltr}
               ? '<div class="eta">اكتمل. الإنهاء يعيد الـ ' + fmt(g.m) + ' ريال الشهرية إلى خطتك، '
                 + 'والمبلغ المدَّخر يبقى في حسابك كما هو.</div>'
                 + '<div class="acts"><button class="act solid" data-arch="' + g.id + '">تم — أنهِ الهدف</button>'
-                + '<button class="act" data-raise="' + g.id + '">بل ارفع المستهدف</button>'
-                + '<button class="act" data-delgoal="' + g.id + '">حذف</button></div>'
-              : '<div class="acts"><button class="act" data-delgoal="' + g.id + '">حذف الهدف</button></div>')
+                + '<button class="act" data-raise="' + g.id + '">بل ارفع المستهدف</button></div>'
+              : "")
           + '</div>';
       }
       return r;
@@ -7777,11 +7847,13 @@ color:var(--ink-3);font-variant-numeric:tabular-nums;direction:ltr}
         + '<button class="qi" data-calcq="' + c.k
         + '" title="احسب في ' + esc(c.n) + '" style="background:' + c.c + '22;color:' + c.c + '">'
         + iconOf(c) + '</button>'
-        + '<span class="qt"><b>' + esc(c.n)
+        + '<span class="qt' + (subs ? " has" : "") + '"'
+        + (subs ? (' data-qsub="' + c.k + '" title="'
+                   + esc(subs + " فروع — اضغط لتفتحها")) + '"' : "")
+        + '><b>' + esc(c.n)
         + (subs
-            ? ('<button class="qsx' + (ui.openQ[c.k] ? " on" : "")
-               + '" data-qsub="' + c.k + '" title="'
-               + esc(subs + " فروع — تُفتح وتُغلق") + '"><i>▾</i>' + subs + '</button>')
+            ? ('<span class="qsx' + (ui.openQ[c.k] ? " on" : "") + '">'
+               + '<i>▾</i>' + subs + '</span>')
             : "")
         + '</b>'
         + '<s>' + (capRow ? ('سقفٌ لا يُحجز · ' + fmt(Math.max(0, left)) + ' قبل بلوغه')
@@ -7939,29 +8011,9 @@ color:var(--ink-3);font-variant-numeric:tabular-nums;direction:ltr}
     h += viewQuick();
     var _tailAt = h.length;
 
-    /* الذيلُ يُبنى قطعاً ثمّ يُصفّ في عمودين — قائمتان قصيرتان لا
-       تستحقّ كلٌّ منهما عرضَ الصفحة كلَّه */
+    /* الذيلُ يُبنى قطعاً ثمّ يُصفّ في عمودين. وقائمةُ العمليات
+       رُفعت من هنا: صارت داخل سجلّ المتابعة في قائمةٍ زمنيّةٍ واحدة. */
     var TAIL = [];
-    h += '<div class="sec"><h2>عملياتُ الشهر</h2><span class="hint">'
-      + m.items.length + ' — ما لم تكتبه بيدك في الجدول</span></div><div class="card">';
-    if(!m.items.length){
-      h += '<div class="empty"><b>لا عمليات بعد</b>'
-        + 'اكتب المبالغَ في الجدول أعلاه — وما يُسجَّل تلقائياً أو يجيء من '
-        + 'أمنيةٍ تشتريها يظهر هنا لتراجعه.</div>';
-    } else {
-      h += m.items.slice().reverse().map(function(it){
-        var c = catOf(it.c), sx = it.s ? subOf(c, it.s) : null;
-        return '<div class="item tap" data-edit="' + it.id + '">'
-          + '<span class="d" style="background:' + c.c + '"></span>'
-          + '<span class="t"><b>' + esc(c.n) + (sx ? ' · ' + esc(sx.n) : "") + '</b>'
-          + (it.auto ? '<span class="au">تلقائي</span>' : "")
-          + '<s>' + esc(it.t || it.d) + '</s></span>'
-          + '<span class="a">' + fmt(it.a) + '</span>'
-          + '<button class="del" data-del="' + it.id + '">×</button></div>';
-      }).join("");
-    }
-    h += '</div>';
-    TAIL.push(h.slice(_tailAt)); h = h.slice(0, _tailAt);
 
     var keys = Object.keys(state.months).filter(function(x){ return actuals(x).sum > 0; }).sort().slice(-6);
     if(keys.length > 1){
@@ -7988,7 +8040,34 @@ color:var(--ink-3);font-variant-numeric:tabular-nums;direction:ltr}
 
   /* سجلُّ التعديلات: مجموعاً باليوم، ولكلّ سطرٍ وقتُه ومقدارُه */
   var LOGKIND = { q: "إدخالٌ سريع", sub: "صرفُ فرع", add: "عمليةٌ جديدة",
-                  edit: "تعديلُ عملية", del: "حذفُ عملية", buy: "شراءُ أمنية" };
+                  edit: "تعديلُ عملية", del: "حذفُ عملية", buy: "شراءُ أمنية",
+                  g: "ادّخار", i: "استثمار", inc: "دخل", plan: "تعديلُ الخطة",
+                  item: "عمليّة" };
+  /* بابٌ لكلّ قيدٍ يُصفّى به — والصرفُ أبوابُه ستّة فجُمعت */
+  var LOGFAM = { q: "sp", sub: "sp", add: "sp", edit: "sp", del: "sp", buy: "sp",
+                 g: "sv", i: "iv", inc: "in", plan: "pl", item: "it" };
+  var LOGFAMS = [{ k: "", n: "الكلّ" }, { k: "sp", n: "صرف" },
+                 { k: "sv", n: "ادخار" }, { k: "iv", n: "استثمار" },
+                 { k: "in", n: "دخل" }, { k: "pl", n: "خطة" },
+                 { k: "it", n: "عمليات" }];
+  /* اسمُ ما جرى عليه القيد: بندٌ أو هدفٌ أو محفظةٌ أو دخلٌ أو خطّة */
+  function logSubject(e){
+    var c = String(e.c || "");
+    if(c.indexOf("g:") === 0){
+      var g = goalOf(c.slice(2));
+      return { e: (g && g.e) || "◎", n: g ? g.n : "هدفٌ محذوف" };
+    }
+    if(c.indexOf("i:") === 0){
+      var v = null;
+      (state.invest || []).forEach(function(x){ if(x.id === c.slice(2)) v = x; });
+      return { e: (v && v.e) || "◺", n: v ? v.n : "محفظةٌ محذوفة" };
+    }
+    if(c.indexOf("inc:") === 0)
+      return { e: "◈", n: c.slice(4) === "extra" ? "دخل إضافيّ" : "الراتب" };
+    var ct = catOf(c), sb = e.s ? subOf(ct, e.s) : null;
+    return { e: (ct && ct.e) || "•",
+             n: ((ct && ct.n) || "بندٌ محذوف") + (sb ? (" · " + sb.n) : "") };
+  }
   function clockAr(ts){
     var d = new Date(ts), hh = d.getHours(), mm = d.getMinutes();
     var am = hh < 12 ? "ص" : "م";
@@ -8006,44 +8085,105 @@ color:var(--ink-3);font-variant-numeric:tabular-nums;direction:ltr}
     if(same(d, y)) return "أمس";
     return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
   }
+  /* وقتُ العمليّة: طابعُها إن وُجد، وإلا ظهرُ يومها */
+  function itemAt(it){
+    if(it && it.at) return num(it.at);
+    var d = String((it && it.d) || "");
+    var t = Date.parse(d + "T12:00:00");
+    return isNaN(t) ? 0 : t;
+  }
   function spendLogHTML(k){
-    var m = state.months[k], L = (m && Array.isArray(m.log)) ? m.log.slice() : [];
-    if(!L.length) return "";
-    /* الأحدثُ أوّلاً بالوقت لا بترتيب الحفظ — فبياناتُ جهازين تُدمج */
-    L.sort(function(a2, b2){ return num(b2.t) - num(a2.t); });
-    L = L.slice(0, 40);
-    var h = '<div class="sec"><h2>سجلُّ التعديلات</h2>'
-      + '<span class="hint">آخرُ ' + L.length + ' في ' + esc(mName(k)) + '</span></div>'
-      + '<div class="card">';
-    var day = "";
+    var m = state.months[k] || {};
+    var L = Array.isArray(m.log) ? m.log.slice() : [];
+    /* العملياتُ التي لم تُكتب في الجدول — التلقائيُّ وما جاء من أمنية */
+    var IT = (Array.isArray(m.items) ? m.items : []).filter(function(x){
+      return x && !x.q; });
+    if(!L.length && !IT.length) return "";
+
+    var rows = [];
     L.forEach(function(e){
-      var dl = dayLabel(e.t);
+      rows.push({ t: num(e.t), kind: e.k || "edit", e: e, item: null });
+    });
+    IT.forEach(function(it){
+      rows.push({ t: itemAt(it), kind: "item", e: null, item: it });
+    });
+    /* الأحدثُ أوّلاً بالوقت لا بترتيب الحفظ — فبياناتُ جهازين تُدمج */
+    rows.sort(function(a2, b2){ return b2.t - a2.t; });
+
+    var fil = ui.logFil || "";
+    var cnt = {};
+    rows.forEach(function(r){
+      var f = LOGFAM[r.kind] || "sp";
+      cnt[f] = (cnt[f] || 0) + 1;
+    });
+    var show = rows.filter(function(r){
+      return !fil || (LOGFAM[r.kind] || "sp") === fil; });
+    show = show.slice(0, 60);
+
+    var h = '<div class="sec"><h2>سجلُّ المتابعة</h2>'
+      + '<span class="hint">كلُّ ما جرى لمالك في ' + esc(mName(k)) + '</span></div>'
+      + '<div class="wfil lfil">'
+      + LOGFAMS.map(function(f){
+          var n = f.k ? (cnt[f.k] || 0) : rows.length;
+          if(f.k && !n) return "";
+          return '<button class="' + (fil === f.k ? "on" : "") + '" data-logfil="'
+            + f.k + '">' + esc(f.n) + '<s>' + n + '</s></button>';
+        }).join("")
+      + '</div><div class="card">';
+
+    if(!show.length){
+      h += '<div class="empty"><b>لا شيء في هذا الباب</b>جرّب باباً آخر.</div>';
+    }
+    var day = "";
+    show.forEach(function(r){
+      var dl = dayLabel(r.t);
       if(dl !== day){
         day = dl;
-        var _d = new Date(e.t);
+        var _d = new Date(r.t);
         h += '<div class="mrow subh"><span class="mn">' + esc(dl) + '</span>'
-          + '<span class="ds">' + _d.getFullYear() + "-" + pad(_d.getMonth() + 1)
-          + "-" + pad(_d.getDate()) + '</span></div>';
+          + '<span class="ds">' + (r.t ? (_d.getFullYear() + "-"
+             + pad(_d.getMonth() + 1) + "-" + pad(_d.getDate())) : "—")
+          + '</span></div>';
       }
-      var c = catOf(e.c), sub = e.s ? subOf(c, e.s) : null;
-      var dlt = num(e.o) - num(e.f);
-      h += '<div class="row lgr">'
-        + '<span class="ic" style="background:var(--card-2)">'
-        + esc((c && c.e) || "•") + '</span>'
-        + '<span><b class="nm">' + esc((c && c.n) || "بند محذوف")
-        + (sub ? (' · ' + esc(sub.n)) : "") + '</b>'
-        + '<s class="sub"><em>' + esc(clockAr(e.t)) + '</em> · '
-        + esc(LOGKIND[e.k] || "تعديل") + '</s></span>'
-        /* الرقمان مسمَّيان: «كان» و«صار» — فلا يُخمَّن أيُّهما قبل */
-        + '<span class="lgmv"><span class="lgn"><s>كان</s><b>'
-        + fmt(e.f) + '</b></span><i>←</i>'
-        + '<span class="lgn to"><s>صار</s><b>' + fmt(e.o) + '</b></span></span>'
-        + '<span class="rt"><b class="a ' + (dlt < 0 ? "wno" : "wok") + '">'
-        + (dlt > 0 ? "+" : dlt < 0 ? "−" : "") + fmt(Math.abs(dlt)) + '</b></span></div>';
+      h += (r.item ? logItemRow(r.item, r.t) : logEntryRow(r.e));
     });
+
     h += '<div class="wact"><button class="mini" data-logclr="1">'
-      + 'امسح سجلَّ الشهر</button></div></div>';
+      + 'امسح قيودَ الشهر</button>'
+      + '<span class="lgnote">تُمسح القيودُ وحدَها — العملياتُ ومبالغُها لا تُمسّ.</span>'
+      + '</div></div>';
     return h;
+  }
+  /* قيدٌ: كم كان وكم صار */
+  function logEntryRow(e){
+    var sj = logSubject(e), dlt = num(e.o) - num(e.f);
+    return '<div class="row lgr">'
+      + '<span class="ic" style="background:var(--card-2)">' + esc(sj.e) + '</span>'
+      + '<span><b class="nm">' + esc(sj.n) + '</b>'
+      + '<s class="sub"><em>' + esc(clockAr(e.t)) + '</em> · '
+      + esc(LOGKIND[e.k] || "تعديل") + '</s></span>'
+      /* الرقمان مسمَّيان: «كان» و«صار» — فلا يُخمَّن أيُّهما قبل */
+      + '<span class="lgmv"><span class="lgn"><s>كان</s><b>'
+      + fmt(e.f) + '</b></span><i>←</i>'
+      + '<span class="lgn to"><s>صار</s><b>' + fmt(e.o) + '</b></span></span>'
+      + '<span class="rt"><b class="a ' + (dlt < 0 ? "wno" : "wok") + '">'
+      + (dlt > 0 ? "+" : dlt < 0 ? "−" : "") + fmt(Math.abs(dlt)) + '</b></span></div>';
+  }
+  /* عمليّة: مالٌ خرج — تُضغط فتُعدَّل وزرُّها يحذف */
+  function logItemRow(it, t){
+    var c = catOf(it.c), sx = it.s ? subOf(c, it.s) : null;
+    var src = it.auto ? "تلقائيّ" : (it.wish ? "شراءُ أمنية" : "عمليّة");
+    return '<div class="row lgr itr tap" data-edit="' + esc(it.id) + '">'
+      + '<span class="ic" style="background:' + ((c && c.c) || "var(--card-2)") + '22;color:'
+      + ((c && c.c) || "var(--ink-3)") + '">' + esc((c && c.e) || "•") + '</span>'
+      + '<span><b class="nm">' + esc((c && c.n) || "بندٌ محذوف")
+      + (sx ? (' · ' + esc(sx.n)) : "") + '</b>'
+      + '<s class="sub"><em>' + esc(t ? clockAr(t) : (it.d || "")) + '</em> · '
+      + esc(src) + (it.t ? (' · ' + esc(it.t)) : "") + '</s></span>'
+      + '<span class="lgmv"><span class="lgn out"><s>صُرف</s><b>'
+      + fmt(it.a) + '</b></span></span>'
+      + '<span class="rt"><button class="del" data-del="' + esc(it.id)
+      + '" title="احذفها">×</button></span></div>';
   }
 
   /* ═══ ٤ · الاستثمار ═══ */
@@ -8548,7 +8688,7 @@ color:var(--ink-3);font-variant-numeric:tabular-nums;direction:ltr}
       all.forEach(function(a){ tot += num(a.bal); });
       var open = ui.openBank[b] !== false;
       var s2 = '<div class="bankhead" data-bank="' + esc(b) + '">'
-        + '<span class="chev">' + (open ? "▾" : "▸") + '</span>'
+        + '<span class="chev' + (open ? " on" : "") + '">▾</span>'
         + '<span class="bn">' + esc(b) + '<span class="bc"> · ' + list.length + ' حساب'
         + (all.length > list.length ? " من " + all.length : "") + '</span></span>'
         + '<span class="bv">' + fmt(tot) + '</span></div>';
@@ -8637,7 +8777,7 @@ color:var(--ink-3);font-variant-numeric:tabular-nums;direction:ltr}
             ? '<span class="chg ' + (cg.pct > 1 ? "up" : (cg.pct < -1 ? "dn" : "flat")) + '">'
               + (cg.pct > 0 ? "▲" : (cg.pct < 0 ? "▼" : "=")) + Math.abs(Math.round(cg.pct)) + '٪</span>'
             : "")
-        + '<span class="chev">' + (open ? "▾" : "▸") + '</span></b>'
+        + '<span class="chev' + (open ? " on" : "") + '">▾</span></b>'
         + '<s>' + (x.carry ? 'رصيد سابق ' + fmt(x.carry) + ' + ' : "")
         + 'دخل ' + fmt(x.plan) + ' − صُرف ' + fmt(x.spent)
         + (ac ? ' · 💳 ' + esc(ac.n) : "") + '</s>'
@@ -8707,7 +8847,7 @@ color:var(--ink-3);font-variant-numeric:tabular-nums;direction:ltr}
           + (gMode(g) !== "fixed"
               ? '<span class="gmode ' + (gMode(g) === "endless" ? "endless" : "calc") + '">'
                 + gModeName(gMode(g)) + '</span>' : "")
-          + '<span class="chev">' + (open ? "▾" : "▸") + '</span></b>'
+          + '<span class="chev' + (open ? " on" : "") + '">▾</span></b>'
           + '<s>يدخله ' + fmt(mo) + ' شهرياً'
           + (tg > 0 ? ' · المستهدف ' + fmt(tg) : ' · بلا سقف') + '</s>'
           + (tg > 0 ? '<span class="track"><i style="width:' + (p * 100)
@@ -9766,9 +9906,15 @@ color:var(--ink-3);font-variant-numeric:tabular-nums;direction:ltr}
     var ch = function(sel, fn){ q(sel).forEach(function(el){ el.onchange = function(){
       diag("حقل", actName(sel, el)); fn(el); }; }); };
 
+    on("[data-logfil]", function(b){
+      ui.logFil = b.getAttribute("data-logfil");
+      render();
+    });
     on("[data-logclr]", function(){
       ask({ title: "مسحُ سجلّ " + mName(ui.month),
-        msg: "يُمحى سجلُّ التعديلات لهذا الشهر — ولا تُمسّ عملياتُك ولا مبالغُها.",
+        msg: "تُمحى قيودُ التعديل لهذا الشهر وحدَها. "
+           + "<b>عملياتُك ومبالغُك وخطّتُك لا تُمسّ</b> — والعملياتُ تبقى "
+           + "معروضةً في القائمة نفسِها.",
         ok: "امسحه", danger: true,
         onOk: function(){
           var m = month(ui.month);
@@ -9826,7 +9972,7 @@ color:var(--ink-3);font-variant-numeric:tabular-nums;direction:ltr}
       save(); render();
     });
     ch("[data-minc]", function(el){
-      var f = el.getAttribute("data-minc"), o = incObj(ui.month), v = num(el.value);
+      var f = el.getAttribute("data-minc"), o = incObj(ui.month), v = money(el.value);
       if(onePlan() && !isPast(ui.month)){
         /* خطة واحدة: الرقم يصير الافتراضي، ويُرفع تخصيص هذا الشهر */
         state.income[f] = v;
@@ -9837,6 +9983,7 @@ color:var(--ink-3);font-variant-numeric:tabular-nums;direction:ltr}
         if(!m.inc) m.inc = { salary: o.salary, extra: o.extra };
         m.inc[f] = v;
       }
+      logAmt(ui.month, "inc:" + f, "", o[f], v, "inc");
       save(); render();
     });
     on("[data-incdef]", function(){
@@ -9845,7 +9992,15 @@ color:var(--ink-3);font-variant-numeric:tabular-nums;direction:ltr}
       toast("صار الافتراضي لكل شهر"); save(); render();
     });
     on("[data-increset]", function(){
-      month(ui.month).inc = null; toast("رجع للافتراضي"); save(); render();
+      var o = incObj(ui.month), gi = state.income || {};
+      confirmDlg("إرجاعُ دخل " + mName(ui.month) + " للعامّ؟",
+        "دخلُ هذا الشهر المخصَّص <b>" + fmt(num(o.salary) + num(o.extra))
+        + "</b> يُمحى، ويحلّ محلَّه الافتراضيُّ العامّ <b>"
+        + fmt(num(gi.salary) + num(gi.extra)) + "</b>."
+        + "<br>عملياتُك ومبالغُك لا تُمسّ — لكنّ «يبقى من دخلك» يتغيّر.",
+        "أرجِعه", function(){
+          month(ui.month).inc = null; toast("رجع للافتراضي"); save(); render();
+        }, true);
     });
 
     /* فتح/طي البنود */
@@ -9897,13 +10052,15 @@ color:var(--ink-3);font-variant-numeric:tabular-nums;direction:ltr}
       setTimeout(function(){ ui.flash = null; }, 1200);
     };
     ch("[data-gquick]", function(el){
-      var gid = el.getAttribute("data-gquick");
+      var gid = el.getAttribute("data-gquick"), _b = num(distMap(ui.month)["g:" + gid]);
       setGoalQuick(ui.month, gid, el.value);
+      logAmt(ui.month, "g:" + gid, "", _b, num(distMap(ui.month)["g:" + gid]), "g");
       flashRow("g:" + gid); save(); render();
     });
     ch("[data-iquick]", function(el){
-      var vid = el.getAttribute("data-iquick");
+      var vid = el.getAttribute("data-iquick"), _b2 = num(distMap(ui.month)["i:" + vid]);
       setInvQuick(ui.month, vid, el.value);
+      logAmt(ui.month, "i:" + vid, "", _b2, num(distMap(ui.month)["i:" + vid]), "i");
       flashRow("i:" + vid); save(); render();
     });
     ch("[data-quick]", function(el){
@@ -10010,16 +10167,18 @@ color:var(--ink-3);font-variant-numeric:tabular-nums;direction:ltr}
       var put = function(x){ if(own) setP(mk, ck, x); else c.p = x; };
       var imp = carryImpact(c, mk, function(){ put(v); }, function(){ put(old); });
       guardEdit(mk, "تعديل خطة «" + c.n + "» في " + mName(mk), imp, function(){
-        put(v); save(); render();
+        put(v); logAmt(mk, ck, "", old, v, "plan"); save(); render();
       });
       if(imp.length && isPast(mk)) render();   /* يعيد الحقل لقيمته حتى تؤكّد */
     });
     ch("[data-sub]", function(el){
       var p = el.getAttribute("data-sub").split("|"), c = catOf(p[0]), x = subOf(c, p[1]);
       if(!x) return;
+      var _bp = linePlan(x, ui.month, lineKey(p[0], p[1]));
       if(hasOvr(ui.month)) setP(ui.month, lineKey(p[0], p[1]), el.value);
-      else x.p = num(el.value);
+      else x.p = money(el.value);
       clampSub(c, x);
+      logAmt(ui.month, p[0], p[1], _bp, linePlan(x, ui.month, lineKey(p[0], p[1])), "plan");
       save(); render();
     });
     on("[data-sugg]", function(b){
@@ -10785,12 +10944,31 @@ color:var(--ink-3);font-variant-numeric:tabular-nums;direction:ltr}
       toast("أُضيف «" + t.n + "» — حدّد مبلغه الشهري");
       save(); render();
     });
+    on("[data-goarch]", function(b){
+      var id = b.getAttribute("data-goarch"), g = null;
+      state.goals.forEach(function(x){ if(x.id === id) g = x; });
+      if(!g) return;
+      confirmDlg("أرشفةُ «" + g.n + "»؟",
+        "يُخفى من أهدافك ويعود <b>" + fmt(num(g.m))
+        + "</b> شهرياً إلى خطّتك — والمُدَّخرُ <b>" + fmt(goalSaved(g))
+        + "</b> وسجلُّه يبقيان. تُعيده متى شئت من «أهداف محقَّقة».",
+        "أرشفه", function(){
+          g.arch = true; toast("أُرشف"); save(); render();
+        });
+    });
     on("[data-delgoal]", function(b){
       var id = b.getAttribute("data-delgoal"), g = null;
       state.goals.forEach(function(x){ if(x.id === id) g = x; });
       if(!g) return;
+      var _sv = goalSaved(g), _m = num(g.m);
+      var _lk = accts().filter(function(a){ return a.link === "g:" + id; }).length;
       confirmDlg("حذف هدف «" + g.n + "»؟",
-        "الحسابات المرتبطة به ستعود «تشغيلي». أرصدتها لا تتأثر.", "احذف", function(){
+        "المُدَّخرُ <b>" + fmt(_sv) + "</b> <b>يبقى في حسابك كما هو</b> — "
+        + "الحذفُ يرفع الهدفَ لا المال."
+        + (_m > 0 ? ("<br>ويعود <b>" + fmt(_m) + "</b> شهرياً إلى خطّتك.") : "")
+        + (_lk ? ("<br>و" + _lk + " من حساباتك المرتبطة تعود «تشغيلي» بأرصدتها.") : "")
+        + "<br><br>وسجلُّه يذهب معه. <b>«أرشفه» يُخفيه ولا يفقد شيئاً.</b>",
+        "احذفه", function(){
           accts().forEach(function(a){ if(a.link === "g:" + id) a.link = "ops"; });
           state.goals = state.goals.filter(function(x){ return x.id !== id; });
           save();
@@ -11025,10 +11203,18 @@ color:var(--ink-3);font-variant-numeric:tabular-nums;direction:ltr}
     on("[data-clearmonth]", function(){
       var mm = month(ui.month);
       confirmDlg("مسح عمليات " + mName(ui.month) + "؟",
-        mm.items.length + " عملية ستُحذف. الأرصدة والخطة لا تتأثر.", "امسح",
+        "<b>" + mm.items.length + " عملية</b> تُحذف بمبالغها — ولا رجعةَ فيها."
+        + "<br>خطّتُك وأرصدتُك وأهدافُك لا تُمسّ.", "امسحها",
         function(){ mm.items = []; save(); }, true);
     });
-    on("[data-rewiz]", function(){ month(ui.month).setup = null; save(); ui.tab = "dash"; render(); });
+    on("[data-rewiz]", function(){
+      confirmDlg("إعادةُ معالج " + mName(ui.month) + "؟",
+        "يُفتح المعالجُ من أوّله في اللوحة ليوزّع دخلَ الشهر من جديد."
+        + "<br>عملياتُك وخطّتُك وأرصدتُك لا تُمسّ — ويمكنك تركُه في أيّ خطوة.",
+        "أعِد تشغيله", function(){
+          month(ui.month).setup = null; save(); ui.tab = "dash"; render();
+        });
+    });
     on("[data-backup]", function(){
       var mks = Object.keys(state.months || {}).length, n = 0;
       for(var k in (state.months || {})) n += ((state.months[k].items) || []).length;
@@ -11734,7 +11920,7 @@ color:var(--ink-3);font-variant-numeric:tabular-nums;direction:ltr}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+24";
+  var APP_VERSION = "1.5.0-beta+25";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
