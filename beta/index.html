@@ -2236,6 +2236,7 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
   function migrate(){
     fixShape();
     fixCents();
+    migInvest();
     if(!Array.isArray(state.wish)) state.wish = [];
     /* تُستنتج مرّةً وتُحفظ، فلا تتغيّر بتغيّر الشهور بعدها */
     if(!state.planFrom) planFrom();
@@ -3134,6 +3135,66 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
      مصدر الحقيقة واحد: قيمة المحفظة في كل شهر — لقطة الحساب المربوط،
      أو v.hist للجهة غير المربوطة. الربح مشتقّ لا مخزَّن، فلا يتناقض رقمان.
      وتسجيلك «بالربح» ليس تخزيناً ثانياً — بل مدخل يُحوَّل إلى قيمة قبل الحفظ. */
+  /* ═══ نموذجُ المحفظة ═══
+     نوعُ الأصل ومخاطرتُه المقترحة. والمخاطرةُ تُشتقّ ولا تُسأل —
+     فمن يعرف أنّه يشتري كريبتو يعرف أنّها عالية. */
+  var INVTYPES = [
+    { k: "stock",  n: "أسهم",          r: "high", e: "📈" },
+    { k: "crypto", n: "كريبتو",        r: "vhigh", e: "🪙" },
+    { k: "fund",   n: "صندوق أو مرابحة", r: "low",  e: "🏦" },
+    { k: "gold",   n: "ذهب أو فضّة",    r: "mid",  e: "🥇" },
+    { k: "estate", n: "عقار",           r: "mid",  e: "🏘️" },
+    { k: "other",  n: "أخرى",           r: "mid",  e: "📊" }
+  ];
+  var INVRISK = [
+    { k: "low",   n: "منخفضة",     c: "var(--ok)" },
+    { k: "mid",   n: "متوسّطة",    c: "var(--gold)" },
+    { k: "high",  n: "عالية",      c: "var(--warn)" },
+    { k: "vhigh", n: "عاليةٌ جدّاً", c: "var(--bad, var(--warn))" }
+  ];
+  var INVMNG = [
+    { k: "auto", n: "تطبيقٌ آليّ", e: "🤖" },
+    { k: "self", n: "أديرها بنفسي", e: "🙋" }
+  ];
+  function invTypeOf(v){
+    var t = v && v.type;
+    for(var i = 0; i < INVTYPES.length; i++) if(INVTYPES[i].k === t) return INVTYPES[i];
+    return INVTYPES[INVTYPES.length - 1];       /* أخرى */
+  }
+  function invRiskOf(v){
+    /* ما اختاره صاحبُه يغلب، وإلّا فمخاطرةُ نوعِه */
+    var r = v && v.risk;
+    for(var i = 0; i < INVRISK.length; i++) if(INVRISK[i].k === r) return INVRISK[i];
+    var d = invTypeOf(v).r;
+    for(var j = 0; j < INVRISK.length; j++) if(INVRISK[j].k === d) return INVRISK[j];
+    return INVRISK[1];
+  }
+  function invMngOf(v){
+    var m = (v && v.mng) || ((v && v.kind === "auto") ? "auto" : "self");
+    return m === "auto" ? INVMNG[0] : INVMNG[1];
+  }
+  /* طريقةُ المتابعة: قيمةٌ إجماليّة أو ممتلكاتٌ بكمّيّةٍ وسعر */
+  function invTrack(v){ return (v && v.track === "hold") ? "hold" : "total"; }
+  function invZak(v){ return !v || v.zak !== false; }
+  /* النوعُ يُخمَّن من الاسم مرّةً — ولا يُخترع لما لا يدلّ */
+  var INVGUESS = [
+    ["crypto", "كريبتو بتكوين بيتكوين عملات رقمية ايثيريوم بينانس crypto bitcoin"],
+    ["stock",  "اسهم سهم تداول سوق تاسي شركات stocks equity shares"],
+    /* الجموعُ المكسّرةُ لا يبلغها جذرُ التاء المربوطة — فتُذكر */
+    ["fund",   "صندوق صناديق مرابحة مرابحات صكوك مؤشر مؤشرات ادخاري "
+             + "ملاءة درايف fund sukuk etf"],
+    ["gold",   "ذهب فضة سبائك سبيكة معادن gold silver"],
+    ["estate", "عقار اراضي ارض عقاري estate"]
+  ];
+  function invGuessType(name){
+    var t = arNorm(name);
+    for(var i = 0; i < INVGUESS.length; i++){
+      var ks = arNorm(INVGUESS[i][1]).split(" ");
+      for(var j = 0; j < ks.length; j++)
+        if(ks[j].length > 2 && t.indexOf(ks[j]) >= 0) return INVGUESS[i][0];
+    }
+    return "other";
+  }
   function invAccts(v){ return linkedTo("i:" + v.id); }
   function invValAt(v, mk){
     var as = invAccts(v);
@@ -4987,6 +5048,55 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
         for(var dk in d){ if(typeof d[dk] === "number") d[dk] = money(d[dk]); }
       });
     }
+  }
+
+  /* ═══ ترحيلُ المحافظ إلى النموذج الواحد ═══
+     يجري مرّةً: تنفصل الجهةُ ذاتُ المحافظ إلى محافظَ مستقلّة، وتُكتب
+     الحقولُ الجديدة لمن لا يملكها. ولا يتغيّر ريالٌ واحد. */
+  function migInvest(){
+    if(!Array.isArray(state.invest)) return;
+    var out = [];
+    state.invest.forEach(function(v){
+      if(!v || typeof v !== "object") return;
+      var as = linkedTo("i:" + v.id);
+      if(as.length > 1){
+        /* جهةٌ بعدّة محافظ: كلُّ محفظةٍ تصير مستقلّةً بحسابها.
+           وما ساهمتَ به يُقسَم بنسبة الأرصدة — فالمجموعُ لا يتغيّر. */
+        var tot = 0;
+        as.forEach(function(a){ tot += num(a.bal); });
+        var left = money(num(v["in"])), i = 0;
+        as.forEach(function(a){
+          var share = (i === as.length - 1)
+            ? left
+            : money(tot > 0 ? num(v["in"]) * num(a.bal) / tot
+                            : num(v["in"]) / as.length);
+          left = money(left - share);
+          var id2 = uid();
+          a.link = "i:" + id2;             /* الحسابُ يتبع محفظتَه الجديدة */
+          out.push(invFill({
+            id: id2, n: v.n + " — " + a.n, e: v.e,
+            m: money(num(v.m) / as.length),
+            val: money(num(a.bal)), in: share,
+            hist: {}, from: v.from, split: v.id
+          }));
+          i++;
+        });
+      } else {
+        out.push(invFill(v));
+      }
+    });
+    state.invest = out;
+  }
+  /* الحقولُ الجديدة لمن لا يملكها — ولا يُمسّ ما كُتب */
+  function invFill(v){
+    if(!v.type) v.type = invGuessType(v.n);
+    if(!v.mng) v.mng = (v.kind === "auto") ? "auto" : "self";
+    if(!v.risk) v.risk = invTypeOf(v).r;
+    if(!v.track) v.track = "total";
+    if(!Array.isArray(v.hold)) v.hold = [];
+    if(v.zak === undefined) v.zak = true;
+    if(!v.hist || typeof v.hist !== "object" || Array.isArray(v.hist)) v.hist = {};
+    return v;
   }
 
   function monthSurplus(mk){
@@ -12806,7 +12916,7 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+38";
+  var APP_VERSION = "1.5.0-beta+39";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
