@@ -1768,6 +1768,13 @@ border-inline-start:2px solid var(--accent);border-bottom:1px solid var(--line)}
 .qtab.zero{opacity:.62}
 .qtab .qv.up{color:var(--ok)}
 .qtab .qv.dn{color:var(--warn)}
+.qtab .qv .qpc{display:block;font-style:normal;font-size:10px;opacity:.7;margin-top:1px}
+/* الرسمُ الجامع: أعمدةٌ محدودةُ العرض وإلّا صارت كتلاً لا رسماً */
+.ispark.big{padding:12px 16px 6px;margin-bottom:14px;background:var(--card);
+border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
+.ispark.big .sb{flex:1 1 0;max-width:52px}
+.ispark.big i{border-radius:5px 5px 0 0}
+.act.sm{padding:6px 12px;font-size:12px}
 .ihead{display:grid;grid-template-columns:34px minmax(0,1fr) auto auto;gap:12px;
   align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
 .ihead .it{min-width:0}
@@ -3044,6 +3051,33 @@ border-inline-start:2px solid var(--accent);border-bottom:1px solid var(--line)}
       + '</div></div>';
   }
   /* مسار القيمة عبر الأشهر — الرقم وحده لا يقول أصاعدٌ أم هابط */
+  /* مسارُ محافظك مجتمعةً — الصورةُ التي كانت ناقصة: رقمٌ واحدٌ لا
+     يقول أصاعدٌ أنت أم هابط، وثمانيةُ أشهرٍ تقول. */
+  function invSparkAll(){
+    var set = {};
+    (state.invest || []).forEach(function(v){
+      invMonthsOf(v).forEach(function(mk){ set[mk] = 1; });
+    });
+    var ms = Object.keys(set).sort().slice(-8);
+    if(ms.length < 2) return "";
+    var vals = ms.map(function(mk){
+      var t = 0;
+      (state.invest || []).forEach(function(v){
+        var x = invValAt(v, mk);
+        if(x !== null) t += num(x);
+      });
+      return t;
+    });
+    var mx = 1;
+    vals.forEach(function(x){ if(x > mx) mx = x; });
+    var H = 56;
+    return '<div class="ispark big">' + ms.map(function(mk, i){
+      return '<span class="sb"><i class="' + (i === ms.length - 1 ? "last" : "")
+        + '" style="height:' + Math.max(3, Math.round(vals[i] / mx * H)) + 'px" title="'
+        + esc(mName(mk)) + ' · ' + fmt(vals[i]) + '"></i>'
+        + '<em>' + mk.slice(5) + '</em></span>';
+    }).join("") + '</div>';
+  }
   function invSpark(v){
     var ms = invMonthsOf(v).filter(function(mk){ return invValAt(v, mk) !== null; }).slice(-8);
     if(ms.length < 2) return "";
@@ -8888,70 +8922,42 @@ border-inline-start:2px solid var(--accent);border-bottom:1px solid var(--line)}
     var PART = {}, _cut = 0;
     function cut(nm){ PART[nm] = h.slice(_cut); _cut = h.length; }
 
-    var RR = investReturn(), GG = invGain(ui.month);   /* خمسة مؤشّرات: صفٌّ واحد */
+    var RR = investReturn(), GG = invGain(ui.month);
     var dm = distMap(ui.month), putI = 0;
     for(var ky in dm){ if(ky.charAt(0) === "i") putI += num(dm[ky]); }
     var unfunded = Math.max(0, planInv() - putI);
-    h += '<div class="kpis k5">'
+    var auto2 = state.invest.filter(function(v){ return v.kind === "auto"; });
+    var self2 = state.invest.filter(function(v){ return v.kind === "self"; });
+    /* ثلاثةُ أرقامٍ تجيب أسئلةَ الشاشة — لا خمسةٌ تُقرأ ولا تُفيد */
+    h += '<div class="kpis k3">'
       + kpi("◺", "accent", "قيمة محافظك", fmt(investVal()), "",
-            "ساهمت بـ " + fmt(investIn()) + " · " + fmt(planInv()) + " شهرياً · "
-            + state.invest.length + " جهة")
-      + kpi("%", RR.n && RR.r < 0 ? "warn" : "ok", "أداء محافظك",
-            RR.n ? (RR.r >= 0 ? "+" : "−") + pctTxt(Math.abs(RR.r)) : "—", "",
-            RR.n ? "خلال " + arMonths(RR.n) : "لا لقطات بعد")
-      + kpi(GG >= 0 ? "↑" : "↓", GG >= 0 ? "ok" : "warn", "ربح " + esc(mName(ui.month)),
-            (GG > 0 ? "+" : GG < 0 ? "−" : "") + fmt(Math.abs(GG)), "",
-            "القيمة − السابقة − ما أودعت")
-      + kpi("Σ", investIn() && investVal() >= investIn() ? "ok" : "warn", "على مساهماتك",
-            investIn() ? pctTxt((investVal() - investIn()) / investIn()) : "—", "",
-            "قيمتها اليوم مقابل ما دفعت")
-      + kpi(unfunded ? "◔" : "✓", unfunded ? "gold" : "ok",
-            unfunded ? "لم يُموَّل" : "مُموَّل بالكامل",
-            unfunded ? fmt(unfunded) : fmt(putI), "",
-            unfunded ? "خطة الشهر لم تُنفَّذ بعد" : "خطة الشهر نُفّذت")
-      + '</div>';
+            state.invest.length + " جهة · " + auto2.length + " آليّة و"
+            + self2.length + " ذاتيّة")
+      + kpi(investVal() >= investIn() ? "↑" : "↓",
+            investVal() >= investIn() ? "ok" : "warn", "ربحُك",
+            investIn() ? ((investVal() - investIn() >= 0 ? "+" : "−")
+                          + fmt(Math.abs(investVal() - investIn()))) : "—", "",
+            investIn() ? ("على " + fmt(investIn()) + " ساهمتَ بها · "
+                          + pctTxt((investVal() - investIn()) / investIn()))
+                       : "لم تساهم بعد")
+      + kpi(unfunded ? "◔" : "✓", unfunded ? "gold" : "ok", "شهرياً",
+            fmt(planInv()), "",
+            unfunded ? ("لم تُموّل " + fmt(unfunded) + " من خطة الشهر")
+                     : "خطةُ الشهر مموَّلةٌ كاملةً")
+      + '</div>'
+      + invSparkAll();
 
     cut("kpi");
 
-    /* التصنيف ملخّصٌ يسبق التفصيل — وكان أسفل الصفحة بعد زرّ الإضافة */
-    h += '<div class="sec"><h2>نوعا استثمارك</h2>'
-      + '<span class="hint">الآليُّ تختار له وتتركه · والذاتيُّ '
-      + 'تشتري وتبيع فيه بنفسك</span></div>'
-      + '<div class="grid nospan">'
-      + stat("آليّ", fmt(sumVal(auto)),
-             fmt(sum(auto,"m")) + " شهرياً · " + auto.length + " جهة", "var(--ok-2)")
-      + stat("ذاتيّ", fmt(sumVal(self)),
-             fmt(sum(self,"m")) + " شهرياً · " + self.length + " جهة", "var(--ink-2)")
-      + '</div>';
-
-    cut("split");
-
-    h += '<div class="hintnote" data-note="n497ed1e"><b>جهة الاستثمار</b> ليست حساباً — هي التطبيق أو الشركة '
-      + '(أبيان، ملاءة، الراجحي المالية) وما تخطّط أن تساهم به فيها شهرياً.<br>'
-      + '<b>الحساب</b> هو الوعاء الذي يحمل المال فعلاً. كل جهة لها حساب واحد أو أكثر من نوع «محفظة»، '
-      + 'وقيمة الجهة = مجموع أرصدة حساباتها. تجدها كلها في تبويب «الحسابات» وتدخل في صافي ثروتك.</div>'
-      + '<div class="hintnote" data-note="n7ef773c">القاعدة: أكمل صندوق الطوارئ أولاً، ولا تضع مال هدف قريب المدى (كالزواج) في محفظة متقلبة. '
-      + 'الاستثمار يضاعف رأس مال قائماً — لا يبنيه.</div>';
+    /* الشرحُ الطويلُ مكانُه الدليل — وهنا سطرٌ وبابٌ إليه */
+    h += '<div class="hintnote" data-note="n497ed1e">'
+      + '<b>الجهة</b> هي التطبيق أو الشركة، و<b>الحساب</b> هو الوعاء الذي '
+      + 'يحمل المال. وقيمةُ الجهة مجموعُ أرصدة حساباتها.'
+      + '<div class="acts"><button class="act sm" data-guide="inv">'
+      + 'اشرح لي أكثر</button></div></div>';
 
     cut("edu");
 
-    var IC = invCat();
-    if(IC){
-      var icap = catCap(IC, ui.month), iused = invMonthly(), iover = Math.max(0, iused - icap);
-      h += '<div class="sec"><h2>سقف الاستثمار الشهري</h2>'
-        + '<span class="hint">من بند «استثمار» في الخطة</span></div><div class="card">'
-        + '<div class="capline" style="border-bottom:0"><span>موزّع على المحافظ <b>' + fmt(iused)
-        + '</b> من <b>' + fmt(icap) + '</b></span>'
-        + '<span class="fill"><i style="width:' + (icap ? Math.min(100, iused / icap * 100) : 100)
-        + '%;background:' + (iover ? "var(--warn)" : "var(--ok-2)") + '"></i></span>'
-        + (iover ? '<span class="capwarn">تجاوزت بـ ' + fmt(iover) + '</span>'
-                 : '<span>متبقٍ <b>' + fmt(Math.max(0, icap - iused)) + '</b></span>') + '</div>'
-        + '<div class="arow" style="padding:0 15px 12px"><span class="al">السقف</span>'
-        + '<input class="ni s" type="number" inputmode="numeric" data-plan="' + INVK + '" value="'
-        + rawP(IC, ui.month, INVK) + '">'
-        + '<span class="ahint" style="padding:0">هذا كل ما تسمح لنفسك باستثماره شهرياً — '
-        + 'مجموع المحافظ لا يتجاوزه.</span></div></div>';
-    }
     cut("cap");
 
     /* جدولٌ كجدول المصروف: صفٌّ لكلّ محفظةٍ وحقلٌ تكتب فيه قيمةَ الشهر.
@@ -8981,7 +8987,9 @@ border-inline-start:2px solid var(--accent);border-bottom:1px solid var(--line)}
         + '<s>' + (gl ? ('تحمل هدف «' + esc(gl.n) + '» · ') : "")
         + (v.kind === "auto" ? "آليّ" : "ذاتيّ")
         + (inn ? (' · ساهمتَ بـ ' + fmt(inn))
-                : " · اكتب قيمتها لتبدأ متابعتَها") + '</s></span>'
+                : " · اكتب قيمتها لتبدأ متابعتَها")
+        /* قيمةُ الشهر الماضي بجانبها: الرقمُ يُقارَن لا يُقرأ وحدَه */
+        + (prev ? (' · كانت ' + fmt(prev) + ' الشهرَ الماضي') : "") + '</s></span>'
         /* الفعلُ الشهريُّ في متناول اليد: قيمةُ اليوم */
         + (many
             ? ('<span class="qv dim" title="' + esc("محافظُها في تبويب الحسابات")
@@ -8992,7 +9000,9 @@ border-inline-start:2px solid var(--accent);border-bottom:1px solid var(--line)}
                + (mode === "val" ? (now === null ? "" : now)
                                  : (gain === null ? "" : gain)) + '">'))
         + '<span class="qv ' + (pr > 0 ? "up" : pr < 0 ? "dn" : "dim") + '">'
-        + (inn ? ((pr >= 0 ? "+" : "−") + fmt(Math.abs(pr))) : "—") + '</span>'
+        + (inn ? ((pr >= 0 ? "+" : "−") + fmt(Math.abs(pr))) : "—")
+        /* والنسبةُ تحته: المبلغُ وحدَه لا يقول أكثيرٌ هو أم قليل */
+        + (inn ? ('<em class="qpc">' + pctTxt(pr / inn) + '</em>') : "") + '</span>'
         + '<span class="qv' + (num(v.m) ? "" : " dim") + '">' + fmt(num(v.m)) + '</span>'
         + '</div>'
         + (open ? invPanel(v) : "");
@@ -9004,6 +9014,21 @@ border-inline-start:2px solid var(--accent);border-bottom:1px solid var(--line)}
       + '<span class="qv ' + (TV - TI > 0 ? "up" : TV - TI < 0 ? "dn" : "dim") + '">'
       + (TI ? ((TV - TI >= 0 ? "+" : "−") + fmt(Math.abs(TV - TI))) : "—") + '</span>'
       + '<span class="qv">' + fmt(TM) + '</span></div>';
+    /* السقفُ حيث يُقرأ: تحت المجموع لا في قسمٍ قائمٍ بذاته */
+    var IC = invCat();
+    if(IC){
+      var icap = catCap(IC, ui.month), iused = invMonthly();
+      var iover = Math.max(0, iused - icap);
+      h += '<div class="capline"><span>موزَّعٌ على محافظك <b>' + fmt(iused)
+        + '</b> من سقفك الشهريّ</span>'
+        + '<input class="ni s" type="number" inputmode="numeric" data-plan="' + INVK
+        + '" value="' + rawP(IC, ui.month, INVK) + '">'
+        + (iover ? ('<span class="capwarn">تجاوزتَه بـ ' + fmt(iover) + '</span>')
+                 : ('<span>متبقٍ <b>' + fmt(Math.max(0, icap - iused)) + '</b></span>'))
+        + '</div>'
+        + '<div class="ahint" style="padding:0 15px 12px">هذا سقفُك أنت — '
+        + 'تكتبه هنا ويُحجز في بند «استثمار» من خطتك.</div>';
+    }
     h += '<div class="qadd"><button class="addbtn sm" data-addinv="1">'
       + '+ جهةٌ جديدة</button></div></div>';
 
@@ -9011,7 +9036,7 @@ border-inline-start:2px solid var(--accent);border-bottom:1px solid var(--line)}
 
     /* الأرقام · السقف · المحافظ · تصنيفها · ثم الشرح */
     /* الملخّصان (النوعان والسقف) قبل التفصيل (المحافظ)، والشرح أخيراً */
-    return ["kpi","split","cap","port","edu"]
+    return ["kpi", "edu", "port"]
       .map(function(nm){ return PART[nm] || ""; }).join("");
   }
 
@@ -12647,7 +12672,7 @@ border-inline-start:2px solid var(--accent);border-bottom:1px solid var(--line)}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+31";
+  var APP_VERSION = "1.5.0-beta+32";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
