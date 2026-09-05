@@ -3025,7 +3025,7 @@ border-inline-start:2px solid var(--accent);border-bottom:1px solid var(--line)}
     var gain = now === null ? null : Math.round(now - prev - put);
     return '<div class="invclose">'
       + '<div class="arow">'
-      + '<span class="cl">أقفِل ' + esc(mName(mk).split(" ")[0]) + '</span>'
+      + '<span class="cl">قيمتُها في ' + esc(mName(mk).split(" ")[0]) + '</span>'
       + '<span class="chips">'
       + '<button class="chip sm' + (mode === "val" ? " on" : "") + '" data-inmode="' + v.id + '|val">بالقيمة</button>'
       + '<button class="chip sm' + (mode === "gain" ? " on" : "") + '" data-inmode="' + v.id + '|gain">بالربح</button>'
@@ -4571,10 +4571,10 @@ border-inline-start:2px solid var(--accent);border-bottom:1px solid var(--line)}
   function calcOpen(title, start, back){
     calcBack = back;
     ask({ title: title,
-      msg: "اكتب أو اضغط. ويقبل + − × ÷ والأقواس.",
+      msg: "اكتب الأرقام أو اضغطها. ويقبل + − × ÷ والأقواس.",
       fields: [{ label: "العملية", value: String(start || ""), ph: "120+45" }],
       html: calcPadHTML(),
-      ok: "استخدم",
+      ok: "ضع الناتج في البند",
       onOk: function(v){
         var raw = String(v[0] || "").trim();
         var r = calcAmt(raw);
@@ -8915,7 +8915,8 @@ border-inline-start:2px solid var(--accent);border-bottom:1px solid var(--line)}
 
     /* التصنيف ملخّصٌ يسبق التفصيل — وكان أسفل الصفحة بعد زرّ الإضافة */
     h += '<div class="sec"><h2>نوعا استثمارك</h2>'
-      + '<span class="hint">آليّ يُدار عنك · ذاتيّ تديره</span></div>'
+      + '<span class="hint">الآليُّ تختار له وتتركه · والذاتيُّ '
+      + 'تشتري وتبيع فيه بنفسك</span></div>'
       + '<div class="grid nospan">'
       + stat("آليّ", fmt(sumVal(auto)),
              fmt(sum(auto,"m")) + " شهرياً · " + auto.length + " جهة", "var(--ok-2)")
@@ -8956,7 +8957,8 @@ border-inline-start:2px solid var(--accent);border-bottom:1px solid var(--line)}
     /* جدولٌ كجدول المصروف: صفٌّ لكلّ محفظةٍ وحقلٌ تكتب فيه قيمةَ الشهر.
        والتفصيلُ خلف ضغطةٍ على الصفّ — لا مبسوطاً في كلّ بطاقة. */
     h += '<div class="sec"><h2>محافظك</h2>'
-      + '<span class="hint">اكتب قيمةَ كلِّ محفظةٍ اليوم — والباقي يُحسب</span>'
+      + '<span class="hint">قيمتُها تتغيّر وحدَها — اكتبها كلَّ شهرٍ '
+      + 'ليُعرف ربحُك</span>'
       + '</div><div class="card">';
     h += '<div class="qtab head"><span>الجهة</span><span>قيمتها اليوم</span>'
       + '<span>الربح</span><span>شهرياً</span></div>';
@@ -8978,7 +8980,8 @@ border-inline-start:2px solid var(--accent);border-bottom:1px solid var(--line)}
         + '<span class="qsx' + (open ? " on" : "") + '"><i>▾</i></span></b>'
         + '<s>' + (gl ? ('تحمل هدف «' + esc(gl.n) + '» · ') : "")
         + (v.kind === "auto" ? "آليّ" : "ذاتيّ")
-        + (inn ? (' · ساهمتَ بـ ' + fmt(inn)) : " · لم تبدأ بعد") + '</s></span>'
+        + (inn ? (' · ساهمتَ بـ ' + fmt(inn))
+                : " · اكتب قيمتها لتبدأ متابعتَها") + '</s></span>'
         /* الفعلُ الشهريُّ في متناول اليد: قيمةُ اليوم */
         + (many
             ? ('<span class="qv dim" title="' + esc("محافظُها في تبويب الحسابات")
@@ -11971,15 +11974,16 @@ border-inline-start:2px solid var(--accent);border-bottom:1px solid var(--line)}
         if(how === "fail"){
           ask({ title: "انسخ النصّ", msg: "تعذّر حفظ ملفٍّ في هذا العرض.",
             fields: [{ label: name, type: "area", value: text }],
-            ok: "تمام", cancel: false, onOk: function(){} });
+            ok: "نسختُه — أغلِقه", cancel: false, onOk: function(){} });
         }
       });
     });
     on("[data-bkshow]", function(){
       ask({ title: "بياناتك نصّاً",
-        msg: "حدّده وانسخه. وللاستعادة الصقه في «استعادة».",
+        msg: "حدّد النصَّ كلَّه وانسخه، واحفظه عندك. "
+           + "ولإرجاعه: الصقه في «استعادة» من الإعدادات.",
         fields: [{ label: backupName("json"), type: "area", value: backupText() }],
-        ok: "تمام", cancel: false, onOk: function(){} });
+        ok: "نسختُه — أغلِقه", cancel: false, onOk: function(){} });
       setTimeout(function(){
         var el = document.getElementById("df0");
         if(el){ el.readOnly = true; try{ el.select(); }catch(e){} }
@@ -12287,7 +12291,7 @@ border-inline-start:2px solid var(--accent);border-bottom:1px solid var(--line)}
           return dgroup("من أين يأتي التحديث",
             '<button class="mini" data-openhome="1">' + esc(HOME) + '</button>');
         },
-        ok: "تمام", cancel: false });
+        ok: "قرأتُه — أغلِقه", cancel: false });
     });
     on("[data-openhome]", function(){
       try{ window.open("https://" + HOME, "_blank", "noopener"); }catch(e){}
@@ -12643,7 +12647,7 @@ border-inline-start:2px solid var(--accent);border-bottom:1px solid var(--line)}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+30";
+  var APP_VERSION = "1.5.0-beta+31";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
@@ -13311,7 +13315,7 @@ border-inline-start:2px solid var(--accent);border-bottom:1px solid var(--line)}
       msg: "اختر ما يناسبك — وغيّره متى شئت من الإعدادات. لا شيء يضيع بالتبديل.",
       fields: [],
       html: function(){ return '<div class="card">' + storageHTML(false) + '</div>'; },
-      ok: "تمّ", cancel: false });
+      ok: "اخترتُ — أغلِقه", cancel: false });
   }
 
   /* ═══ جوجل درايف ═══ */
