@@ -1762,6 +1762,12 @@ color:var(--gold);white-space:nowrap}
 
 /* ══ قياس الاستثمار ══ */
 .invcard{padding:0}
+/* لوحُ تفصيل المحفظة: مُزاحٌ بعمودٍ كفروع المصروف */
+.qsub.ipanel{display:block;padding:12px 15px 14px;background:var(--card-2);
+border-inline-start:2px solid var(--accent);border-bottom:1px solid var(--line)}
+.qtab.zero{opacity:.62}
+.qtab .qv.up{color:var(--ok)}
+.qtab .qv.dn{color:var(--warn)}
 .ihead{display:grid;grid-template-columns:34px minmax(0,1fr) auto auto;gap:12px;
   align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
 .ihead .it{min-width:0}
@@ -2977,6 +2983,36 @@ color:var(--gold);white-space:nowrap}
      «بالربح»  تكتب ربح الجهة      → القيمة تُشتقّ ثم تُخزَّن
      المخزَّن في الحالتين هو القيمة وحدها. */
   function invEntry(v){ return v.entry === "gain" ? "gain" : "val"; }
+  /* تفصيلُ المحفظة — يُفتح في مكانه تحت صفّها */
+  function invPanel(v){
+    var many = invAccts(v).length > 1;
+    return '<div class="qsub ipanel">'
+      + invSpark(v)
+      + '<div class="ibody">'
+      + invClose(v, ui.month)
+      + invHist(v)
+      + '<div class="iedit"><div class="lab">حساب الحفظ</div>'
+      + (many
+          ? acctSelect("data-isel", v.id, "i:" + v.id)
+            + linkedChips("i:" + v.id, "inv", "data-iunlink")
+          : acctSelectOne("data-ipick", v.id, "i:" + v.id))
+      + '<div class="lab" style="margin-top:12px">إعدادات الجهة</div><div class="fields">'
+      + '<div class="f"><label>شهرياً</label><input class="ni" type="number" '
+      + 'inputmode="numeric" data-inv="' + v.id + '|m" value="' + num(v.m) + '"></div>'
+      + '<div class="f"><label>إجمالي ما ساهمت</label><input class="ni w" type="number" '
+      + 'inputmode="numeric" data-inv="' + v.id + '|in" value="' + num(v["in"]) + '"></div>'
+      + (invFromAccts(v) ? ""
+          : '<div class="f"><label>القيمة الحالية</label>'
+            + '<input class="ni w" type="number" inputmode="numeric" data-inv="'
+            + v.id + '|val" value="' + num(v.val) + '"></div>')
+      + '</div>'
+      + '<div class="abtns">'
+      + '<button class="mini" data-kind="' + v.id + '">'
+      + (v.kind === "auto" ? "🤖 آليّ" : "📊 ذاتيّ") + '</button>'
+      + '<button class="mini" data-addwallet="' + v.id + '">+ محفظة أخرى</button>'
+      + '<button class="mini bad" data-delinv="' + v.id + '">احذف الجهة</button>'
+      + '</div></div></div></div>';
+  }
   function invClose(v, mk){
     var as = invAccts(v);
     if(as.length > 1)
@@ -8800,69 +8836,57 @@ color:var(--gold);white-space:nowrap}
     }
     cut("cap");
 
-    h += '<div class="sec"><h2>محافظك</h2><span class="hint">حدّث القيمة شهرياً</span></div>';
+    /* جدولٌ كجدول المصروف: صفٌّ لكلّ محفظةٍ وحقلٌ تكتب فيه قيمةَ الشهر.
+       والتفصيلُ خلف ضغطةٍ على الصفّ — لا مبسوطاً في كلّ بطاقة. */
+    h += '<div class="sec"><h2>محافظك</h2>'
+      + '<span class="hint">اكتب قيمةَ كلِّ محفظةٍ اليوم — والباقي يُحسب</span>'
+      + '</div><div class="card">';
+    h += '<div class="qtab head"><span>الجهة</span><span>قيمتها اليوم</span>'
+      + '<span>الربح</span><span>شهرياً</span></div>';
+    var TV = 0, TI = 0, TM = 0;
     h += state.invest.map(function(v){
-      var pr = invVal(v) - num(v["in"]);
-      var ret = num(v["in"]) ? pr / num(v["in"]) : 0;
-      var RV = invReturn(v);
-      var many = invAccts(v).length > 1, open = !!ui.openInv[v.id], a1 = invAccts(v)[0];
-      /* المعروض دائماً: الاسم · الأداء · حساب الحفظ · إقفال الشهر · السجلّ
-         وخلف «تعديل»: المبالغ والربط والحذف — لا يُعدَّل شيء بالخطأ. */
-      /* لم تبدأ بعد: لا قيمة ولا إيداع ولا خطة — صفٌّ يكفيها */
-      if(!invVal(v) && !num(v["in"]) && !num(v.m) && !open){
-        return '<div class="card invcard idle"><div class="ihead">'
-          + '<span class="ic" style="background:var(--card-2);color:var(--ink-3)">'
-          + (v.kind === "auto" ? "🤖" : "📊") + '</span>'
-          + '<span class="it"><b>' + esc(v.n) + '</b><s>لم تبدأ بعد — لا قيمة ولا إيداع</s></span>'
-          + '<button class="mini" data-invedit="' + v.id + '">افتحها</button>'
-          + '</div></div>';
-      }
-      return '<div class="card invcard"><div class="ihead">'
-        + '<span class="ic" style="background:var(--ok-soft);color:var(--ok)">'
-        + (v.kind==="auto" ? "🤖" : "📊") + '</span>'
-        + '<span class="it"><b>' + esc(v.n) + '</b><s>'
-        + (invGoal(v) ? ('تحمل هدف «' + esc(invGoal(v).n) + '» · ') : "")
-        + (RV.n ? "أداء " + (RV.r>=0?"+":"−") + pctTxt(Math.abs(RV.r))
-                  + " خلال " + arMonths(RV.n) : "لم تُقفل شهراً بعد")
-        + '</s></span>'
-        + '<button class="mini' + (open ? " on" : "") + '" data-invedit="' + v.id + '">'
-        + (open ? "تمّ" : "تعديل") + '</button></div>'
-        /* ثلاثة أرقام: الأسئلة التي تفتح البطاقة لأجلها */
-        + '<div class="ires">'
-        + '<span class="rq"><s>قيمتها اليوم</s><b>' + fmt(invVal(v)) + '</b></span>'
-        + '<span class="rq"><s>ما ساهمتَ به</s><b class="dim">' + fmt(num(v["in"])) + '</b></span>'
-        + '<span class="rq"><s>الربح</s><b class="' + (pr >= 0 ? "up" : "dn") + '">'
-        + (num(v["in"]) ? (pr>=0?"+":"−") + fmt(Math.abs(pr)) : "—") + '</b>'
-        + (num(v["in"]) ? '<em>' + pctTxt(ret) + '</em>' : "") + '</span>'
+      var val = invVal(v), inn = num(v["in"]), pr = val - inn;
+      var open = !!ui.openInv[v.id], many = invAccts(v).length > 1;
+      var idle = !val && !inn && !num(v.m);
+      var gl = invGoal(v);
+      TV += val; TI += inn; TM += num(v.m);
+      var mode = invEntry(v), now = invValAt(v, ui.month);
+      var prev = invValAt(v, shift(ui.month, -1)); if(prev === null) prev = 0;
+      var put = invPut(v, ui.month);
+      var gain = now === null ? null : Math.round(now - prev - put);
+      return '<div class="qtab' + (idle ? " zero" : "") + '">'
+        + '<span class="qt has" data-invopen="' + v.id + '" title="'
+        + esc("اضغط الصفَّ لتفتح تفاصيلَها") + '">'
+        + '<b>' + esc(v.n)
+        + '<span class="qsx' + (open ? " on" : "") + '"><i>▾</i></span></b>'
+        + '<s>' + (gl ? ('تحمل هدف «' + esc(gl.n) + '» · ') : "")
+        + (v.kind === "auto" ? "آليّ" : "ذاتيّ")
+        + (inn ? (' · ساهمتَ بـ ' + fmt(inn)) : " · لم تبدأ بعد") + '</s></span>'
+        /* الفعلُ الشهريُّ في متناول اليد: قيمةُ اليوم */
+        + (many
+            ? ('<span class="qv dim" title="' + esc("محافظُها في تبويب الحسابات")
+               + '">' + fmt(val) + '</span>')
+            : ('<input class="qin' + (now !== null ? " has" : "") + '" type="number" '
+               + 'inputmode="decimal" step="any" data-invclose="' + v.id
+               + '" placeholder="' + fmt(val) + '" value="'
+               + (mode === "val" ? (now === null ? "" : now)
+                                 : (gain === null ? "" : gain)) + '">'))
+        + '<span class="qv ' + (pr > 0 ? "up" : pr < 0 ? "dn" : "dim") + '">'
+        + (inn ? ((pr >= 0 ? "+" : "−") + fmt(Math.abs(pr))) : "—") + '</span>'
+        + '<span class="qv' + (num(v.m) ? "" : " dim") + '">' + fmt(num(v.m)) + '</span>'
         + '</div>'
-        + invSpark(v)
-        + '<div class="ibody">'
-        + invClose(v, ui.month)
-        + invHist(v)
-        + (open
-            ? '<div class="iedit"><div class="lab">حساب الحفظ</div>'
-              + (many
-                  ? acctSelect("data-isel", v.id, "i:" + v.id)
-                    + linkedChips("i:" + v.id, "inv", "data-iunlink")
-                  : acctSelectOne("data-ipick", v.id, "i:" + v.id))
-              + '<div class="lab" style="margin-top:12px">إعدادات الجهة</div><div class="fields">'
-              + '<div class="f"><label>شهرياً</label><input class="ni" type="number" inputmode="numeric" data-inv="' + v.id + '|m" value="' + num(v.m) + '"></div>'
-              + '<div class="f"><label>إجمالي ما ساهمت</label><input class="ni w" type="number" inputmode="numeric" data-inv="' + v.id + '|in" value="' + num(v["in"]) + '"></div>'
-              + (invFromAccts(v) ? ""
-                  : '<div class="f"><label>القيمة الحالية</label>'
-                    + '<input class="ni w" type="number" inputmode="numeric" data-inv="' + v.id + '|val" value="' + num(v.val) + '"></div>')
-              + '</div>'
-              + '<div class="abtns">'
-              + '<button class="mini" data-kind="' + v.id + '">' + (v.kind==="auto" ? "🤖 آلي" : "📊 ذاتي") + '</button>'
-              + '<button class="mini" data-addwallet="' + v.id + '">+ محفظة أخرى</button>'
-              + '<button class="mini bad" data-delinv="' + v.id + '" style="margin-inline-start:auto">احذف الجهة</button>'
-              + '</div></div>'
-            : "")
-        + '</div></div>';
+        + (open ? invPanel(v) : "");
     }).join("");
-    h += '<button class="addbtn" data-addinv="1">+ أضف جهة استثمار</button>';
-    h += '<div class="hintnote spanall" data-note="n80324d6">«تعديل» يفتح إعدادات الجهة — المبالغ والربط والحذف. '
-      + 'وحقل الإقفال يبقى مفتوحاً دائماً لأنه عمل كل شهر.</div>';
+    h += '<div class="qtab foot"><span class="qn">'
+      + '<span class="qi" style="background:var(--card-2)">Σ</span>'
+      + '<span class="qt"><b>مجموع محافظك</b><s>' + state.invest.length + ' جهة</s></span></span>'
+      + '<span class="qv">' + fmt(TV) + '</span>'
+      + '<span class="qv ' + (TV - TI > 0 ? "up" : TV - TI < 0 ? "dn" : "dim") + '">'
+      + (TI ? ((TV - TI >= 0 ? "+" : "−") + fmt(Math.abs(TV - TI))) : "—") + '</span>'
+      + '<span class="qv">' + fmt(TM) + '</span></div>';
+    h += '<div class="qadd"><button class="addbtn sm" data-addinv="1">'
+      + '+ جهةٌ جديدة</button></div></div>';
+
     cut("port");
 
     /* الأرقام · السقف · المحافظ · تصنيفها · ثم الشرح */
@@ -11465,6 +11489,11 @@ color:var(--gold);white-space:nowrap}
     on("[data-mighide]", function(){
       state.migHide = true; toast("تجده في الإعدادات متى شئت"); save(); render();
     });
+    on("[data-invopen]", function(b){
+      var id = b.getAttribute("data-invopen");
+      ui.openInv[id] = !ui.openInv[id];
+      render();
+    });
     ch("[data-ginv]", function(el){
       var g = byId(state.goals, el.getAttribute("data-ginv"));
       if(!g) return;
@@ -12489,7 +12518,7 @@ color:var(--gold);white-space:nowrap}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+28";
+  var APP_VERSION = "1.5.0-beta+29";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
