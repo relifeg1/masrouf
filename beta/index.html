@@ -2363,6 +2363,12 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
   }
   function income(k){ var o = incObj(k); return o.salary + o.extra; }
 
+  /* ما أُودع في المحافظ هذا الشهر — وهو «صرفُ» بند الاستثمار */
+  function invPutAll(mk){
+    var d = distMap(mk), t = 0;
+    for(var k2 in d){ if(k2.charAt(0) === "i") t += num(d[k2]); }
+    return money(t);
+  }
   function actuals(k){
     var m = state.months[k], by = {}, bySub = {}, sum = 0;
     if(m) m.items.forEach(function(it){
@@ -2370,6 +2376,12 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
       if(it.s) bySub[it.s] = (bySub[it.s]||0) + it.a;
       sum += it.a;
     });
+    /* بندُ الاستثمار لا يُصرف بعملياتٍ بل بإيداعٍ في محافظه — وخطّتُه
+       محسوبةٌ منها. فلو تُرك صفراً لقرأ الأبُ غيرَ ما يقرأ أبناؤه.
+       ولا يُزاد في `sum`: ذاك مجموعُ الإنفاق، والإيداعُ ادّخارٌ يُعدّ
+       في بابه — ولو عُدّ هنا لطُرح مرّتين من «يبقى من دخلك». */
+    var ip = invPutAll(k);
+    if(ip) by[INVK] = (by[INVK] || 0) + ip;
     return { by: by, bySub: bySub, sum: sum };
   }
   /* ── أنواع البنود ── */
@@ -8403,10 +8415,13 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
       var capRow = isCap(c);
       if(capRow) avail = capOf(c);
       var tk = typeOf(c);
-      var roCalc = capRow || c.off || tk === "cycle" || tk === "pct";
+      /* بندُ الاستثمار خطّتُه مجموعُ محافظه — فلا يُكتب هنا رقمٌ ثانٍ
+         يخالفها. وسقفُه يُكتب في شاشة الاستثمار حيث يُقرأ مع محافظه. */
+      var roCalc = capRow || c.off || tk === "cycle" || tk === "pct" || isInvCat(c);
       var roWhy = c.off ? "موقوف مؤقّتاً"
                 : capRow ? "سقفٌ لا يُحجز من دخلك"
                 : tk === "cycle" ? ("المبلغ الكامل ÷ " + (num(c.every) || 12) + " شهراً")
+                : isInvCat(c) ? "مجموعُ ما تضعه في محافظك — وسقفُه في شاشة الاستثمار"
                 : ("نسبةٌ من دخل الشهر: " + num(c.pct) + "٪");
       var sp = A.by[c.k] || 0, left = avail - sp;
       var det = detailSum(k, c.k), dn = detailCount(k, c.k);
@@ -12766,7 +12781,7 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+35";
+  var APP_VERSION = "1.5.0-beta+36";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
