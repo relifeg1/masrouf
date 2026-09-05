@@ -1773,6 +1773,8 @@ border-inline-start:2px solid var(--accent);border-bottom:1px solid var(--line)}
 .ispark.big{padding:12px 16px 6px;margin-bottom:14px;background:var(--card);
 border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
 .ispark.big .sb{flex:1 1 0;max-width:52px}
+.kpis.k4{grid-template-columns:1fr 1fr}
+@media (min-width:1060px){.kpis.k4{grid-template-columns:repeat(4,1fr)}}
 .ispark.big i{border-radius:5px 5px 0 0}
 .act.sm{padding:6px 12px;font-size:12px}
 .ihead{display:grid;grid-template-columns:34px minmax(0,1fr) auto auto;gap:12px;
@@ -3018,7 +3020,31 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
           ? acctSelect("data-isel", v.id, "i:" + v.id)
             + linkedChips("i:" + v.id, "inv", "data-iunlink")
           : acctSelectOne("data-ipick", v.id, "i:" + v.id))
-      + '<div class="lab" style="margin-top:12px">إعدادات الجهة</div><div class="fields">'
+      + '<div class="lab" style="margin-top:12px">ما هي هذه المحفظة</div>'
+      + '<div class="f2grid">'
+      + '<div class="f2"><label>نوعُها</label><select class="sel" data-invtype="'
+      + v.id + '">'
+      + INVTYPES.map(function(t){
+          return '<option value="' + t.k + '"' + (invTypeOf(v).k === t.k ? " selected" : "")
+            + '>' + esc(t.e + " " + t.n) + '</option>'; }).join("")
+      + '</select></div>'
+      + '<div class="f2"><label>من يديرها</label><select class="sel" data-invmng="'
+      + v.id + '">'
+      + INVMNG.map(function(t){
+          return '<option value="' + t.k + '"' + (invMngOf(v).k === t.k ? " selected" : "")
+            + '>' + esc(t.e + " " + t.n) + '</option>'; }).join("")
+      + '</select></div>'
+      + '<div class="f2"><label>مخاطرتُها</label><select class="sel" data-invrisk="'
+      + v.id + '">'
+      + INVRISK.map(function(t){
+          return '<option value="' + t.k + '"' + (invRiskOf(v).k === t.k ? " selected" : "")
+            + '>' + esc(t.n) + '</option>'; }).join("")
+      + '</select></div>'
+      + '<div class="f2"><label>هدفُها (اختياريّ)</label>'
+      + '<input class="ni" type="number" inputmode="numeric" data-invtgt="' + v.id
+      + '" value="' + (num(v.tgt) || "") + '" placeholder="مثلاً 100000"></div>'
+      + '</div>'
+      + '<div class="lab" style="margin-top:12px">أرقامُها</div><div class="fields">'
       + '<div class="f"><label>شهرياً</label><input class="ni" type="number" '
       + 'inputmode="numeric" data-inv="' + v.id + '|m" value="' + num(v.m) + '"></div>'
       + '<div class="f"><label>إجمالي ما ساهمت</label><input class="ni w" type="number" '
@@ -3349,7 +3375,27 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
     }
     return true;
   }
+  /* صافي ما وضعتَ في محافظك كلِّها — يُسمح بالسلب */
   function investIn(){ var s = 0; state.invest.forEach(function(v){ s += num(v["in"]); }); return s; }
+  /* أقربُ هدفٍ في محافظك: هدفُ المحفظة نفسِها أو هدفٌ يقرأ منها */
+  function invNearGoal(){
+    var best = null;
+    (state.invest || []).forEach(function(v){
+      var tg = num(v.tgt), now = invVal(v), per = num(v.m), g = invGoal(v);
+      var nm = v.n, src = "محفظة";
+      if(!(tg > 0) && g && goalTarget(g) > 0){
+        tg = goalTarget(g); now = goalSaved(g); per = goalMonthly(g);
+        nm = g.n; src = "هدف";
+      }
+      if(!(tg > 0)) return;
+      var rest = Math.max(0, tg - now);
+      var n = per > 0 ? Math.ceil(rest / per) : null;
+      var cand = { n: nm, src: src, tgt: tg, now: now, rest: rest, months: n };
+      if(!best) best = cand;
+      else if(n !== null && (best.months === null || n < best.months)) best = cand;
+    });
+    return best;
+  }
   /* ── الحسابات المصرفية ── */
   function accts(){ if(!state.accts) state.accts = []; return state.accts; }
   function acctOf(id){ var a = accts(); for(var i=0;i<a.length;i++) if(a[i].id === id) return a[i]; return null; }
@@ -9163,24 +9209,35 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
     var dm = distMap(ui.month), putI = 0;
     for(var ky in dm){ if(ky.charAt(0) === "i") putI += num(dm[ky]); }
     var unfunded = Math.max(0, planInv() - putI);
-    var auto2 = state.invest.filter(function(v){ return v.kind === "auto"; });
-    var self2 = state.invest.filter(function(v){ return v.kind === "self"; });
-    /* ثلاثةُ أرقامٍ تجيب أسئلةَ الشاشة — لا خمسةٌ تُقرأ ولا تُفيد */
-    h += '<div class="kpis k3">'
-      + kpi("◺", "accent", "قيمة محافظك", fmt(investVal()), "",
-            state.invest.length + " جهة · " + auto2.length + " آليّة و"
-            + self2.length + " ذاتيّة")
-      + kpi(investVal() >= investIn() ? "↑" : "↓",
-            investVal() >= investIn() ? "ok" : "warn", "ربحُك",
-            investIn() ? ((investVal() - investIn() >= 0 ? "+" : "−")
-                          + fmt(Math.abs(investVal() - investIn()))) : "—", "",
-            investIn() ? ("على " + fmt(investIn()) + " ساهمتَ بها · "
-                          + pctTxt((investVal() - investIn()) / investIn()))
-                       : "لم تساهم بعد")
-      + kpi(unfunded ? "◔" : "✓", unfunded ? "gold" : "ok", "شهرياً",
-            fmt(planInv()), "",
-            unfunded ? ("لم تُموّل " + fmt(unfunded) + " من خطة الشهر")
-                     : "خطةُ الشهر مموَّلةٌ كاملةً")
+    var NET = investIn(), VAL = investVal(), PRF = money(VAL - NET);
+    var NG = invNearGoal();
+    var nAuto = 0;
+    state.invest.forEach(function(v){ if(invMngOf(v).k === "auto") nAuto++; });
+    /* أربعةُ أرقامٍ — أسئلتُك الأربعةُ حين تفتح الشاشة */
+    h += '<div class="kpis k4">'
+      /* ١ · كم عندي الآن؟ */
+      + kpi("◺", "accent", "قيمة محافظك", fmt(VAL), "",
+            state.invest.length + " محفظة · " + nAuto + " بتطبيقٍ آليّ")
+      /* ٢ · أربحتُ أم خسرت؟ — على صافي ما وضعتَ لا على ما ساهمت */
+      + kpi(PRF >= 0 ? "↑" : "↓", PRF >= 0 ? "ok" : "warn", "ربحُك",
+            (VAL || NET) ? ((PRF >= 0 ? "+" : "−") + fmt(Math.abs(PRF))) : "—", "",
+            NET > 0 ? ("على " + fmt(NET) + " صافي ما وضعت · " + pctTxt(PRF / NET))
+                    : (NET < 0 ? ("استرجعتَ " + fmt(Math.abs(NET))
+                                  + " أكثرَ ممّا وضعت")
+                               : "لم تضع شيئاً بعد"))
+      /* ٣ · أأمشي على خطتي؟ */
+      + kpi(unfunded ? "◔" : "✓", unfunded ? "gold" : "ok", "أودعتَ هذا الشهر",
+            fmt(putI), "",
+            planInv() ? (unfunded ? ("من خطّتك " + fmt(planInv()) + " — بقي "
+                                    + fmt(unfunded))
+                                  : ("خطّتُك " + fmt(planInv()) + " · مموَّلةٌ كاملةً"))
+                      : "لم تضع خطّةً شهريّةً بعد")
+      /* ٤ · متى أبلغ ما أريد؟ */
+      + kpi("◈", NG ? "accent" : "ok", "أقربُ هدف",
+            NG ? (NG.months === null ? "—" : arMonths(NG.months)) : "—", "",
+            NG ? (esc(NG.n) + " · بقي " + fmt(NG.rest) + " من " + fmt(NG.tgt)
+                  + (NG.months === null ? " · لا قسطَ شهريّ" : ""))
+               : "لا هدفَ على محافظك بعد")
       + '</div>'
       + invSparkAll();
 
@@ -9207,7 +9264,7 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
       + '<span>الربح</span><span>شهرياً</span></div>';
     var TV = 0, TI = 0, TM = 0;
     h += state.invest.map(function(v){
-      var val = invVal(v), inn = num(v["in"]), pr = val - inn;
+      var val = invVal(v), inn = num(v["in"]), pr = money(val - inn);
       var open = !!ui.openInv[v.id], many = invAccts(v).length > 1;
       var idle = !val && !inn && !num(v.m);
       var gl = invGoal(v);
@@ -9222,9 +9279,11 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
         + '<b>' + esc(v.n)
         + '<span class="qsx' + (open ? " on" : "") + '"><i>▾</i></span></b>'
         + '<s>' + (gl ? ('تحمل هدف «' + esc(gl.n) + '» · ') : "")
-        + (v.kind === "auto" ? "آليّ" : "ذاتيّ")
-        + (inn ? (' · ساهمتَ بـ ' + fmt(inn))
-                : " · اكتب قيمتها لتبدأ متابعتَها")
+        + esc(invTypeOf(v).n) + ' · ' + esc(invMngOf(v).n)
+        + ' · مخاطرةٌ ' + esc(invRiskOf(v).n)
+        + (inn > 0 ? (' · صافي ما وضعت ' + fmt(inn))
+             : inn < 0 ? (' · استرجعتَ ' + fmt(Math.abs(inn)) + ' أكثرَ ممّا وضعت')
+                       : " · اكتب قيمتها لتبدأ متابعتَها")
         /* قيمةُ الشهر الماضي بجانبها: الرقمُ يُقارَن لا يُقرأ وحدَه */
         + (prev ? (' · كانت ' + fmt(prev) + ' الشهرَ الماضي') : "") + '</s></span>'
         /* الفعلُ الشهريُّ في متناول اليد: قيمةُ اليوم */
@@ -9237,9 +9296,10 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
                + (mode === "val" ? (now === null ? "" : now)
                                  : (gain === null ? "" : gain)) + '">'))
         + '<span class="qv ' + (pr > 0 ? "up" : pr < 0 ? "dn" : "dim") + '">'
-        + (inn ? ((pr >= 0 ? "+" : "−") + fmt(Math.abs(pr))) : "—")
+        + ((inn || val) ? ((pr >= 0 ? "+" : "−") + fmt(Math.abs(pr))) : "—")
         /* والنسبةُ تحته: المبلغُ وحدَه لا يقول أكثيرٌ هو أم قليل */
-        + (inn ? ('<em class="qpc">' + pctTxt(pr / inn) + '</em>') : "") + '</span>'
+        + (inn > 0 ? ('<em class="qpc">' + pctTxt(pr / inn) + '</em>') : "")
+        + '</span>'
         + '<span class="qv' + (num(v.m) ? "" : " dim") + '">' + fmt(num(v.m)) + '</span>'
         + '</div>'
         + (open ? invPanel(v) : "");
@@ -11924,6 +11984,34 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
     on("[data-mighide]", function(){
       state.migHide = true; toast("تجده في الإعدادات متى شئت"); save(); render();
     });
+    ch("[data-invtype]", function(el){
+      var v = byId(state.invest, el.getAttribute("data-invtype"));
+      if(!v) return;
+      v.type = el.value;
+      /* المخاطرةُ تتبع النوعَ ما لم يخترها صاحبُها بيده */
+      if(!v.riskSet) v.risk = invTypeOf(v).r;
+      toast("صارت " + invTypeOf(v).n + " · مخاطرتُها " + invRiskOf(v).n);
+      save(); render();
+    });
+    ch("[data-invmng]", function(el){
+      var v = byId(state.invest, el.getAttribute("data-invmng"));
+      if(!v) return;
+      v.mng = el.value; v.kind = el.value;    /* القديمُ يتبع الجديد */
+      save(); render();
+    });
+    ch("[data-invrisk]", function(el){
+      var v = byId(state.invest, el.getAttribute("data-invrisk"));
+      if(!v) return;
+      v.risk = el.value; v.riskSet = true;    /* اختارها بيده فلا تتبع النوع */
+      save(); render();
+    });
+    ch("[data-invtgt]", function(el){
+      var v = byId(state.invest, el.getAttribute("data-invtgt"));
+      if(!v) return;
+      var t = Math.max(0, money(el.value));
+      if(t) v.tgt = t; else delete v.tgt;
+      save(); render();
+    });
     on("[data-invmv]", function(b){
       var id = b.getAttribute("data-invmv");
       ui.invMv[id] = !ui.invMv[id];
@@ -13022,7 +13110,7 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+40";
+  var APP_VERSION = "1.5.0-beta+41";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
