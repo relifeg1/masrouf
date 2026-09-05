@@ -651,7 +651,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
 .dlg h3{font-size:17px;font-weight:600;margin-bottom:6px}
 .dmsg{font-size:13px;color:var(--ink-2);margin:0 0 14px;line-height:1.7}
 .dmsg b{color:var(--ink);font-weight:600}
-.f2{display:flex;flex-direction:column;gap:3px;margin-bottom:10px;min-width:0}
+.f2{display:flex;flex-direction:column;gap:2px;margin-bottom:8px;min-width:0}
 .f2 label{font-size:11px;color:var(--ink-3)}
 .f2 input{width:100%;background:var(--card-2);border:1.5px solid var(--line);border-radius:10px;
   padding:9px 12px;color:var(--ink);font-size:16px;outline:none}
@@ -668,7 +668,27 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
 .dacts{display:flex;gap:8px;margin-top:16px}
 .dacts .act{flex:1;padding:12px;font-size:15px;text-align:center;border-radius:16px}
 .act.danger{background:var(--warn);border-color:var(--warn);color:#fff}
-.dlab{font-size:11px;color:var(--ink-3);margin:12px 0 6px}
+.dlab{font-size:11px;color:var(--ink-3);margin:10px 0 5px}
+/* ذيلُ الحوار: خلف فاصلٍ رفيع، والخطرُ في طرفه */
+/* زرُّ الطيّ: سطرٌ كاملٌ بحدٍّ منقوطٍ — يُقرأ باباً لا زخرفة */
+.dmore{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;
+margin:2px 0 10px;padding:9px;border-radius:10px;cursor:pointer;font:inherit;
+font-size:12.5px;border:1px dashed var(--line2,var(--line));background:transparent;
+color:var(--ink-3);transition:.14s}
+.dmore:hover{border-color:var(--accent);color:var(--accent)}
+.dmore>i{font-style:normal;font-size:9px;line-height:1;transition:transform .18s}
+.dmore.on>i{transform:rotate(-180deg)}
+.dmore.on{color:var(--accent);border-color:var(--accent)}
+@media(prefers-reduced-motion:reduce){ .dmore>i{transition:none} }
+/* مدى الثمن على البطاقة */
+.wrng{display:block;text-decoration:none;font-family:"IBM Plex Mono",monospace;
+font-size:10.5px;color:var(--ink-3);margin-top:2px}
+.dlgfoot{margin-top:12px;padding-top:12px;border-top:1px solid var(--line);
+display:flex;flex-wrap:wrap;gap:0 18px;align-items:flex-start}
+.dlgfoot .dgrp{margin-bottom:6px}
+.dlgfoot .dgrp .dlab{margin:0 0 5px}
+.dlgfoot .dgrp.danger{margin-inline-start:auto}
+@media(max-width:520px){ .dlgfoot .dgrp.danger{margin-inline-start:0;width:100%} }
 .dbtns{display:flex;gap:8px;flex-wrap:wrap}
 /* المجموعات جنباً إلى جنب — بأسمائها، فالزرّ بلا اسم لغز */
 .dgrp{margin-bottom:2px}
@@ -4220,13 +4240,15 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
     + dgroup("الظهور",
         '<button class="mini' + (c.hidden ? " on" : "") + '" data-hidecat="' + k + '">'
       + (c.hidden ? "مخفي الآن — أظهره" : "ظاهر الآن — أخفِه") + '</button>')
-    + dgroup("خطر", '<button class="mini bad" data-rmcat="' + k + '">احذف البند نهائياً</button>');
+    + '<div class="dgrp danger"><div class="dlab">خطر</div><div class="dbtns">'
+    + '<button class="mini bad" data-rmcat="' + k + '">احذف البند نهائياً</button>'
+    + '</div></div>';
   }
   function editSimple(title, o, fields, delAttr, delId, delLabel){
     ask({ title: title,
       msg: "الاسم يُحفظ بزرّ الحفظ · الحذف يُنفَّذ فوراً.",
       fields: fields,
-      html: function(){ return dgroup("خطر",
+      foot: function(){ return dgroup("خطر",
         '<button class="mini bad" data-' + delAttr + '="' + delId + '">' + esc(delLabel) + '</button>'); },
       ok: "احفظ الاسم",
       onOk: function(v){ fields.forEach(function(f, i){ if(v[i]) o[f.key] = v[i]; }); save(); } });
@@ -4247,7 +4269,29 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
           ? dlg.html((dlg.fields || []).map(function(x){ return x.value; }))
           : (dlg.html || "")) + '</div>'
       + '<div class="f2grid">'
-      + f.map(function(x, i){
+      + f.map(function(x, i){ return x.more ? "" : dlgField(x, i); }).join("")
+      + '</div>'
+      + (f.some(function(x){ return x.more; })
+          ? ('<button class="dmore" data-dmore="1"><i>▾</i>تفاصيل أكثر</button>'
+             + '<div class="f2grid f2more" hidden>'
+             + f.map(function(x, i){ return x.more ? dlgField(x, i) : ""; }).join("")
+             + '</div>')
+          : "")
+      /* الذيل: ما ليس حقلاً يُملأ — الترتيبُ والظهورُ والخطر. ينزل تحت
+         الحقول لا فوقها، فلا يقع زرُّ الحذف في منتصف الطريق. */
+      + (dlg.foot
+          ? ('<div class="dlgfoot">'
+             + (typeof dlg.foot === "function" ? dlg.foot() : dlg.foot) + '</div>')
+          : "")
+      + '<div class="dacts">'
+      + (dlg.cancel === false ? ""
+          : '<button class="act" data-dcancel="1">' + esc(dlg.cancel || "إلغاء") + '</button>')
+      + '<button class="act solid' + (dlg.danger ? " danger" : "") + '" data-dok="1">'
+      + esc(dlg.ok || "حفظ") + '</button></div></div></div>';
+  }
+  /* حقلٌ واحد — والموضعُ `i` من المصفوفة الأصليّة لا من المجموعة */
+  function dlgField(x, i){
+    return (function(){
           if(x.type === "select")
             return '<div class="f2"><label>' + esc(x.label) + '</label>'
               + '<select id="df' + i + '" class="sel"'
@@ -4273,16 +4317,19 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
             + (x.type === "number" ? ' inputmode="decimal"' : "")
             + ' value="' + esc(x.value == null ? "" : x.value) + '"'
             + ' placeholder="' + esc(x.ph || "") + '"></div>';
-        }).join("")
-      + '</div>'
-      + '<div class="dacts">'
-      + (dlg.cancel === false ? ""
-          : '<button class="act" data-dcancel="1">' + esc(dlg.cancel || "إلغاء") + '</button>')
-      + '<button class="act solid' + (dlg.danger ? " danger" : "") + '" data-dok="1">'
-      + esc(dlg.ok || "حفظ") + '</button></div></div></div>';
+    })();
   }
   function dlgWire(){
     if(!dlg) return;
+    /* الطيُّ لا يمرّ بـrender: إعادةُ الرسم تبني الحقولَ من قيمها
+       المحفوظة، فيضيع ما كُتب ولم يُحفظ. */
+    var mb = document.querySelector("[data-dmore]");
+    if(mb) mb.onclick = function(){
+      var box = document.querySelector(".f2more");
+      if(!box) return;
+      box.hidden = !box.hidden;
+      mb.classList.toggle("on", !box.hidden);
+    };
     var vals = function(){
       return (dlg.fields || []).map(function(x, i){
         var el = document.getElementById("df" + i);
@@ -4608,9 +4655,9 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
   function wishImp(x){ var v = Math.round(num(x && x.imp)); return v >= 1 && v <= 5 ? v : 3; }
   function wishSortMode(){ return ui.wsort || state.wsort || "value"; }
   function wishOrder(a, b){
-    if(wishSortMode() === "price") return num(a.price) - num(b.price);
+    if(wishSortMode() === "price") return wishPrice(a) - wishPrice(b);
     var d = wishImp(b) - wishImp(a);
-    return d ? d : (num(a.price) - num(b.price));
+    return d ? d : (wishPrice(a) - wishPrice(b));
   }
   /* عمرُها بالأيّام: الرغبةُ العابرةُ تُعرَف بعمرها — وسمٌ لا منع */
   function wishAge(x){
@@ -4639,7 +4686,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
   function wishCap(){ return Math.max(0, num(state.wishCap)); }
   function wishSpent(mk){
     var t = 0;
-    wishList().forEach(function(x){ if(x.bought && x.bm === mk) t += num(x.paid || x.price); });
+    wishList().forEach(function(x){ if(x.bought && x.bm === mk) t += (num(x.paid) || wishPrice(x)); });
     return t;
   }
 
@@ -4648,7 +4695,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
      فكلّما بلغ المجموعُ ثمنَ الأولى حُجزت لشهرها وطُرح ثمنُها. */
   function wishSchedule(k){
     var W = wishList().filter(function(x){
-      return wishActive(x) && num(x.price) > 0;
+      return wishActive(x) && wishPrice(x) > 0;
     }).sort(wishOrder);
     var O = outlook(k, 12), cap = wishCap(), pool = 0, out = [], i = 0, j;
     /* أقساطُ الأمنيات ذواتِ الخطط خُصمت من الفائض وهي لهنّ — فتُردّ */
@@ -4730,11 +4777,74 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
   }
   function wishPaused(g){ return !!g && num(g.m) <= 0 && num(g.pm) > 0; }
   /* ما اجتمع لها في خطّتها — يُطرح من ثمنها في كلّ حساب */
+  /* حقولُ الأمنية: قائمةٌ واحدةٌ للإضافة والتعديل. `more` يُطوى في
+     الإضافة وحدَها — فمن سجّل سريعاً لم يُطلب منه إلّا الاسمُ والثمن،
+     ومن أراد التفصيل وجده في الحوار نفسِه لا في حوارٍ ثانٍ.
+     والقراءةُ بالمفاتيح لا بالمواضع: حقلٌ يُزاد يزحزح ما بعده. */
+  function wishDlgFields(w){
+    var n = !w;
+    w = w || {};
+    return [
+      { key: "e", label: "الرمز", type: "hidden", emo: true, value: w.e || "🎁" },
+      { key: "img", label: "الغلاف", type: "hidden", hook: "coverfield",
+        value: w.img || "" },
+      { key: "n", label: n ? "ما الذي تريده؟" : "ما هو", value: w.n || "",
+        ph: "شنطة · جوّال · رحلة" },
+      { key: "price", label: "أدنى ثمنٍ متوقَّع", type: "number",
+        value: w.price === undefined ? "" : num(w.price) },
+      { key: "price2", label: "أعلى ثمنٍ متوقَّع (اختياري)", type: "number",
+        value: num(w.price2) || "" },
+      { key: "url", label: "رابطها (اختياري)", value: w.url || "", ph: "https://" },
+      { key: "kind", label: "بابها — ليُقال موسمُها", type: "select", more: n,
+        options: [{ v: "", n: "— بلا باب —" }].concat(
+          WKINDS.map(function(o){ return { v: o.k, n: o.n }; })),
+        value: w.kind || "" },
+      { key: "cat", label: "من أيّ بند (اختياري)", type: "select", more: n,
+        options: [{ v: "", n: "— بلا بند —" }].concat(catOptions()),
+        value: w.cat || "" },
+      { key: "by", label: "خلال كم شهر (اختياري)", type: "number", more: n,
+        value: w.by || "" },
+      { key: "run", label: "كلفةٌ شهريّةٌ بعد شرائها (اختياري)", type: "number",
+        more: n, value: w.run || "" },
+      { key: "wait", label: "كلفةُ انتظارها شهرياً (اختياري)", type: "number",
+        more: n, value: w.wait || "" },
+      { key: "note", label: "ملاحظة (مقاس · لون · متجر)", value: w.note || "",
+        more: n, ph: "مقاسٌ أو لونٌ أو أين رأيتَها" }
+    ];
+  }
+  function wishApply(w, by){
+    w.n = String(by.n || "").trim();
+    w.e = String(by.e || "🎁");
+    w.img = String(by.img || "");
+    w.price = Math.max(0, money(by.price));
+    w.price2 = Math.max(0, money(by.price2));
+    w.url = String(by.url || "");
+    w.kind = String(by.kind || "");
+    w.cat = String(by.cat || "");
+    w.by = Math.max(0, Math.round(num(by.by)));
+    w.run = Math.max(0, money(by.run));
+    w.wait = Math.max(0, money(by.wait));
+    w.note = String(by.note || "");
+  }
   function wishGot(x){ var g = wishGoal(x); return g ? goalSaved(g) : 0; }
   /* وقسطُها: خُصم من الفائض لأنّه هدفٌ نشط، فيُردّ في حسابها وحدَها
      لئلّا يُحسب المالُ مرّتين ضدّها. */
   function wishOwn(x, mk){ var g = wishGoal(x); return g ? goalMonthly(g, mk) : 0; }
-  function wishNeed(x){ return Math.max(0, num(x.price) - wishGot(x)); }
+  /* الثمنُ المعتمَد: متوسّطُ المدى إن كان له مدى، وإلا فرقمُه.
+     رقمٌ واحدٌ تُبنى عليه كلُّ الحسابات، فلا يختلف حسابان. */
+  function wishPrice(x){
+    if(!x) return 0;
+    var a = num(x.price || 0), b = num(x.price2 || 0);
+    if(b > 0 && b !== a) return money((a + b) / 2);
+    return a;
+  }
+  function wishRange(x){
+    if(!x) return null;
+    var a = num(x.price || 0), b = num(x.price2 || 0);
+    if(!(b > 0) || b === a) return null;
+    return { lo: Math.min(a, b), hi: Math.max(a, b) };
+  }
+  function wishNeed(x){ return Math.max(0, wishPrice(x) - wishGot(x)); }
   /* ما صار في متناوله اليوم: بالباقي أو باكتمال خطّته */
   /* تُحسب معاً لا كلٌّ على حدة: ثلاثٌ بأربعمئةٍ لا تكون كلُّها في
      متناولك وباقيك خمسمئة. فينقص الباقي بقدر ما تأخذه كلُّ واحدة. */
@@ -4742,9 +4852,9 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
   function wishReady(k){
     var R = wishRoom(k), pool = R.now, out = [];
     wishList().filter(function(x){
-      return wishActive(x) && num(x.price) > 0;
+      return wishActive(x) && wishPrice(x) > 0;
     }).sort(wishOrder).forEach(function(x){
-      var p = num(x.price), got = wishGot(x);
+      var p = wishPrice(x), got = wishGot(x);
       if(pool + got < p) return;
       pool -= Math.max(0, p - got);
       out.push(x);
@@ -4786,7 +4896,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
      ثلاثةُ مصادرَ للمال تبدو في الرصيد سواءً وليست سواءً: فائضٌ حرّ،
      ومالٌ محجوزٌ لبندٍ لم يُصرف، وادّخارٌ لهدف. فيُقال من أيّها تُؤخذ. */
   function wishSim(x, k){
-    var R = wishRoom(k), p = num(x.price);
+    var R = wishRoom(k), p = wishPrice(x);
     /* المُدَّخرُ لها يُنفَق عليها أوّلاً — فهو مالٌ حُجز لها بعينها */
     var fromGoal = Math.min(p, wishGot(x));
     p -= fromGoal;
@@ -4795,7 +4905,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
     var fromPlan = Math.min(rest, Math.max(0, R.left));
     var fromSave = Math.max(0, rest - fromPlan);
     var lvl = fromSave > 0 ? 2 : (fromPlan > 0 ? 1 : 0);
-    var o = { p: num(x.price), now: R.now, after: R.now - p, lvl: lvl,
+    var o = { p: wishPrice(x), now: R.now, after: R.now - p, lvl: lvl,
               goal: fromGoal, free: fromFree, plan: fromPlan, save: fromSave,
               cat: null };
     /* وإن عيّن لها بنداً: تجاوزُه يُقال باسمه */
@@ -4803,7 +4913,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
       var pr = String(x.cat).split("|"), c = catOf(pr[0]);
       if(c){
         var av = catPlan(c, k) + carryOf(c, k);
-        var sp = (actuals(k).by[c.k] || 0), pay = num(x.price);
+        var sp = (actuals(k).by[c.k] || 0), pay = wishPrice(x);
         o.cat = { n: c.n, plan: av, spent: sp,
                   after: sp + pay, over: Math.max(0, sp + pay - av) };
       }
@@ -4854,7 +4964,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
 
   /* طرقُك إليها — مرتَّبةً: ما لا يهزّ شيئاً أوّلاً، وما له ثمنٌ آخراً */
   function wishWays(x, k){
-    var R = wishRoom(k), p = num(x.price), W = [];
+    var R = wishRoom(k), p = wishPrice(x), W = [];
     /* حسابُ الأمنية يعرف خطّتها: المُدَّخرُ يُطرح، والقسطُ يُردّ */
     var got = wishGot(x), own = wishOwn(x, k), gl = wishGoal(x);
     var need = Math.max(0, p - got);
@@ -5419,7 +5529,8 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
       /* المنتقي يُضمّ إلى اللوحة القائمة لا يُكتب مفتاحاً ثانياً:
          مفتاحان باسمٍ واحد في كائن — والثاني يغلب. فبقي المنتقي
          مكتوباً ولا يُعرض. */
-      html: function(){ return emoPickHTML(c.img || c.e) + catPanel(ck); },
+      html: function(){ return emoPickHTML(c.img || c.e); },
+      foot: function(){ return catPanel(ck); },
       ok: "احفظ",
       onOk: function(v, by){
         var c2 = catOf(ck); if(!c2) return;
@@ -7015,7 +7126,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
     wishList().forEach(function(x){
       if(!x.bought || !inR[x.bm]) return;
       WB.push(x);
-      wpaid += num(x.paid || x.price);
+      wpaid += (num(x.paid) || wishPrice(x));
     });
     var REC = wishRecord();
     h += '<div class="sec"><h2>الأمنيات</h2><span class="hint">'
@@ -7048,7 +7159,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
               ["bought", "مشتراة"], ["all", "الكلّ"]];
 
   function wishChip(x, k, R){
-    var p = num(x.price), got = wishGot(x);
+    var p = wishPrice(x), got = wishGot(x);
     if(x.bought)
       return { n: x.bm ? ("اشتُريت في " + mName(x.bm)) : "مشتراة", c: "" };
     if(x.snooze) return { n: "مؤجَّلة", c: "" };
@@ -7065,7 +7176,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
   }
 
   function wishTile(x, k, R, open){
-    var p = num(x.price), got = wishGot(x), planned = !!wishGoal(x);
+    var p = wishPrice(x), got = wishGot(x), planned = !!wishGoal(x);
     var base = planned ? got : Math.min(Math.max(0, R.now), p);
     var pct = p > 0 ? Math.max(0, Math.min(100, Math.round(base / p * 100))) : 0;
     var ch = wishChip(x, k, R), tg = x.bought ? null : wishAgeTag(x);
@@ -7084,19 +7195,24 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
     var bar = x.bought ? ""
       : ('<div class="track wtrack"><i style="width:' + pct + '%;background:'
          + (pct >= 100 ? "var(--ok)" : "var(--accent)") + '"></i></div>');
+    var rng = wishRange(x);
     var price = fmt(x.bought ? num(x.paid || p) : p) + ' ' + esc(cur());
+    var rngTx = (rng && !x.bought)
+      ? ('<s class="wrng" title="' + esc("المعتمدُ متوسّطُ المدى") + '">'
+         + fmt(rng.lo) + '–' + fmt(rng.hi) + '</s>') : "";
     /* مفتوحةً: صفٌّ كصفوف التطبيق — العمودُ يعلو نصفَ الشاشة بلا داعٍ */
     if(open)
       return '<div class="wtile open" data-wsel="' + x.id + '">' + link
         + '<span class="wsm">' + icon + '</span>'
         + '<span class="wtx"><b class="wnm3">' + esc(x.n) + '</b>' + chips + '</span>'
         + '<span class="rt"><b class="a">' + price + '</b>'
-        + '<b class="b">' + (x.bought ? "مدفوع" : (pct + '٪')) + '</b></span>'
+        + '<b class="b">' + (rng && !x.bought ? (fmt(rng.lo) + '–' + fmt(rng.hi))
+                             : (x.bought ? "مدفوع" : (pct + '٪'))) + '</b></span>'
         + bar + '</div>';
     return '<div class="wtile' + (x.img ? " cov" : "") + '" data-wsel="' + x.id + '">'
       + link + icon
       + '<b class="wnm3">' + esc(x.n) + '</b>'
-      + '<s class="wpr">' + price + '</s>'
+      + '<s class="wpr">' + price + '</s>' + rngTx
       + chips + bar + '</div>';
   }
 
@@ -7122,7 +7238,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
         + '<span class="ic" style="background:var(--ok-soft);color:var(--ok)">✓</span>'
         + '<span><b class="nm">صارت في متناولك</b><s class="sub">'
         + rdy.map(function(w){
-            return (w.e || "🎁") + " " + esc(w.n) + " · " + fmt(num(w.price));
+            return (w.e || "🎁") + " " + esc(w.n) + " · " + fmt(wishPrice(w));
           }).join(" · ") + '</s></span></div></div>';
     }
 
@@ -7186,7 +7302,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
           + '<s>اسمُها وثمنُها يكفيان</s></button>';
       show.forEach(function(x){
         var open = (x.id === sel);
-        var p = num(x.price), can = (R.now + wishGot(x)) >= p;
+        var p = wishPrice(x), can = (R.now + wishGot(x)) >= p;
         h += '<div class="card wcard' + (open ? " open" : "")
            + (x.bought ? " won" : "") + '">'
           + wishTile(x, k, R, open);
@@ -7257,7 +7373,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
         + SC.map(function(o){
             return '<div class="schr' + (o.k ? "" : " no") + '">'
               + '<b>' + (o.w.e || "🎁") + ' ' + esc(o.w.n) + '</b>'
-              + '<s>' + fmt(num(o.w.price)) + ' ' + esc(cur())
+              + '<s>' + fmt(wishPrice(o.w)) + ' ' + esc(cur())
               + (wishGot(o.w) > 0 ? (' · بقي ' + fmt(wishNeed(o.w))) : "")
               + ' · أهمّيّة ' + wishImp(o.w) + '/٥</s>'
               + '<i>' + (o.k ? esc(mName(o.k)) : "لا تبلغها هذه السنة") + '</i></div>';
@@ -7313,7 +7429,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
   function wishPlanHTML(x, k){
     var g = wishGoal(x);
     if(!g) return "";
-    var p = num(x.price), got = goalSaved(g), rest = Math.max(0, p - got);
+    var p = wishPrice(x), got = goalSaved(g), rest = Math.max(0, p - got);
     var rate = num(g.m) || num(g.pm), paused = wishPaused(g);
     var pct = p > 0 ? Math.max(0, Math.min(100, Math.round(got / p * 100))) : 0;
     var when = (rest > 0 && rate > 0)
@@ -10461,42 +10577,9 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
       if(!w) return;
       ask({ title: "تعديل «" + w.n + "»",
         html: emoPickHTML(w.e || "🎁") + coverPickHTML(w.img || ""),
-        fields: [{ label: "الرمز", type: "hidden", emo: true, value: w.e || "🎁" },
-                 { label: "الغلاف", type: "hidden", hook: "coverfield",
-                   value: w.img || "" },
-                 { label: "ما هو", value: w.n },
-                 { label: "الثمن", type: "number", value: num(w.price) },
-                 { label: "خلال كم شهر (اختياري)", type: "number", value: w.by || "" },
-                 { label: "من أيّ بند (اختياري)", type: "select",
-                   options: [{ v: "", n: "— بلا بند —" }].concat(catOptions()),
-                   value: w.cat || "" },
-                 { label: "كلفةٌ شهريّةٌ بعد شرائها (اختياري)", type: "number",
-                   value: w.run || "" },
-                 { label: "بابها — ليُقال موسمُها", type: "select",
-                   options: [{ v: "", n: "— بلا باب —" }].concat(
-                     WKINDS.map(function(o){ return { v: o.k, n: o.n }; })),
-                   value: w.kind || "" },
-                 { label: "كلفةُ انتظارها شهرياً (اختياري)", type: "number",
-                   value: w.wait || "" },
-                 { label: "ملاحظة (مقاس · لون · متجر)", value: w.note || "",
-                   ph: "مقاسٌ أو لونٌ أو أين رأيتَها" },
-                 { label: "رابطها (اختياري)", value: w.url || "",
-                   ph: "https://" }],
+        fields: wishDlgFields(w),
         ok: "احفظ",
-        onOk: function(v){
-          if(!v[2]) return;
-          w.e = String(v[0] || "🎁");
-          w.img = String(v[1] || "");
-          w.n = String(v[2]); w.price = num(v[3]);
-          w.by = Math.max(0, Math.round(num(v[4])));
-          w.cat = String(v[5] || "");
-          w.run = Math.max(0, num(v[6]));
-          w.kind = String(v[7] || "");
-          w.wait = Math.max(0, num(v[8]));
-          w.note = String(v[9] || "");
-          w.url = String(v[10] || "");
-          save();
-        } });
+        onOk: function(v, by){ wishApply(w, by); save(); } });
     });
     /* تصير هدفاً: تُدَّخر لها كما يُدَّخر لبقيّة أهدافه — بآلته لا بآلةٍ ثانية */
     on("[data-wgoal]", function(b){
@@ -10504,10 +10587,10 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
       wishList().forEach(function(x){ if(x.id === p[0]) w = x; });
       if(!w) return;
       var n = Math.max(1, Math.round(num(p[1]) || 1));
-      var per = Math.ceil(num(w.price) / n);
+      var per = Math.ceil(wishPrice(w) / n);
       var g = { id: uid(), n: w.n, e: w.e || "🎁",
                 c: PALETTE[(state.goals || []).length % PALETTE.length],
-                mode: "fixed", target: num(w.price), mult: 1,
+                mode: "fixed", target: wishPrice(w), mult: 1,
                 saved: 0, m: per, date: "", arch: false };
       state.goals = state.goals || [];
       state.goals.push(g);
@@ -10519,16 +10602,12 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
       ask({ title: "أمنيةٌ جديدة",
         msg: "اسمُها وثمنُها يكفيان — وما سواهما في «عدّلها».",
         html: emoPickHTML("🎁"),
-        fields: [{ label: "الرمز", type: "hidden", emo: true, value: "🎁" },
-                 { label: "ما الذي تريده؟", value: "", ph: "شنطة · جوّال · رحلة" },
-                 { label: "ثمنُه التقريبيّ", type: "number", value: "" },
-                 { label: "رابطُها (اختياري)", value: "", ph: "https://" }],
+        fields: wishDlgFields(null),
         ok: "سجّلها",
-        onOk: function(v){
-          if(!v[1]) return;
-          var w = { id: uid(), n: String(v[1]), e: String(v[0] || "🎁"),
-                    price: num(v[2]), url: String(v[3] || ""),
-                    bought: false, at: Date.now() };
+        onOk: function(v, by){
+          if(!by.n) return;
+          var w = { id: uid(), bought: false, at: Date.now() };
+          wishApply(w, by);
           wishList().push(w);
           ui.wfil = "live";
           ui.wsel = w.id;                    /* تُفتح على طرقها فوراً */
@@ -10555,7 +10634,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
       var fB = [{ label: "البند", type: "select",
                   value: w.cat || (state.cats[0] || {}).k || "",
                   options: catOptions() },
-                { label: "المبلغ المدفوع", type: "number", value: num(w.price) },
+                { label: "المبلغ المدفوع", type: "number", value: wishPrice(w) },
                 { label: "كلفةٌ شهريّةٌ بعدها (اختياري)", type: "number",
                   value: w.run || "" }];
       /* لها خطّة: أمن مالها تدفع أم من جيبك؟ */
@@ -10911,7 +10990,8 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
         html: emoPickHTML(g.e),
         fields: [
           { label: "الاسم", value: g.n },
-          { label: "الرمز", value: g.e, ph: "🎯" },
+          /* الوجهُ فوقُ يكتبه — فحقلٌ ثانٍ بالاسم نفسِه لغو */
+          { label: "الرمز", type: "hidden", emo: true, value: g.e },
           { label: "النوع", type: "select", value: md,
             options: GMODES.map(function(y){ return { v: y.k, n: y.n }; }) },
           { label: "المبلغ المستهدف (للمحدَّد) · أو المضاعف (للمحسوب)", type: "number",
@@ -11920,7 +12000,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+25";
+  var APP_VERSION = "1.5.0-beta+26";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
