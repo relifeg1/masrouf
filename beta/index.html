@@ -1815,6 +1815,20 @@ margin-inline-end:5px;vertical-align:middle}
 .alleg s{text-decoration:none;color:var(--ink-3);font-family:"IBM Plex Mono",monospace}
 .ygrid .tsub{display:block;text-decoration:none;font-size:10px;color:var(--ink-3);
 margin-top:2px}
+/* مقابضُ اللوح في سطرٍ واحدٍ لا كلٌّ في سطر */
+.itogs{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+/* المقابضُ في سطرٍ: تُلغى كتلتُها وعرضُها الكامل.
+   و`1 1 auto` تجعل ما لفَّ منها يملأ سطرَه — فلا يبقى واحدٌ مُعلَّقاً */
+.itogs .logtog{display:inline-flex;align-items:center;justify-content:center;
+gap:5px;width:auto;margin:0;flex:1 1 auto;padding:6px 9px;font-size:11px;
+white-space:nowrap}
+.itogs .logtog>i{font-style:normal;font-size:8px;line-height:1}
+.f2grid.tight{gap:0 10px}
+.f2grid.tight .f2{margin-bottom:7px}
+.f2grid.tight > .f2:last-child{grid-column:auto}
+.f2grid.tight label{font-size:10.5px}
+.f2grid.tight .sel,.f2grid.tight .ni{padding:7px 10px;font-size:13.5px}
+.iedit .lab{margin:12px 0 5px}
 .ni.hp{width:88px;padding:5px 6px;font-size:13px;text-align:center}
 .ygrid .v.z{opacity:.65}
 .ygrid .gp{color:var(--ok)}
@@ -2090,7 +2104,7 @@ margin-top:2px}
              openBank: {}, openAcct: {}, showArch: false,
              acctQ: "", hideZero: false, showArchAcct: false, year: null, openEnv: {},
              spendMode: "quick", openQ: {}, openGoal: {}, sort: "manual", zopen: false, openLog: {},
-             openInv: {}, stripYear: null, jumpTo: null, ledger: "plan", setSec: 0, planLayer: null, showPrev: false, repN: 6, flash: null, invLog: {}, invMv: {}, zakHide: false };
+             openInv: {}, stripYear: null, jumpTo: null, ledger: "plan", setSec: 0, planLayer: null, showPrev: false, repN: 6, flash: null, invLog: {}, invMv: {}, invSet: {}, zakHide: false };
   var PALETTE = ["#E2703A","#3E8E7E","#4C3AE3","#2F80ED","#B4542B","#C2407A","#7A5AF8",
                  "#D9A227","#0F7355","#B4342B","#1F7A8C","#8E44AD","#16A085","#8A92A0"];
 
@@ -3056,19 +3070,28 @@ margin-top:2px}
   /* تفصيلُ المحفظة — يُفتح في مكانه تحت صفّها */
   function invPanel(v){
     var many = invAccts(v).length > 1;
+    var op = !!ui.invSet[v.id];
+    /* ظاهرٌ دائماً: ما تفعله كلَّ شهر. ومطويٌّ: ما تضبطه مرّةً واحدة. */
     return '<div class="qsub ipanel">'
       + invSpark(v)
       + '<div class="ibody">'
       + invClose(v, ui.month)
-      + invHist(v)
-      + '<div class="iedit"><div class="lab">حساب الحفظ</div>'
-      + (many
-          ? acctSelect("data-isel", v.id, "i:" + v.id)
-            + linkedChips("i:" + v.id, "inv", "data-iunlink")
-          : acctSelectOne("data-ipick", v.id, "i:" + v.id))
       + invHoldHTML(v)
-      + '<div class="lab" style="margin-top:12px">ما هي هذه المحفظة</div>'
-      + '<div class="f2grid">'
+      + '<div class="itogs">'
+      + invHist(v)
+      + invLedger(v)
+      + '<button class="logtog' + (op ? " on" : "") + '" data-invset="' + v.id
+      + '"><i>▾</i> إعداداتُها</button>'
+      + (invFromAccts(v) ? ""
+          : '<button class="logtog" data-invout="' + v.id + '">− سحبتُ منها</button>')
+      + '</div>'
+      + (op ? invSetHTML(v, many) : "")
+      + '</div></div>';
+  }
+  /* الإعدادات: تُضبط مرّةً فتُطوى — لا تُزاحم عملَ الشهر */
+  function invSetHTML(v, many){
+    return '<div class="iedit">'
+      + '<div class="f2grid tight">'
       + '<div class="f2"><label>نوعُها</label><select class="sel" data-invtype="'
       + v.id + '">'
       + INVTYPES.map(function(t){
@@ -3090,7 +3113,7 @@ margin-top:2px}
       + '<div class="f2"><label>كيف تتابعها</label><select class="sel" '
       + 'data-invtrack="' + v.id + '">'
       + '<option value="total"' + (invTrack(v) === "total" ? " selected" : "")
-      + '>قيمةٌ إجماليّةٌ واحدة</option>'
+      + '>قيمةٌ واحدة</option>'
       + '<option value="hold"' + (invTrack(v) === "hold" ? " selected" : "")
       + '>ممتلكاتٌ بكمّيّةٍ وسعر</option></select></div>'
       + '<div class="f2"><label>الزكاة</label><select class="sel" '
@@ -3098,28 +3121,28 @@ margin-top:2px}
       + '<option value="1"' + (invZak(v) ? " selected" : "") + '>تُزكّى</option>'
       + '<option value="0"' + (invZak(v) ? "" : " selected") + '>لا تُزكّى</option>'
       + '</select></div>'
+      + '<div class="f2"><label>تودع فيها شهرياً</label>'
+      + '<input class="ni" type="number" inputmode="numeric" data-inv="' + v.id
+      + '|m" value="' + num(v.m) + '"></div>'
       + '<div class="f2"><label>هدفُها (اختياريّ)</label>'
       + '<input class="ni" type="number" inputmode="numeric" data-invtgt="' + v.id
       + '" value="' + (num(v.tgt) || "") + '" placeholder="مثلاً 100000"></div>'
+      + '<div class="f2"><label>صافي ما وضعت</label>'
+      + '<input class="ni" type="number" inputmode="numeric" data-inv="' + v.id
+      + '|in" value="' + num(v["in"]) + '"></div>'
       + '</div>'
-      + '<div class="lab" style="margin-top:12px">أرقامُها</div><div class="fields">'
-      + '<div class="f"><label>شهرياً</label><input class="ni" type="number" '
-      + 'inputmode="numeric" data-inv="' + v.id + '|m" value="' + num(v.m) + '"></div>'
-      + '<div class="f"><label>صافي ما وضعت</label><input class="ni w" type="number" '
-      + 'inputmode="numeric" data-inv="' + v.id + '|in" value="' + num(v["in"]) + '"></div>'
-      + (invFromAccts(v) ? ""
-          : '<div class="f"><label>القيمة الحالية</label>'
-            + '<input class="ni w" type="number" inputmode="numeric" data-inv="'
-            + v.id + '|val" value="' + num(v.val) + '"></div>')
-      + '</div>'
+      /* حسابُ الحفظ: لمن له حساباتٌ — ولمن لا حسابَ له سطرٌ يقول ذلك */
+      + '<div class="lab">أين يقعد مالُها</div>'
+      + (many
+          ? acctSelect("data-isel", v.id, "i:" + v.id)
+            + linkedChips("i:" + v.id, "inv", "data-iunlink")
+          : acctSelectOne("data-ipick", v.id, "i:" + v.id))
       + '<div class="abtns">'
-      + '<button class="mini" data-kind="' + v.id + '">'
-      + (v.kind === "auto" ? "🤖 آليّ" : "📊 ذاتيّ") + '</button>'
-      + (invFromAccts(v) ? ""
-          : '<button class="mini" data-invout="' + v.id + '">− سحبتُ منها</button>')
+      + '<button class="mini" data-addwallet="' + v.id + '">+ محفظةٌ في الجهة نفسِها</button>'
       + '<button class="mini bad" data-delinv="' + v.id + '">احذف المحفظة</button>'
-      + '</div>' + invLedger(v) + '</div></div></div>';
+      + '</div></div>';
   }
+
   /* ممتلكاتُ المحفظة — لمن يديرها بنفسه */
   function invHoldHTML(v){
     if(invTrack(v) !== "hold") return "";
@@ -12558,6 +12581,11 @@ margin-top:2px}
       if(t) v.tgt = t; else delete v.tgt;
       save(); render();
     });
+    on("[data-invset]", function(b){
+      var id = b.getAttribute("data-invset");
+      ui.invSet[id] = !ui.invSet[id];
+      render();
+    });
     on("[data-invmv]", function(b){
       var id = b.getAttribute("data-invmv");
       ui.invMv[id] = !ui.invMv[id];
@@ -12692,13 +12720,8 @@ margin-top:2px}
       });
       save(); render();
     });
-    on("[data-kind]", function(el){
-      var id = el.getAttribute("data-kind");
-      state.invest.forEach(function(v){ if(v.id === id) v.kind = v.kind === "auto" ? "self" : "auto"; });
-      save(); render();
-    });
     on("[data-addinv]", function(){
-      ask({ title: "محفظةُ استثمارٍ جديدة", msg: "تطبيق استثمار آلي أو محفظتك الخاصة",
+      ask({ title: "محفظةُ استثمارٍ جديدة", msg: "وعاءٌ فيه مالُك: أسهمٌ أو كريبتو أو صندوق — بتطبيقٍ آليّ أو تديره بنفسك.",
         fields: [{ label: "اسم المحفظة", value: "", ph: "اكتب الاسم" },
                  { label: "المساهمة الشهرية", type: "number", value: "" }],
         ok: "أضف",
@@ -13661,7 +13684,7 @@ margin-top:2px}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+45";
+  var APP_VERSION = "1.5.0-beta+46";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
