@@ -2042,7 +2042,7 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
              openBank: {}, openAcct: {}, showArch: false,
              acctQ: "", hideZero: false, showArchAcct: false, year: null, openEnv: {},
              spendMode: "quick", openQ: {}, openGoal: {}, sort: "manual", zopen: false, openLog: {},
-             openInv: {}, stripYear: null, jumpTo: null, ledger: "plan", setSec: 0, planLayer: null, showPrev: false, repN: 6, flash: null, invLog: {} };
+             openInv: {}, stripYear: null, jumpTo: null, ledger: "plan", setSec: 0, planLayer: null, showPrev: false, repN: 6, flash: null, invLog: {}, invMv: {} };
   var PALETTE = ["#E2703A","#3E8E7E","#4C3AE3","#2F80ED","#B4542B","#C2407A","#7A5AF8",
                  "#D9A227","#0F7355","#B4342B","#1F7A8C","#8E44AD","#16A085","#8A92A0"];
 
@@ -3031,9 +3031,33 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
       + '<div class="abtns">'
       + '<button class="mini" data-kind="' + v.id + '">'
       + (v.kind === "auto" ? "🤖 آليّ" : "📊 ذاتيّ") + '</button>'
-      + '<button class="mini" data-addwallet="' + v.id + '">+ محفظة أخرى</button>'
-      + '<button class="mini bad" data-delinv="' + v.id + '">احذف الجهة</button>'
-      + '</div></div></div></div>';
+      + (invFromAccts(v) ? ""
+          : '<button class="mini" data-invout="' + v.id + '">− سحبتُ منها</button>')
+      + '<button class="mini bad" data-delinv="' + v.id + '">احذف المحفظة</button>'
+      + '</div>' + invLedger(v) + '</div></div></div>';
+  }
+  /* دفترُ الحركات: يُطوى ويُفتح — تفصيلٌ لا يُقرأ كلَّ مرّة */
+  function invLedger(v){
+    var L = invMoves(v).slice().sort(function(a, b){ return num(b.t) - num(a.t); });
+    if(!L.length) return "";
+    var op = !!ui.invMv[v.id];
+    var h = '<button class="logtog' + (op ? " on" : "") + '" data-invmv="' + v.id
+      + '"><i>▾</i> حركاتُها · ' + L.length + '</button>';
+    if(!op) return h;
+    return h + '<div class="card" style="margin-top:8px">'
+      + L.slice(0, 40).map(function(x){
+          var isOut = x.k === "out";
+          return '<div class="row"><span class="ic" style="background:'
+            + (isOut ? "var(--warn-soft);color:var(--warn)"
+                     : x.k === "in" ? "var(--ok-soft);color:var(--ok)"
+                                    : "var(--card-2);color:var(--ink-3)") + '">'
+            + (isOut ? "↑" : x.k === "in" ? "↓" : "=") + '</span>'
+            + '<span><b class="nm">' + esc(INVMV[x.k] || "حركة") + '</b>'
+            + '<s class="sub"><em>' + esc(mName(x.m)) + '</em>'
+            + (x.n ? (' · ' + esc(x.n)) : "") + '</s></span>'
+            + '<span class="rt"><b class="a">' + fmt(x.a) + '</b></span></div>';
+        }).join("")
+      + '</div>';
   }
   function invClose(v, mk){
     var as = invAccts(v);
@@ -3195,6 +3219,31 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
     }
     return "other";
   }
+  /* ═══ دفترُ حركات المحفظة ═══
+     كلُّ ما يمسّ مالَها يمرّ من هنا، فلا تتناقض حقولُها. */
+  /* تصحيحُ الإيداع ليس سحباً: من كتب ٧٠ ثمّ صحّحها صفراً لم يُخرج
+     مالاً — بل صحّح ما كتب. ولو عُدّ سحباً لطُرح مرّتين: مرّةً في
+     الإيداع نفسِه ومرّةً في خصم المسحوب. (التقطه deptest.) */
+  var INVMV = { in: "أودعت", inx: "صحّحتَ الإيداع",
+                out: "سحبت", val: "صارت قيمتُها" };
+  function invMoves(v){
+    if(!v) return [];
+    if(!Array.isArray(v.mv)) v.mv = [];
+    return v.mv;
+  }
+  /* صافي ما وضعتَ: الإيداعُ يزيده والسحبُ ينقصه — ويُسمح بالسلب،
+     فمن استرجع أكثرَ ممّا وضع فذاك حالُه ولا يُخفى. */
+  function invNet(v){ return money(num(v && v["in"])); }
+  function invProfit(v){ return money(invVal(v) - invNet(v)); }
+  function invMove(v, kind, amt, mk, note){
+    if(!v) return;
+    var a = money(amt);
+    if(!(a > 0) && kind !== "val") return;
+    var L = invMoves(v);
+    L.push({ t: Date.now(), m: mk || ui.month, k: kind, a: a,
+             n: note ? String(note).slice(0, 40) : "" });
+    if(L.length > 300) v.mv = L.slice(-300);
+  }
   function invAccts(v){ return linkedTo("i:" + v.id); }
   function invValAt(v, mk){
     var as = invAccts(v);
@@ -3208,6 +3257,30 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
     return out;
   }
   function invPut(v, mk){ return num(distMap(mk)["i:" + v.id]); }
+  /* ما سُحب من محفظةٍ في شهر — يُقرأ من دفترها */
+  function invOutOf(v, mk){
+    var t = 0;
+    invMoves(v).forEach(function(x){
+      if(x.k === "out" && x.m === mk) t += num(x.a); });
+    return money(t);
+  }
+  function invOutAll(v){
+    var t = 0;
+    invMoves(v).forEach(function(x){ if(x.k === "out") t += num(x.a); });
+    return money(t);
+  }
+  /* السحبُ: القيمةُ تنقص وصافي ما وضعتَ ينقص — فالربحُ لا يتحرّك */
+  function invWithdraw(v, amt, mk){
+    var a = money(amt);
+    if(!(a > 0)) return false;
+    if(invFromAccts(v)) return false;      /* مالُها رصيدُ حسابها */
+    var now = invValAt(v, mk);
+    if(now === null) now = invVal(v);
+    setInvValue(v, mk, money(Math.max(0, num(now) - a)));
+    v["in"] = money(num(v["in"]) - a);
+    invMove(v, "out", a, mk, "");
+    return true;
+  }
   function invGainOf(v, mk){
     var now = invValAt(v, mk);
     if(now === null) return null;
@@ -3568,7 +3641,8 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
     d[key] = t;
     if(v && !invFromAccts(v)){
       var dif = t - prev;
-      v["in"] = money(Math.max(0, num(v["in"]) + dif));
+      /* صافي ما وضعتَ يتحرّك بالفرق — ويُسمح بالسلب في السحب لا هنا */
+      v["in"] = money(num(v["in"]) + dif);
       /* والقيمةُ كذلك: تُقدَّر بما وضعتَ حتى تكتب الحقيقيّةَ آخر الشهر */
       v.val = money(Math.max(0, num(v.val) + dif));
       /* وتُثبَّت لقطةُ الشهر: خانةُ «قيمتها اليوم» تعرض اللقطةَ لا
@@ -3577,7 +3651,9 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
          زادت بمقدار ما أودعتَ لا أكثر. */
       var _pv = invValAt(v, shift(mk, -1));
       if(_pv === null) _pv = 0;
-      setInvValue(v, mk, money(_pv + t));
+      /* والقيمةُ لا تنسى ما سُحب في الشهر نفسِه */
+      setInvValue(v, mk, money(_pv + t - invOutOf(v, mk)));
+      if(dif) invMove(v, dif > 0 ? "in" : "inx", Math.abs(dif), mk, "من المصروف");
     }
     return t;
   }
@@ -11848,6 +11924,35 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
     on("[data-mighide]", function(){
       state.migHide = true; toast("تجده في الإعدادات متى شئت"); save(); render();
     });
+    on("[data-invmv]", function(b){
+      var id = b.getAttribute("data-invmv");
+      ui.invMv[id] = !ui.invMv[id];
+      render();
+    });
+    on("[data-invout]", function(b){
+      var v = byId(state.invest, b.getAttribute("data-invout"));
+      if(!v) return;
+      var cur0 = invVal(v);
+      ask({ title: "سحبٌ من «" + v.n + "»",
+        msg: "قيمتُها الآن <b>" + fmt(cur0) + "</b>. السحبُ ينقصها وينقص "
+           + "صافي ما وضعتَ فيها — <b>فربحُك لا يتغيّر</b>، لأنّ المال "
+           + "الذي أخرجتَه ليس خسارة."
+           + "<br>وإن أردتَ تسجيلَ خسارةٍ فاكتب قيمتَها الجديدة في الجدول.",
+        fields: [{ label: "كم سحبت؟", type: "number", value: "" }],
+        ok: "سجّل السحب",
+        onOk: function(vv){
+          var a = money(vv[0]);
+          if(!(a > 0)) return;
+          if(a > cur0){
+            toast("لا تسحب أكثرَ من قيمتها (" + fmt(cur0) + ")");
+            return;
+          }
+          if(invWithdraw(v, a, ui.month)){
+            toast("سُحب " + fmt(a) + " · قيمتُها الآن " + fmt(invVal(v)));
+            save(); render();
+          }
+        } });
+    });
     on("[data-invopen]", function(b){
       var id = b.getAttribute("data-invopen");
       ui.openInv[id] = !ui.openInv[id];
@@ -11988,6 +12093,7 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
       var g = Math.round(val - prev - put), base = prev + put;
       var commit = function(){
         if(!setInvValue(v0, mk, val)){ toast("عدّة محافظ — حدّثها من تبويب الحسابات"); return; }
+        invMove(v0, "val", val, mk, "");
         toast((g >= 0 ? "ربح " : "خسارة ") + mName(mk) + ": "
               + (g >= 0 ? "+" : "−") + fmt(Math.abs(g)) + " " + cur());
         save(); render();
@@ -12916,7 +13022,7 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+39";
+  var APP_VERSION = "1.5.0-beta+40";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
