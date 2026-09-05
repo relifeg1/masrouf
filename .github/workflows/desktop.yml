@@ -49,14 +49,18 @@ jobs:
         id: ch
         shell: bash
         run: |
+          # التجارب لها ملفُّ إعدادٍ خالص، والأصلُ إعدادُه داخلَ package.json
+          # تحت مفتاح build — فيُترك بلا --config ليقرأه البنّاءُ بنفسه.
+          # ولو مُرِّر package.json إعداداً لرُفض: فيه scripts وdependencies
+          # وليست من إعداد البنّاء.
           if [[ "${GITHUB_REF}" == *-beta ]]; then
-            echo "conf=package.beta.json" >> "$GITHUB_OUTPUT"
-            echo "src=beta/index.html"    >> "$GITHUB_OUTPUT"
-            echo "name=التجارب"           >> "$GITHUB_OUTPUT"
+            echo "conf=--config package.beta.json" >> "$GITHUB_OUTPUT"
+            echo "src=beta/index.html"             >> "$GITHUB_OUTPUT"
+            echo "name=التجارب"                    >> "$GITHUB_OUTPUT"
           else
-            echo "conf=package.json"  >> "$GITHUB_OUTPUT"
-            echo "src=index.html"     >> "$GITHUB_OUTPUT"
-            echo "name=الأصل"          >> "$GITHUB_OUTPUT"
+            echo "conf="            >> "$GITHUB_OUTPUT"
+            echo "src=index.html"   >> "$GITHUB_OUTPUT"
+            echo "name=الأصل"        >> "$GITHUB_OUTPUT"
           fi
           echo "القناة: $(cat "$GITHUB_OUTPUT")"
 
@@ -79,7 +83,7 @@ jobs:
         env:
           # بلا شهادة توقيع — وإلا فشل البناء بحثاً عن هويّة غير موجودة
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
-        run: npx electron-builder --config ${{ steps.ch.outputs.conf }} --publish never
+        run: npx electron-builder ${{ steps.ch.outputs.conf }} --publish never
 
       - name: رفع الأثر
         uses: actions/upload-artifact@v4
