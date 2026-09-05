@@ -3105,7 +3105,7 @@ margin-top:2px}
       + '<div class="lab" style="margin-top:12px">أرقامُها</div><div class="fields">'
       + '<div class="f"><label>شهرياً</label><input class="ni" type="number" '
       + 'inputmode="numeric" data-inv="' + v.id + '|m" value="' + num(v.m) + '"></div>'
-      + '<div class="f"><label>إجمالي ما ساهمت</label><input class="ni w" type="number" '
+      + '<div class="f"><label>صافي ما وضعت</label><input class="ni w" type="number" '
       + 'inputmode="numeric" data-inv="' + v.id + '|in" value="' + num(v["in"]) + '"></div>'
       + (invFromAccts(v) ? ""
           : '<div class="f"><label>القيمة الحالية</label>'
@@ -7923,7 +7923,7 @@ margin-top:2px}
           "و«صافي ثروتك» = ما تملك ناقص ما عليك."] },
     { k: "inv", i: "📈", n: "الاستثمار",
       w: "ما تضعه في محافظك ونموّه — منفصلاً عن مصروفك.",
-      h: ["لكلّ جهةٍ ما أدخلتَه فيها وقيمتُها اليوم، فيظهر الربح.",
+      h: ["لكلّ محفظةٍ ما وضعتَه فيها وقيمتُها اليوم، فيظهر الربح.",
           "و«سقف الاستثمار الشهري» يمنعك أن تتجاوز ما تحتمله."] }
   ];
 
@@ -9670,8 +9670,8 @@ margin-top:2px}
 
     /* الشرحُ الطويلُ مكانُه الدليل — وهنا سطرٌ وبابٌ إليه */
     h += '<div class="hintnote" data-note="n497ed1e">'
-      + '<b>الجهة</b> هي التطبيق أو الشركة، و<b>الحساب</b> هو الوعاء الذي '
-      + 'يحمل المال. وقيمةُ الجهة مجموعُ أرصدة حساباتها.'
+      + '<b>المحفظة</b> وعاءٌ فيه مالُك: أسهمٌ أو كريبتو أو صندوق. '
+      + 'تكتب قيمتَها كلَّ شهر، فيُعرف ربحُك ونموُّ مالك.'
       + '<div class="acts"><button class="act sm" data-guide="inv">'
       + 'اشرح لي أكثر</button></div></div>';
 
@@ -9685,7 +9685,7 @@ margin-top:2px}
       + '<span class="hint">قيمتُها تتغيّر وحدَها — اكتبها كلَّ شهرٍ '
       + 'ليُعرف ربحُك</span>'
       + '</div><div class="card">';
-    h += '<div class="qtab head"><span>الجهة</span><span>قيمتها اليوم</span>'
+    h += '<div class="qtab head"><span>المحفظة</span><span>قيمتها اليوم</span>'
       + '<span>الربح</span><span>شهرياً</span></div>';
     var TV = 0, TI = 0, TM = 0;
     h += state.invest.map(function(v){
@@ -9731,7 +9731,7 @@ margin-top:2px}
     }).join("");
     h += '<div class="qtab foot"><span class="qn">'
       + '<span class="qi" style="background:var(--card-2)">Σ</span>'
-      + '<span class="qt"><b>مجموع محافظك</b><s>' + state.invest.length + ' جهة</s></span></span>'
+      + '<span class="qt"><b>مجموع محافظك</b><s>' + state.invest.length + ' محفظة</s></span></span>'
       + '<span class="qv">' + fmt(TV) + '</span>'
       + '<span class="qv ' + (TV - TI > 0 ? "up" : TV - TI < 0 ? "dn" : "dim") + '">'
       + (TI ? ((TV - TI >= 0 ? "+" : "−") + fmt(Math.abs(TV - TI))) : "—") + '</span>'
@@ -9752,7 +9752,7 @@ margin-top:2px}
         + 'تكتبه هنا ويُحجز في بند «استثمار» من خطتك.</div>';
     }
     h += '<div class="qadd"><button class="addbtn sm" data-addinv="1">'
-      + '+ جهةٌ جديدة</button></div></div>';
+      + '+ محفظةٌ جديدة</button></div></div>';
 
     cut("port");
 
@@ -10922,7 +10922,7 @@ margin-top:2px}
       return mrow(v.n, (v.kind === "auto" ? "آلي" : "ذاتي") + " · قيمتها " + fmt(invVal(v)),
         '<button class="mini" data-editinv="' + v.id + '">تعديل</button>');
     }).join("");
-    h += '<div style="padding:12px 15px"><button class="addbtn" data-addinv="1">+ جهة استثمار</button></div></div>';
+    h += '<div style="padding:12px 15px"><button class="addbtn" data-addinv="1">+ محفظة استثمار</button></div></div>';
 
     var sal = salaryAcct();
     var ICS = invCat();
@@ -12431,7 +12431,7 @@ margin-top:2px}
       var L = invStale();
       if(!L.length) return;
       ask({ title: "قيمُ محافظك في " + mName(ui.month),
-        msg: "اكتب ما تراه في تطبيق كلِّ جهة. وما تتركه فارغاً يبقى كما هو.",
+        msg: "اكتب ما تراه في تطبيق كلِّ محفظة. وما تتركه فارغاً يبقى كما هو.",
         fields: L.map(function(v){
           return { key: v.id, label: v.n + " — كانت " + fmt(invVal(v)),
                    type: "number", value: "" };
@@ -12698,8 +12698,8 @@ margin-top:2px}
       save(); render();
     });
     on("[data-addinv]", function(){
-      ask({ title: "جهة استثمار جديدة", msg: "تطبيق استثمار آلي أو محفظتك الخاصة",
-        fields: [{ label: "اسم الجهة", value: "", ph: "اكتب الاسم" },
+      ask({ title: "محفظةُ استثمارٍ جديدة", msg: "تطبيق استثمار آلي أو محفظتك الخاصة",
+        fields: [{ label: "اسم المحفظة", value: "", ph: "اكتب الاسم" },
                  { label: "المساهمة الشهرية", type: "number", value: "" }],
         ok: "أضف",
         onOk: function(v){
@@ -12711,7 +12711,7 @@ margin-top:2px}
           accts().push({ id: uid(), bank: v[0], n: ordName("المحفظة", 0), link: "i:" + iid,
                          kind: "wallet", bal: 0, log: [], snap: sn0 });
           state.invest.forEach(function(x){ if(x.id === iid) clampInv(x); });
-          toast("أُضيفت الجهة ومعها حسابها");
+          toast("أُضيفت المحفظة ومعها حسابها");
           save();
         } });
     });
@@ -12775,7 +12775,7 @@ margin-top:2px}
       if(!v0) return;
       var _gv = invGoal(v0), _vv = invVal(v0);
       var _la = accts().filter(function(a){ return a.link === "i:" + id; }).length;
-      confirmDlg("حذف جهة «" + v0.n + "»؟",
+      confirmDlg("حذف محفظة «" + v0.n + "»؟",
         "قيمتُها <b>" + fmt(_vv) + "</b> وما ساهمتَ به <b>"
         + fmt(num(v0["in"])) + "</b> وسجلُّ أشهرها يذهب معها — ولا رجعة."
         + (_la ? ("<br>و" + _la + " من حساباتك المرتبطة تعود «تشغيلي» "
@@ -12900,9 +12900,9 @@ margin-top:2px}
       var id = b.getAttribute("data-editinv"), v0 = null;
       v0 = byId(state.invest, id);
       if(!v0) return;
-      editSimple("تعديل جهة الاستثمار: " + v0.n, v0,
+      editSimple("تعديل المحفظة: " + v0.n, v0,
         [{ label: "الاسم", value: v0.n, key: "n" }],
-        "delinv", id, "احذف الجهة نهائياً");
+        "delinv", id, "احذف المحفظة نهائياً");
     });
     on("[data-editacct]", function(b){
       var a = acctOf(b.getAttribute("data-editacct"));
@@ -13008,7 +13008,7 @@ margin-top:2px}
         "يُمسح: <b>" + _ms + " شهراً</b> · <b>" + _ops + " عملية</b> بمجموع <b>"
         + fmt(_sum) + "</b> · <b>" + (state.goals || []).length + " هدفاً</b> · <b>"
         + accts().length + " حساباً</b> · <b>" + (state.invest || []).length
-        + " جهةَ استثمار</b> · <b>" + (state.wish || []).length + " أمنية</b>."
+        + " محفظةَ استثمار</b> · <b>" + (state.wish || []).length + " أمنية</b>."
         + "<br><br><b>لا رجعةَ في هذا</b> — إلّا أن تكون أخذتَ نسخةً احتياطيّة. "
         + "خذها الآن من «النسخة الاحتياطية» إن لم تكن أخذتَها، فهي دقيقةٌ واحدة.",
         "امسح كلَّ شيء",
@@ -13661,7 +13661,7 @@ margin-top:2px}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+44";
+  var APP_VERSION = "1.5.0-beta+45";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
