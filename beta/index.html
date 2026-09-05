@@ -3661,9 +3661,27 @@ color:var(--gold);white-space:nowrap}
   /* المُدَّخر يُشتق من الحسابات المرتبطة إن وُجدت */
   function goalSaved(g){
     var l = linkedTo("g:" + g.id);
-    return l.length ? linkedSum("g:" + g.id) : num(g.saved);
+    if(l.length) return linkedSum("g:" + g.id);
+    /* مالُه يقعد في محفظة: قيمتُها هي مُدَّخرُه — رقمٌ واحدٌ لا رقمان */
+    var v = goalInv(g);
+    if(v) return invVal(v);
+    return num(g.saved);
   }
   function goalFromAccts(g){ return linkedTo("g:" + g.id).length > 0; }
+  /* المحفظةُ التي يقعد فيها مالُ الهدف — إن وُصل بواحدة */
+  function goalInv(g){
+    if(!g || !g.inv) return null;
+    return byId(state.invest, g.inv);
+  }
+  /* والعكس: أيُّ هدفٍ تحمله هذه المحفظة */
+  function invGoal(v){
+    if(!v) return null;
+    var out = null;
+    (state.goals || []).forEach(function(g){
+      if(!g.arch && g.inv === v.id) out = g; });
+    return out;
+  }
+  function goalHeld(g){ return goalFromAccts(g) || !!goalInv(g); }
   function invVal(v){
     var l = linkedTo("i:" + v.id);
     return l.length ? linkedSum("i:" + v.id) : num(v.val);
@@ -8040,7 +8058,23 @@ color:var(--gold);white-space:nowrap}
           + linkedChips("g:" + g.id, "", "data-gunlink")
           + (goalFromAccts(g)
               ? '<div class="eta">المُدَّخر محسوب من ' + linkedTo("g:" + g.id).length + ' حساب مرتبط</div>'
-              : '<div class="eta">بلا حساب — المُدَّخر يُكتب يدوياً من «تعديل»</div>')
+              : (goalInv(g)
+                  ? ('<div class="eta">المُدَّخر يُقرأ من محفظة «'
+                     + esc(goalInv(g).n) + '» — قيمتُها اليوم '
+                     + fmt(invVal(goalInv(g))) + '</div>')
+                  : '<div class="eta">بلا حساب — المُدَّخر يُكتب يدوياً من «تعديل»</div>'))
+          /* أو يقعد مالُه في محفظة: هدفٌ ومحفظةٌ معاً لا أحدُهما */
+          + (state.invest && state.invest.length
+              ? ('<div class="lab" style="margin-top:12px">أو يقعد مالُه في محفظة</div>'
+                 + '<select class="sel" data-ginv="' + g.id + '">'
+                 + '<option value="">— لا، مالُه في حسابٍ أو يُكتب يدوياً —</option>'
+                 + state.invest.map(function(v){
+                     return '<option value="' + esc(v.id) + '"'
+                       + (g.inv === v.id ? " selected" : "") + '>'
+                       + esc(v.n) + ' · ' + fmt(invVal(v)) + '</option>';
+                   }).join("")
+                 + '</select>')
+              : "")
           + '</div>'
           + (done
               ? '<div class="eta">اكتمل. الإنهاء يعيد الـ ' + fmt(g.m) + ' ريال الشهرية إلى خطتك، '
@@ -8068,12 +8102,17 @@ color:var(--gold);white-space:nowrap}
                            : '<span class="pill">عامّ</span>')
       + (function(){
           /* مرشدُ الترقية: يُستدعى متى شاء — والوعدُ في التنبيه أن يُوجد هنا */
-          var _mg = migFind().length;
-          return _mg
+          var _mg = migFind().length, _mu = migUndoList().length;
+          return (_mg
             ? mrow("مرشد الترقية",
                    _mg + " شيئاً يمكن نقلُه إلى مكانه",
                    '<button class="mini" data-migshow="1">اعرضها</button>')
-            : "";
+            : "")
+            + (_mu
+                ? mrow("تراجعْ عن نقل",
+                       _mu + " انتقل من مكانه — تردّه كما كان",
+                       '<button class="mini" data-migback="1">أرِني</button>')
+                : "");
         })()
       + mrow("معالج بداية الشهر", MM.setup === true ? "أُنجز" : "لم يُنجز بعد",
              '<button class="mini" data-rewiz="1">أعد تشغيله</button>')
@@ -8510,8 +8549,10 @@ color:var(--gold);white-space:nowrap}
   /* ═══ مرشدُ الترقية: ما بُني بأدواتٍ أقدم يجد بيته ═══ */
   var MIGGOAL = "زواج زفاف عرس طوارئ طواري احتياطي حج عمرة بيت شقة ارض سيارة "
               + "دفعة مقدم ادخار توفير مدخرات هدف حلم مشروع دراسة جامعة سفر";
-  var MIGINV  = "استثمار اسهم سهم محفظة تداول صندوق مؤشر ذهب فضة عقار كريبتو "
-              + "بيتكوين ريت صكوك";
+  /* ما لا يحتمل غيرَ الاستثمار. و«صندوق» ليست منها: «صندوق الطوارئ»
+     أشهرُ ما تُقال بها في لسان أهل البلد — وقد أوقعت الخطأ. */
+  var MIGINV  = "استثمار استثماري اسهم سهم محفظة تداول مؤشر كريبتو "
+              + "بيتكوين ريت صكوك تمويل جماعي";
   function migWordHit(name, bag){
     var t = arNorm(name), keys = arNorm(bag).split(" ");
     for(var i = 0; i < keys.length; i++)
@@ -8552,15 +8593,24 @@ color:var(--gold);white-space:nowrap}
     });
     (state.goals || []).forEach(function(g){
       if(g.arch) return;
+      /* وُصل بوعائه من قبلُ — فلا يُعرض ثانيةً، وإلا أُنشئ له وعاءٌ
+         في كلّ مرّة. (التقطه migtest: ستّةُ أوعيةٍ لهدفٍ واحد.) */
+      if(g.inv) return;
       var word = migWordHit(g.n, MIGINV);
-      if(gMode(g) !== "endless" && !word) return;
+      /* دليلٌ صريحٌ لا غير: «بلا نهاية» وحدَها ليست استثماراً —
+         فادّخارٌ مفتوحٌ بلا سقفٍ ادّخار. */
+      if(!word) return;
+      /* واسمٌ من كلمات الأهداف ينقض العرضَ مهما وافق غيرَه:
+         «صندوق الطوارئ» لا يصير محفظةً ولو سُمّي صندوقاً. */
+      var veto = migWordHit(g.n, MIGGOAL);
+      if(veto) return;
       out.push({ t: "g2i", id: g.id, n: g.n, e: g.e || "📈",
                  m: num(g.m), saved: goalSaved(g),
-                 why: word ? "اسمُه من باب الاستثمار"
-                           : "بلا نهاية — وهو وصفُ المحفظة لا الهدف" });
+                 why: "اسمُه يقول «" + veto0(word) + "» — وهو بابُ الاستثمار" });
     });
     return out;
   }
+  function veto0(w){ return String(w || ""); }
   function migSkipped(){
     var o = state.migSkip;
     return (o && typeof o === "object") ? o : (state.migSkip = {});
@@ -8581,15 +8631,74 @@ color:var(--gold);white-space:nowrap}
       c.hidden = true;                 /* يُخفى ولا يُحذف: سجلُّه باقٍ */
       toast("صار «" + c.n + "» هدفاً");
     } else {
+      /* لا يُنقل: يُنشأ له وعاءٌ ويُوصل به. فالهدفُ يبقى هدفاً في خطّتك،
+         والمحفظةُ تقول أين يقعد مالُه — سؤالان لا يُلغي أحدُهما الآخر. */
       var gg = goalOf(x.id);
       if(!gg) return;
-      state.invest.push({ id: uid(), n: gg.n, e: gg.e || "📈", kind: "self",
-                          m: money(num(gg.m)), val: money(goalSaved(gg)),
-                          in: money(goalSaved(gg)), from: gg.id });
-      gg.arch = true;
-      toast("صارت «" + gg.n + "» محفظة");
+      var nv = { id: uid(), n: gg.n, e: gg.e || "📈", kind: "self",
+                 m: money(num(gg.m)), val: money(goalSaved(gg)),
+                 in: money(goalSaved(gg)), from: gg.id };
+      state.invest.push(nv);
+      gg.inv = nv.id;
+      toast("«" + gg.n + "» بقي هدفاً — ومالُه صار في محفظة");
     }
     save();
+  }
+  /* ما نُقل يُردّ: لا شيءَ حُذف — البندُ مخفيٌّ والهدفُ مؤرشف */
+  function migUndoList(){
+    var L = [];
+    (state.invest || []).forEach(function(v){
+      if(!v.from) return;
+      var g = byId(state.goals, v.from);
+      if(g) L.push({ t: "i2g", id: v.id, n: v.n, back: g.n });
+    });
+    (state.goals || []).forEach(function(g){
+      if(!g.from || g.arch) return;
+      var c = catOf(g.from);
+      if(c && c.hidden) L.push({ t: "g2c", id: g.id, n: g.n, back: c.n });
+    });
+    return L;
+  }
+  function migUndo(t, id){
+    if(t === "i2g"){
+      var v = byId(state.invest, id);
+      if(!v) return;
+      var g = byId(state.goals, v.from);
+      if(!g) return;
+      g.arch = false;
+      /* ما صار في الوعاء يُردّ رقماً في الهدف — لا يضيع */
+      g.saved = money(invVal(v));
+      if(!num(g.m)) g.m = money(num(v.m));
+      delete g.inv;
+      state.invest = state.invest.filter(function(x){ return x.id !== id; });
+      toast("رُفع الوعاء — و«" + g.n + "» هدفٌ بمالِه");
+    } else {
+      var g2 = byId(state.goals, id);
+      if(!g2) return;
+      var c = catOf(g2.from);
+      if(!c) return;
+      c.hidden = false;
+      c.p = money(num(g2.m));
+      g2.arch = true;
+      toast("رجع «" + c.n + "» بنداً");
+    }
+    save();
+  }
+  function migUndoHTML(){
+    var L = migUndoList();
+    if(!L.length) return "";
+    return '<div class="sec"><h2>نُقل من مكانه</h2>'
+      + '<span class="hint">تراجعْ عن أيّ نقلٍ متى شئت</span></div><div class="card">'
+      + L.map(function(x){
+          return '<div class="row"><span class="ic" style="background:var(--card-2)">↩</span>'
+            + '<span><b class="nm">' + esc(x.n) + '</b>'
+            + '<s class="sub">كان ' + (x.t === "i2g" ? "هدفاً" : "بنداً في خطّتك")
+            + ' باسم «' + esc(x.back) + '»</s></span>'
+            + '<span class="rt"><button class="mini" data-migundo="'
+            + esc(x.t + ":" + x.id) + '">أرجِعه '
+            + (x.t === "i2g" ? "هدفاً" : "بنداً") + '</button></span></div>';
+        }).join("")
+      + '</div>';
   }
   function migCard(){
     var L = migOpen();
@@ -8604,12 +8713,12 @@ color:var(--gold);white-space:nowrap}
           ? ('بندٌ في خطّتك يشبه <b>الهدف</b>. نقلُه يجعل له مستهدفاً ومتى '
              + 'تبلغه، ويبقى المُدَّخر <b>' + fmt(x.saved) + '</b> والقسط <b>'
              + fmt(x.m) + '</b> كما هما. والبندُ يُخفى ولا يُحذف — سجلُّه باقٍ.')
-          : ('هدفٌ يشبه <b>المحفظة</b>. الفرقُ أنّ الهدفَ مالٌ تضعه فيزيد بما '
-             + 'تضعه وحدَه، والمحفظةَ مالٌ يتحرّك من نفسه فيُقاس ربحُه. '
-             + 'ينتقل بمالِه <b>' + fmt(x.saved) + '</b> وقسطِه <b>' + fmt(x.m)
-             + '</b>، ويُؤرشف الهدفُ ولا يُحذف.'))
+          : ('اسمُه يقول إنّ مالَه يقعد في وعاءٍ ينمو. <b>ويبقى هدفاً كما هو</b> '
+             + 'في خطّتك بقسطه <b>' + fmt(x.m) + '</b> — ويُنشأ له وعاءٌ '
+             + 'بقيمة <b>' + fmt(x.saved) + '</b> يُقاس نموُّه، ويُقرأ مُدَّخرُه '
+             + 'منه. سؤالان لا يُلغي أحدُهما الآخر.'))
       + '<div class="acts"><button class="act solid" data-migok="' + esc(x.t + ":" + x.id)
-      + '">انقله</button>'
+      + '">' + (x.t === "c2g" ? "اجعله هدفاً" : "أنشئ وعاءه وصِلْه") + '</button>'
       + '<button class="act" data-migno="' + esc(x.t + ":" + x.id)
       + '">اتركه كما هو</button>'
       + (L.length > 1 ? ('<span class="mign">وبعده ' + (L.length - 1) + '</span>') : "")
@@ -8712,6 +8821,7 @@ color:var(--gold);white-space:nowrap}
         + '<span class="ic" style="background:var(--ok-soft);color:var(--ok)">'
         + (v.kind==="auto" ? "🤖" : "📊") + '</span>'
         + '<span class="it"><b>' + esc(v.n) + '</b><s>'
+        + (invGoal(v) ? ('تحمل هدف «' + esc(invGoal(v).n) + '» · ') : "")
         + (RV.n ? "أداء " + (RV.r>=0?"+":"−") + pctTxt(Math.abs(RV.r))
                   + " خلال " + arMonths(RV.n) : "لم تُقفل شهراً بعد")
         + '</s></span>'
@@ -11355,6 +11465,34 @@ color:var(--gold);white-space:nowrap}
     on("[data-mighide]", function(){
       state.migHide = true; toast("تجده في الإعدادات متى شئت"); save(); render();
     });
+    ch("[data-ginv]", function(el){
+      var g = byId(state.goals, el.getAttribute("data-ginv"));
+      if(!g) return;
+      var id = el.value;
+      if(!id){ delete g.inv; toast("فُكّ الوصل — المُدَّخر يُكتب يدوياً"); }
+      else {
+        g.inv = id;
+        var v = byId(state.invest, id);
+        toast("مُدَّخرُ «" + g.n + "» يُقرأ من «" + ((v && v.n) || "المحفظة") + "»");
+      }
+      save(); render();
+    });
+    on("[data-migback]", function(){
+      ui.migBack = true; ui.tab = "set"; render();
+    });
+    on("[data-migundo]", function(b){
+      var p = b.getAttribute("data-migundo").split(":");
+      var x = null;
+      migUndoList().forEach(function(y){ if(y.t === p[0] && String(y.id) === p[1]) x = y; });
+      if(!x) return;
+      confirmDlg("إرجاعُ «" + x.n + "»؟",
+        (p[0] === "i2g"
+          ? ("تعود هدفاً باسم «" + esc(x.back) + "» بمالِها وقسطِها كما هما الآن، "
+             + "وتُرفع من المحافظ.")
+          : ("يعود بنداً في خطّتك باسم «" + esc(x.back) + "» بقسطه، ويُؤرشف الهدف."))
+        + "<br>لا يضيع ريالٌ — ما كُتب بعد النقل يُردّ معه.",
+        "أرجِعه", function(){ migUndo(p[0], p[1]); render(); });
+    });
     on("[data-migshow]", function(){
       state.migHide = false; state.migSkip = {}; ui.tab = "dash";
       save(); render();
@@ -12351,7 +12489,7 @@ color:var(--gold);white-space:nowrap}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+27";
+  var APP_VERSION = "1.5.0-beta+28";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
