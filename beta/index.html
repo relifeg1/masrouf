@@ -3858,6 +3858,24 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
     return out.slice(-(n || 6));
   }
   /* قسطٌ مقترَح: الباقي على اثني عشر شهراً — رقمٌ يُقبل أو يُعدَّل */
+  /* نصُّ حذف البند — كان في موضعين بنصٍّ واحدٍ موجزٍ بلا رقم */
+  function catDelMsg(c){
+    var nit = 0, tot = 0;
+    for(var mk in (state.months || {}))
+      ((state.months[mk] || {}).items || []).forEach(function(it){
+        if(it.c === c.k){ nit++; tot += num(it.a); }
+      });
+    var subs = (c.subs || []).length;
+    return "خطّتُه <b>" + fmt(catPlan(c, ui.month)) + "</b> شهرياً تعود إلى "
+      + "الباقي من دخلك"
+      + (subs ? (" · و<b>" + subs + "</b> من فروعه تذهب معه") : "")
+      + "."
+      + (nit ? ("<br>و<b>" + nit + " عملية</b> بمجموع <b>" + fmt(tot)
+               + "</b> تبقى في شهورها <b>بلا اسمِ بند</b> — فتُقرأ تقاريرُك "
+               + "ناقصةً.") : "")
+      + "<br><br><b>«أخفِه» أرفق</b>: يرفعه من الشاشات ويبقي أرقامَه "
+      + "وتقاريرَه كما هي.";
+  }
   function goalSuggest(g){
     var rem = Math.max(0, goalTarget(g) - goalSaved(g));
     if(rem <= 0) return 0;
@@ -8287,20 +8305,6 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
              incObj(k).own ? "مخصص لهذا الشهر وحده" : "من الافتراضي العامّ",
              incObj(k).own ? '<button class="mini" data-increset="1">أرجِعه للعامّ</button>'
                            : '<span class="pill">عامّ</span>')
-      + (function(){
-          /* مرشدُ الترقية: يُستدعى متى شاء — والوعدُ في التنبيه أن يُوجد هنا */
-          var _mg = migFind().length, _mu = migUndoList().length;
-          return (_mg
-            ? mrow("مرشد الترقية",
-                   _mg + " شيئاً يمكن نقلُه إلى مكانه",
-                   '<button class="mini" data-migshow="1">اعرضها</button>')
-            : "")
-            + (_mu
-                ? mrow("تراجعْ عن نقل",
-                       _mu + " انتقل من مكانه — تردّه كما كان",
-                       '<button class="mini" data-migback="1">أرِني</button>')
-                : "");
-        })()
       + mrow("معالج بداية الشهر", MM.setup === true ? "أُنجز" : "لم يُنجز بعد",
              '<button class="mini" data-rewiz="1">أعد تشغيله</button>')
       + '</div>';
@@ -8379,7 +8383,10 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
       var sp = A.by[c.k] || 0, left = avail - sp;
       var det = detailSum(k, c.k), dn = detailCount(k, c.k);
       var pv = PA.by[c.k] || 0;
-      var subs = (c.subs || []).length;
+      /* بندُ الاستثمار فروعُه محافظُك — والنموذجُ يقولها من قبل:
+         subsSum له هي مجموعُ ما تضعه في المحافظ. */
+      var isI = isInvCat(c);
+      var subs = isI ? (state.invest || []).length : (c.subs || []).length;
       /* لا يُجمع السقف: مالٌ لم يُحجز */
       if(!capRow) TA += avail;
       TS += sp;
@@ -8422,7 +8429,29 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
         + '</div>'
         /* الفروع بالأعمدة نفسها: خطّة · صُرف · باقٍ. ومعها ما بقي من
            السقف بلا فرع، فتجتمع الأرقام ولا يبقى فرقٌ لا يُفسَّر. */
-        + ((subs && ui.openQ[c.k])
+        + ((subs && ui.openQ[c.k] && isI)
+            ? ((state.invest || []).map(function(v){
+                var mo2 = num(v.m), pu2 = invPut(v, k), lf3 = mo2 - pu2;
+                return '<div class="qtab qsub">'
+                  + '<span class="qn"><span class="qt"><b>'
+                  + (v.kind === "auto" ? "🤖 " : "📊 ") + esc(v.n) + '</b>'
+                  + '<s>قيمتُها الآن ' + fmt(invVal(v))
+                  + (invGoal(v) ? (' · تحمل هدف «' + esc(invGoal(v).n) + '»') : "")
+                  + '</s></span></span>'
+                  + '<span class="qv' + (mo2 ? "" : " dim") + '">' + fmt(mo2) + '</span>'
+                  + '<input class="qin' + (pu2 ? " has" : "") + '" type="text" '
+                  + 'inputmode="decimal" data-iquick="' + v.id + '" value="'
+                  + (pu2 || "") + '" placeholder="0">'
+                  + '<span class="qv' + (lf3 > 0 ? "" : " dim") + '">'
+                  + fmt(lf3) + '</span></div>';
+              }).join("")
+              + '<div class="qtab qsub rest"><span class="qn"><span class="qt">'
+              + '<b>القيمةُ تُحدَّث من تبويب الاستثمار</b>'
+              + '<s>هنا ما تودعه · وهناك ما صار إليه</s></span></span>'
+              + '<span class="qv"></span><span class="qv"></span>'
+              + '<span class="qv"></span></div>')
+            : "")
+        + ((subs && ui.openQ[c.k] && !isI)
             ? ((c.subs || []).map(function(x){
                 var sp2 = linePlan(x, k, lineKey(c.k, x.id));
                 var sv2 = A.bySub[x.id] || 0;
@@ -8496,44 +8525,9 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
         + 'وإلا فارصده يُقرأ من الحساب.</div>';
     }
 
-    /* ── الاستثمار: النصف الآخر من «ادفع لنفسك» ── */
-    var QI = state.invest || [];
-    if(QI.length){
-      var IT = 0, IP = 0;
-      h += '<div class="sec"><h2>الاستثمار</h2>'
-        + '<span class="hint">المخطّطُ لمحافظك مقابل ما أودعتَه فعلاً</span></div><div class="card">';
-      h += '<div class="qtab head"><span>الجهة</span><span>المخطط</span>'
-        + '<span>أودعت</span><span>المتبقي</span></div>';
-      h += QI.map(function(v){
-        var mo = num(v.m), pu = invPut(v, k), left = mo - pu;
-        IT += mo; IP += pu;
-        return '<div class="qtab' + (ui.flash === "i:" + v.id ? " flash" : "") + '">'
-          + '<span class="qn"><span class="qi" style="background:'
-          + 'var(--ok-soft);color:var(--ok)">'
-          + (v.kind === "auto" ? "🤖" : "📊") + '</span>'
-          + '<span class="qt"><b>' + esc(v.n) + '</b>'
-          + '<s>قيمتها الآن ' + fmt(invVal(v)) + '</s></span></span>'
-          + '<span class="qv' + (mo ? "" : " dim") + '">' + fmt(mo) + '</span>'
-          + '<input class="qin' + (pu ? " has" : "") + '" type="text" inputmode="decimal" '
-          + 'data-iquick="' + v.id + '" value="' + (pu || "") + '" placeholder="0">'
-          + '<span class="qv' + (left > 0 ? "" : " dim") + '">' + fmt(left) + '</span></div>';
-      }).join("");
-      h += '<div class="qtab foot"><span class="qn">'
-        + '<span class="qi" style="background:var(--card-2)">Σ</span>'
-        + '<span class="qt"><b>مجموع الإيداع</b><s>' + QI.length + ' جهة</s></span></span>'
-        + '<span class="qv">' + fmt(IT) + '</span>'
-        + '<span class="qv" style="font-size:15px">' + fmt(IP) + '</span>'
-        + '<span class="qv">' + fmt(IT - IP) + '</span></div></div>';
-      h += '<div class="hintnote" data-note="ne55eff0">الإيداع يُسجَّل هنا، و<b>قيمة</b> المحفظة تُحدَّث من تبويب '
-        + 'الاستثمار عند إقفال الشهر — فالإيداع ما دفعتَه، والقيمة ما صار إليه.'
-        + '<div class="acts"><button class="act" data-tab="inv">افتح الاستثمار</button></div></div>';
-    }
+    /* قسمُ الاستثمار المستقلُّ رُفع: صار بندُ «استثمار» في الجدول
+       يتفرّع إلى محافظه، فلا يُقرأ الشيءُ في مكانين. */
 
-    h += '<div class="hintnote" data-note="nd24b159">عمود <b>الخطة</b> يُحرَّر هنا كما يُحرَّر في شاشة الخطة — '
-      + 'التعديل يخصّ هذا الشهر إن كانت له خطة خاصة، وإلا فخطتك الأساسية.<br>'
-      + 'وعمود <b>صُرف</b> إجمالي ما صرفته في البند هذا الشهر. ما سجّلته عمليةً بعملية يبقى '
-      + 'كما هو، والفرق وحده يُضاف كعملية «إدخال سريع»، والبنود ذات الحساب المخصَّص '
-      + 'يُخصم منها تلقائياً.</div>';
     return h;
   }
 
@@ -10223,6 +10217,23 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
 
     var mm = month(ui.month);
     var nItems = 0; for(var kk in state.months) nItems += state.months[kk].items.length;
+    /* مرشدُ الترقية وتراجعُه: أدواتُ مرّةٍ واحدة، موضعُها الإعدادات —
+       وهو ما يَعِد به التنبيه. وكانت في شاشة الخطة. */
+    var _mg = migFind().length, _mu = migUndoList().length;
+    if(_mg || _mu){
+      h += '<div class="sec"><h2>الترقية من نسخةٍ أقدم</h2>'
+        + '<span class="hint">ما بنيتَه بأدواتٍ أقدم — يُنقل إلى مكانه أو '
+        + 'يُردّ كما كان</span></div><div class="card">'
+        + (_mg ? mrow("ما يمكن نقلُه",
+                      _mg + " شيئاً يشبه هدفاً أو محفظة",
+                      '<button class="mini" data-migshow="1">اعرضها</button>') : "")
+        + (_mu ? mrow("ما انتقل من مكانه",
+                      _mu + " — تردّه بمالِه وقسطِه كما كان",
+                      '<button class="mini" data-migback="1">أرِني</button>') : "")
+        + '</div>';
+      if(ui.migBack) h += migUndoHTML();
+    }
+
     h += '<div class="sec"><h2>النسخة الاحتياطية</h2></div><div class="card">'
       + mrow("بياناتك", Object.keys(state.months).length + " شهر · " + nItems + " عملية · " + accts().length + " حساب",
              '<button class="mini" data-backup="1">انسخها</button>'
@@ -10915,7 +10926,9 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
       var mk = b.getAttribute("data-lockm");
       if(isLocked(mk)){
         confirmDlg("فتح «" + mName(mk) + "»؟",
-          "سيُسجَّل أنه فُتح بأثر رجعي، ويبقى السجلّ ظاهراً في شريط الخطة.",
+          "يعود قابلاً للتعديل — فتتغيّر مجاميعُه وتقاريرُك معه. "
+          + "ويُسجَّل أنّه فُتح بأثرٍ رجعيّ، ويبقى ذلك ظاهراً في شريط الخطة."
+          + "<br>لا يضيع شيءٌ بالفتح.",
           "افتحه", function(){ lockMonth(mk, false); save(); }, true);
       } else {
         confirmDlg("إقفال «" + mName(mk) + "»؟",
@@ -10925,8 +10938,14 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
       }
     });
     on("[data-planbase]", function(){
+      var _ov = planOvr(ui.month) || {}, _nch = 0;
+      for(var _kk in _ov) _nch++;
       confirmDlg("اجعل خطة " + mName(ui.month) + " هي الأساسية؟",
-        "ستُطبَّق على كل شهر جديد، ويُلغى التخصيص الحالي.", "اعتمدها", function(){
+        "<b>" + _nch + " رقماً</b> خصّصتَه لهذا الشهر يصير خطّتَك الأساسيّة، "
+        + "فتُطبَّق على كلّ شهرٍ جديدٍ بعده."
+        + "<br>شهورُك الماضية وعملياتُك لا تُمسّ — يتغيّر ما يُبنى عليه "
+        + "الجديد فقط.",
+        "اعتمدها", function(){
           var o = planOvr(ui.month) || {};
           state.cats.forEach(function(c){
             if(o[c.k] !== undefined) c.p = num(o[c.k]);
@@ -10941,8 +10960,13 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
         });
     });
     on("[data-planreset]", function(){
+      var _o2 = planOvr(ui.month) || {}, _n2 = 0;
+      for(var _k2 in _o2) _n2++;
       confirmDlg("إرجاع " + mName(ui.month) + " للخطة الأساسية؟",
-        "سيُحذف التخصيص الخاص بهذا الشهر — للبنود وللأهداف.", "أرجِعها", function(){
+        "<b>" + _n2 + " رقماً</b> خصّصتَه لهذا الشهر — للبنود وللأهداف — "
+        + "يُمحى، فيقرأ الشهرُ خطّتَك الأساسيّة."
+        + "<br>عملياتُك ومبالغُك لا تُمسّ.",
+        "أرجِعها", function(){
           var m0 = month(ui.month);
           delete m0.plan;
           delete m0.gm;
@@ -11022,8 +11046,7 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
     });
     on("[data-delcat]", function(b){
       var k = b.getAttribute("data-delcat"), c = catOf(k);
-      confirmDlg("حذف بند «" + c.n + "»؟",
-        "العمليات المسجّلة عليه ستبقى لكن بلا اسم.", "احذف", function(){
+      confirmDlg("حذف بند «" + c.n + "»؟", catDelMsg(c), "احذفه", function(){
           state.cats = state.cats.filter(function(x){ return x.k !== k; });
           if(ui.cat === k) ui.cat = null;
           save();
@@ -11660,7 +11683,13 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
       save(); render();
     });
     on("[data-migback]", function(){
-      ui.migBack = true; ui.tab = "set"; render();
+      ui.migBack = true; ui.tab = "set";
+      render();
+      /* يُمرَّر إلى القائمة لا يُترك يبحث عنها */
+      setTimeout(function(){
+        var el = document.querySelector("[data-migundo]");
+        if(el && el.scrollIntoView) el.scrollIntoView({ block: "center" });
+      }, 60);
     });
     on("[data-migundo]", function(b){
       var p = b.getAttribute("data-migundo").split(":");
@@ -11816,11 +11845,24 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
       var id = b.getAttribute("data-delinv"), v0 = null;
       v0 = byId(state.invest, id);
       if(!v0) return;
-      confirmDlg("حذف «" + v0.n + "»؟", "الحسابات المرتبطة بها ستعود «تشغيلي».", "احذف", function(){
-        accts().forEach(function(a){ if(a.link === "i:" + id) a.link = "ops"; });
-        state.invest = state.invest.filter(function(x){ return x.id !== id; });
-        save();
-      }, true);
+      var _gv = invGoal(v0), _vv = invVal(v0);
+      var _la = accts().filter(function(a){ return a.link === "i:" + id; }).length;
+      confirmDlg("حذف جهة «" + v0.n + "»؟",
+        "قيمتُها <b>" + fmt(_vv) + "</b> وما ساهمتَ به <b>"
+        + fmt(num(v0["in"])) + "</b> وسجلُّ أشهرها يذهب معها — ولا رجعة."
+        + (_la ? ("<br>و" + _la + " من حساباتك المرتبطة تعود «تشغيلي» "
+                  + "بأرصدتها كما هي.") : "")
+        + (_gv ? ("<br><b>وهدفُ «" + esc(_gv.n) + "» يقرأ مُدَّخرَه منها</b> — "
+                  + "فيُكتب فيه <b>" + fmt(_vv) + "</b> رقماً ويُفكّ الوصل، "
+                  + "فلا يسقط إلى صفر.") : ""),
+        "احذفها", function(){
+          /* الهدفُ الموصولُ لا يُترك بلا مُدَّخر: تُنقل القيمةُ إليه رقماً */
+          var g2 = invGoal(v0);
+          if(g2){ g2.saved = money(_vv); delete g2.inv; }
+          accts().forEach(function(a){ if(a.link === "i:" + id) a.link = "ops"; });
+          state.invest = state.invest.filter(function(x){ return x.id !== id; });
+          save();
+        }, true);
     });
 
     /* المصروف */
@@ -11944,7 +11986,7 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
     });
     on("[data-rmcat]", function(b){
       var k = b.getAttribute("data-rmcat"), c = catOf(k);
-      confirmDlg("حذف بند «" + c.n + "»؟", "العمليات المسجّلة عليه ستبقى لكن بلا اسم.", "احذف",
+      confirmDlg("حذف بند «" + c.n + "»؟", catDelMsg(c), "احذفه",
         function(){
           state.cats = state.cats.filter(function(x){ return x.k !== k; });
           if(ui.cat === k) ui.cat = null;
@@ -12030,8 +12072,18 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
       inp.click();
     });
     on("[data-wipe]", function(){
-      confirmDlg("تصفير كل البيانات؟",
-        "سيُمسح كل شيء: الأشهر والعمليات والأهداف والحسابات. لا يمكن التراجع.", "صفّر كل شيء",
+      var _ms = Object.keys(state.months || {}).length, _ops = 0, _sum = 0;
+      for(var _k in (state.months || {}))
+        ((state.months[_k] || {}).items || []).forEach(function(it){
+          _ops++; _sum += num(it.a); });
+      confirmDlg("تصفير كل بياناتك؟",
+        "يُمسح: <b>" + _ms + " شهراً</b> · <b>" + _ops + " عملية</b> بمجموع <b>"
+        + fmt(_sum) + "</b> · <b>" + (state.goals || []).length + " هدفاً</b> · <b>"
+        + accts().length + " حساباً</b> · <b>" + (state.invest || []).length
+        + " جهةَ استثمار</b> · <b>" + (state.wish || []).length + " أمنية</b>."
+        + "<br><br><b>لا رجعةَ في هذا</b> — إلّا أن تكون أخذتَ نسخةً احتياطيّة. "
+        + "خذها الآن من «النسخة الاحتياطية» إن لم تكن أخذتَها، فهي دقيقةٌ واحدة.",
+        "امسح كلَّ شيء",
         function(){
           /* رقم البنية يبقى كما هو — التصفير يمحو البيانات لا يُنزل
              الحالة إلى إصدارٍ أقدم. كان مكتوباً 8 والبنية 15. */
@@ -12339,8 +12391,10 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
         }, true);
     });
     on("[data-snapdrop]", function(){
-      confirmDlg("احذف اللقطة",
-        "لن تستطيع الرجوع إلى ما قبل هذا التحديث بعدها.",
+      confirmDlg("احذف لقطةَ ما قبل التحديث؟",
+        "هي نسخةٌ من بياناتك حُفظت تلقائياً قبل آخر تحديث. حذفُها يعني "
+        + "أنّك لن تستطيع الرجوع إليها."
+        + "<br>بياناتُك الحاليّة لا تُمسّ — ونسخُك الاحتياطيّة كذلك.",
         "احذفها", function(){ snapDrop(); toast("حُذفت"); render(); }, true);
     });
     on("[data-stordev]", function(){
@@ -12672,7 +12726,7 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+33";
+  var APP_VERSION = "1.5.0-beta+34";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
