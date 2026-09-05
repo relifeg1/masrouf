@@ -3510,6 +3510,13 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
       v["in"] = money(Math.max(0, num(v["in"]) + dif));
       /* والقيمةُ كذلك: تُقدَّر بما وضعتَ حتى تكتب الحقيقيّةَ آخر الشهر */
       v.val = money(Math.max(0, num(v.val) + dif));
+      /* وتُثبَّت لقطةُ الشهر: خانةُ «قيمتها اليوم» تعرض اللقطةَ لا
+         القيمةَ الجارية، فبدونها تبقى فارغةً ويبقى الرسمُ بلا نقطة —
+         فيُقرأ كأنّ الإيداعَ لم يصل. والربحُ يبقى صفراً لأنّ القيمةَ
+         زادت بمقدار ما أودعتَ لا أكثر. */
+      var _pv = invValAt(v, shift(mk, -1));
+      if(_pv === null) _pv = 0;
+      setInvValue(v, mk, money(_pv + t));
     }
     return t;
   }
@@ -12799,7 +12806,7 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+37";
+  var APP_VERSION = "1.5.0-beta+38";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
