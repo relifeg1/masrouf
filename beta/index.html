@@ -651,6 +651,9 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
 .dlg h3{font-size:17px;font-weight:600;margin-bottom:6px}
 .dmsg{font-size:13px;color:var(--ink-2);margin:0 0 14px;line-height:1.7}
 .dmsg b{color:var(--ink);font-weight:600}
+/* السمةُ `hidden` أضعفُ من أيّ قاعدةٍ تُكتب بيدك — و`.f2grid`
+   تغلبها بـ`display:grid`. فحكمٌ عامٌّ يحمي كلَّ ما يُخفى. */
+[hidden]{display:none!important}
 .f2{display:flex;flex-direction:column;gap:2px;margin-bottom:8px;min-width:0}
 .f2 label{font-size:11px;color:var(--ink-3)}
 .f2 input{width:100%;background:var(--card-2);border:1.5px solid var(--line);border-radius:10px;
@@ -661,6 +664,9 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   .f2grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
   .f2grid > .f2:first-child, .f2grid > .f2:last-child{grid-column:1 / -1}
   .f2grid > .f2:only-child{grid-column:1 / -1}
+  /* وما أعلن عرضَه غلب القاعدةَ العمياء — تُكتب بعدها فتسبقها */
+  .f2grid > .f2.wide{grid-column:1 / -1}
+  .f2grid > .f2.half{grid-column:auto}
 }
 .f2 input:focus{border-color:var(--accent);background:var(--card)}
 .f2 input[type=number]{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:21px;
@@ -1609,10 +1615,16 @@ font:600 10px/1 inherit;padding:4px 8px;border-radius:99px;cursor:pointer;
 vertical-align:middle;transition:.14s}
 .qtab .qsx>i{font-style:normal;font-size:8px;line-height:1;display:inline-block;
 transition:transform .18s}
-.qtab .qt.has{cursor:pointer;border-radius:9px;margin-inline-start:-5px;
-padding-inline-start:5px;transition:background .14s}
+/* الصفُّ كلُّه بابٌ: الاسمُ والوصفُ وما بينهما — لا العددُ وحدَه */
+.qtab .qt.has{cursor:pointer;border-radius:10px;margin-inline-start:-6px;
+padding:3px 6px;transition:background .14s}
 .qtab .qt.has:hover{background:var(--card-2)}
-.qtab .qt.has:hover .qsx{border-color:var(--accent);color:var(--accent)}
+.qtab .qt.has:hover .qsx{border-color:var(--accent);color:var(--accent);
+background:var(--accent-soft)}
+/* والسهمُ حبّةٌ كحبّات التطبيق — يدور فيُعلم أنّه فُتح */
+.qtab .qsx{gap:5px;padding:3px 7px 3px 5px}
+.qtab .qsx>em{font-style:normal;font-family:"IBM Plex Mono",monospace;
+font-size:10px;opacity:.75}
 .qtab .qsx.on{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
 .qtab .qsx.on>i{transform:rotate(-180deg)}
 /* لوحُ الفروع: مُزاحٌ عن أبيه، له عمودٌ في جهة الاسم يجمعه */
@@ -1654,6 +1666,16 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
 .lgr .del:hover{border-color:var(--warn);color:var(--warn)}
 .lgnote{font-size:10.5px;color:var(--ink-3);margin-inline-start:10px;line-height:1.7}
 .gacts{display:flex;gap:6px;margin-inline-start:auto;flex-wrap:wrap}
+/* «حدّده»: زرٌّ في خانة الرقم — يقول إنّ ثمّ رقماً ينقص */
+/* بطاقةُ المرشد: تقول ما وجدت وتُري الشيءَ نفسَه قبل أن تسأل */
+.flag.mig{border-color:var(--gold)}
+.migone{display:grid;grid-template-columns:34px minmax(0,1fr);gap:11px;
+align-items:center;margin:10px 0;padding:9px 11px;border-radius:12px;
+background:var(--card-2)}
+.mign{align-self:center;font-size:11px;color:var(--ink-3);margin-inline-start:auto}
+.mini.gset{padding:4px 10px;font-size:11.5px;border-color:var(--gold);
+color:var(--gold);white-space:nowrap}
+.mini.gset:hover{background:var(--gold-soft)}
 .mini.bad{border-color:var(--warn-soft);color:var(--warn)}
 .mini.bad:hover{border-color:var(--warn);background:var(--warn-soft)}
 @media(max-width:620px){
@@ -2059,6 +2081,19 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
   function esc(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){
     return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]; }); }
   function num(v){ var n = parseFloat(v); return isNaN(n) ? 0 : n; }
+  /* البحثُ عن كائنٍ بمعرّفه: كان يُكتب بيده تسعةَ عشرَ مرّة */
+  function byId(list, id){
+    if(!list || !list.length) return null;
+    for(var i = 0; i < list.length; i++)
+      if(list[i] && list[i].id === id) return list[i];
+    return null;
+  }
+  /* سمةٌ مزدوجة «بند|فرع» — عشرون موضعاً تقرؤها */
+  function pair(el, name){
+    var v = "";
+    try{ v = el.getAttribute(name) || ""; }catch(e){}
+    return String(v).split("|");
+  }
   /* المالُ قرشان لا أكثر — يُقرَّب عند الكتابة لا عند العرض، فما يدخل
      البيانات يبقى كما يُقرأ. (٤٤٢ − ٢٧١٫٠٥ كانت تُخزَّن
      170.95000000000002 وتظهر خاماً في الحقل.) */
@@ -3732,6 +3767,17 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
     });
     return out.slice(-(n || 6));
   }
+  /* قسطٌ مقترَح: الباقي على اثني عشر شهراً — رقمٌ يُقبل أو يُعدَّل */
+  function goalSuggest(g){
+    var rem = Math.max(0, goalTarget(g) - goalSaved(g));
+    if(rem <= 0) return 0;
+    return Math.max(1, Math.ceil(rem / 12));
+  }
+  /* هدفٌ له مستهدفٌ ولا يقتطع شيئاً: موجودٌ في القائمة، غائبٌ عن الخطة */
+  function goalIdle(g){
+    return !isDone(g) && gMode(g) !== "endless"
+        && goalMonthly(g) <= 0 && goalTarget(g) > 0;
+  }
   function goalEta(g){
     if(gMode(g) === "endless") return { done: false, months: null, when: "", endless: true };
     if(isDone(g)) return { done: true, months: 0, when: "" };
@@ -4293,7 +4339,8 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
   function dlgField(x, i){
     return (function(){
           if(x.type === "select")
-            return '<div class="f2"><label>' + esc(x.label) + '</label>'
+            return '<div class="f2' + (x.w ? (" " + x.w) : "") + '"><label>'
+              + esc(x.label) + '</label>'
               + '<select id="df' + i + '" class="sel"'
               + (x.rerender ? ' data-dlgre="1"' : '') + '>'
               + (x.options || []).map(function(o){
@@ -4312,7 +4359,8 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
               + (x.emo ? ' data-emofield="1"' : '')
               + (x.hook ? (' data-' + x.hook + '="1"') : "")
               + ' value="' + esc(x.value == null ? "" : x.value) + '">';
-          return '<div class="f2"><label>' + esc(x.label) + '</label>'
+          return '<div class="f2' + (x.w ? (" " + x.w) : "") + '"><label>'
+            + esc(x.label) + '</label>'
             + '<input id="df' + i + '" type="' + (x.type || "text") + '"'
             + (x.type === "number" ? ' inputmode="decimal"' : "")
             + ' value="' + esc(x.value == null ? "" : x.value) + '"'
@@ -4321,6 +4369,44 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
   }
   function dlgWire(){
     if(!dlg) return;
+    /* مستهدفٌ يُكتب وحقلُ القسط فارغ: يُملأ باقتراحٍ ظاهرٍ يُعدَّل —
+       فلا يخرج من الحوار بهدفٍ لا يقتطع شيئاً وهو لا يدري. */
+    (function(){
+      var src = null, dst = null;
+      (dlg.fields || []).forEach(function(x, i){
+        if(x.suggests) src = { el: document.getElementById("df" + i), to: x.suggests };
+        if(x.key && src && x.key === src.to) dst = document.getElementById("df" + i);
+      });
+      if(!src || !src.el || !dst) return;
+      src.el.onchange = function(){
+        if(num(dst.value) > 0) return;          /* كتب رقمَه — فلا يُمسّ */
+        var t = num(src.el.value);
+        if(t <= 0) return;
+        dst.value = Math.max(1, Math.ceil(t / 12));
+      };
+    })();
+    /* الرمزُ يتبع الاسم ما لم يختر صاحبُه بيده. ولا يمرّ بـrender
+       للسبب نفسِه: إعادةُ الرسم تُفقد ما كُتب ولم يُحفظ. */
+    (function(){
+      var emo = document.querySelector("[data-emofield]");
+      var face = document.querySelector(".emoface");
+      if(!emo || !face) return;
+      var nf = null;
+      (dlg.fields || []).forEach(function(x, i){
+        if(x.guess) nf = document.getElementById("df" + i);
+      });
+      if(!nf) return;
+      /* رمزٌ اختاره من قبلُ يُحترم — إلّا الافتراضيَّ الذي لم يُقصَد */
+      var DEF = { "🎁": 1, "🙂": 1, "•": 1, "": 1 };
+      if(!DEF[String(emo.value || "")]) emo.setAttribute("data-emopick", "1");
+      nf.oninput = function(){
+        if(emo.getAttribute("data-emopick")) return;
+        var g = emoGuess(nf.value);
+        if(!g) return;
+        emo.value = g;
+        face.textContent = g;      /* في مكانه — لا إعادةَ رسم */
+      };
+    })();
     /* الطيُّ لا يمرّ بـrender: إعادةُ الرسم تبني الحقولَ من قيمها
        المحفوظة، فيضيع ما كُتب ولم يُحفظ. */
     var mb = document.querySelector("[data-dmore]");
@@ -4457,6 +4543,104 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
     ["أسرة", "👶🧒👨‍👩‍👧🐱🐶🎒"],
     ["مال", "💰🏦📈🛟💍🎯🪙📊"]
   ];
+  /* ── الرمزُ يُعرف من الاسم ──
+     قاموسٌ صغيرٌ بالكلمة لا بالجملة. والمطابقةُ بعد تجريدِ «ال»
+     والتاء المربوطة وتوحيدِ الألف والياء — فـ«السيّارة» و«سيارتي»
+     و«سياره» كلُّها تصيب. */
+  var EMOWORDS = [
+    ["⛽", "بنزين وقود محطة بترول ديزل"],
+    ["🚗", "سيارة سياره مركبة عربية موتر"],
+    ["🚕", "تاكسي اوبر كريم اجرة توصيل"],
+    ["🛒", "بقالة تموين سوبرماركت مقاضي تسوق مشتريات سوق"],
+    ["🍔", "برجر وجبة اكل ماكولات"],
+    ["🍕", "بيتزا"],
+    ["☕", "قهوة كافيه شاي كوفي مقهى"],
+    ["🍽️", "مطعم مطاعم عشاء غداء فطور طعام"],
+    ["🏠", "بيت منزل ايجار سكن شقة عمارة"],
+    ["💡", "كهرباء نور اضاءة"],
+    ["💧", "ماء مياه"],
+    ["📶", "انترنت نت شبكة داتا باقة"],
+    ["📱", "جوال هاتف تلفون موبايل ايفون"],
+    ["📺", "اشتراك اشتراكات نتفلكس شاهد تلفزيون بث"],
+    ["🧾", "فاتورة فواتير سداد"],
+    ["🏥", "مستشفى عيادة طبيب علاج صحة"],
+    ["💊", "دواء صيدلية علاج حبوب"],
+    ["🦷", "اسنان تقويم"],
+    ["👓", "نظارة نظارات عدسات"],
+    ["📚", "كتاب كتب دراسة تعليم مذاكرة"],
+    ["🎓", "جامعة رسوم دورة شهادة تخرج"],
+    ["🏫", "مدرسة مدارس روضة"],
+    ["👕", "ملابس ثوب قميص لبس تيشرت"],
+    ["👗", "فستان عباية عبايه"],
+    ["👟", "حذاء جزمة نعال شوز احذية"],
+    ["👜", "شنطة شنط حقيبة جزدان محفظة كيس"],
+    ["🕶️", "نظارة شمسية"],
+    ["💄", "مكياج عطر تجميل عطور"],
+    ["✈️", "سفر طيران تذكرة رحلة اجازة سياحة"],
+    ["🏖️", "شاطئ مصيف عطلة بحر"],
+    ["🏨", "فندق حجز شاليه استراحة"],
+    ["🎮", "العاب لعبة بلايستيشن قيمنق كمبيوتر"],
+    ["🎧", "سماعة سماعات ايربودز"],
+    ["💻", "لابتوب حاسب كمبيوتر جهاز ماك"],
+    ["⌚", "ساعة ساعات"],
+    ["🎬", "سينما فيلم افلام"],
+    ["🎁", "هدية هدايا مناسبة عيدية"],
+    ["🎂", "عيد ميلاد كيك حفلة"],
+    ["💍", "زواج زفاف خطوبة ملكة عرس مهر"],
+    ["👶", "طفل مولود اطفال حضانة"],
+    ["🐱", "قطة قطط حيوان"],
+    ["🐶", "كلب"],
+    ["💰", "ادخار مدخرات فلوس مال نقود توفير"],
+    ["🛟", "طوارئ احتياطي طواري"],
+    ["🏦", "بنك حساب قرض تمويل"],
+    ["📈", "استثمار اسهم محفظة تداول صندوق"],
+    ["🪙", "ذهب فضة عملة كريبتو بيتكوين"],
+    ["📅", "قسط اقساط شهري دفعة"],
+    ["🤲", "صدقة زكاة تبرع خير"],
+    ["🕌", "عمرة حج مسجد"],
+    ["🧹", "تنظيف نظافة عاملة خادمة"],
+    ["🔧", "صيانة تصليح ورشة اصلاح"],
+    ["🪑", "اثاث كرسي طاولة مكتب"],
+    ["🛏️", "سرير مرتبة فراش"],
+    ["🚿", "حمام دورة سباكة"],
+    ["🏃", "رياضة نادي جيم تمرين"],
+    ["✂️", "حلاقة صالون قص"],
+    ["🎒", "مستلزمات اغراض حاجيات"]
+  ];
+  /* تجريدُ ما يلتصق بالكلمة: أل التعريف · التاء المربوطة · الهمزات */
+  function arNorm(t){
+    return String(t || "")
+      .replace(/[\u064B-\u0652\u0640]/g, "")     /* التشكيل والتطويل */
+      .replace(/[أإآٱ]/g, "ا").replace(/ى/g, "ي").replace(/ة/g, "ه")
+      .replace(/ؤ/g, "و").replace(/ئ/g, "ي")
+      .toLowerCase();
+  }
+  function emoGuess(name){
+    var t = arNorm(name).trim();
+    if(!t) return "";
+    var words = t.split(/[\s،,\-_\/]+/).filter(Boolean);
+    var best = "", bestLen = 0;
+    for(var i = 0; i < EMOWORDS.length; i++){
+      var keys = arNorm(EMOWORDS[i][1]).split(" ");
+      for(var j = 0; j < keys.length; j++){
+        var k = keys[j];
+        if(k.length < 3) continue;
+        for(var w = 0; w < words.length; w++){
+          /* الكلمةُ تحوي المفتاحَ أو المفتاحُ يحويها — فـ«ال» و«ي»
+             الملتصقتان لا تمنعان */
+          var hit = words[w].indexOf(k) >= 0
+                 || (words[w].length >= 3 && k.indexOf(words[w]) >= 0);
+          var sc = hit ? k.length : 0;
+          /* وما التصق بالكلمة من ضميرٍ أو نسبة: «سيارتي» تشترك مع
+             «سياره» في أربعة أحرف — وأربعةٌ لا تخلط «سيارة» بـ«سياحة» */
+          if(!hit && words[w].length >= 4 && k.length >= 4
+             && words[w].slice(0, 4) === k.slice(0, 4)){ hit = true; sc = 4; }
+          if(hit && sc > bestLen){ best = EMOWORDS[i][0]; bestLen = sc; }
+        }
+      }
+    }
+    return best;
+  }
   /* وجهٌ يحمل الرمز الحاليّ، والأبوابُ تحته مطويّة. ويكتب في الحقل
      الثاني — وهو «الرمز» في حواري البند والهدف والأمنية معاً. */
   /* حيث تُرسم الأيقونة: الصورةُ تعلو الرمز. وما سواها يقرأ الرمز كما
@@ -4789,12 +4973,14 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
       { key: "img", label: "الغلاف", type: "hidden", hook: "coverfield",
         value: w.img || "" },
       { key: "n", label: n ? "ما الذي تريده؟" : "ما هو", value: w.n || "",
-        ph: "شنطة · جوّال · رحلة" },
-      { key: "price", label: "أدنى ثمنٍ متوقَّع", type: "number",
+        w: "wide", guess: true, ph: "شنطة · جوّال · رحلة" },
+      /* الثمنان نصفان متجاوران: مدىً واحدٌ يُقرأ دفعةً */
+      { key: "price", label: "أدنى ثمنٍ متوقَّع", type: "number", w: "half",
         value: w.price === undefined ? "" : num(w.price) },
       { key: "price2", label: "أعلى ثمنٍ متوقَّع (اختياري)", type: "number",
-        value: num(w.price2) || "" },
-      { key: "url", label: "رابطها (اختياري)", value: w.url || "", ph: "https://" },
+        w: "half", value: num(w.price2) || "" },
+      { key: "url", label: "رابطها (اختياري)", value: w.url || "",
+        w: "wide", ph: "https://" },
       { key: "kind", label: "بابها — ليُقال موسمُها", type: "select", more: n,
         options: [{ v: "", n: "— بلا باب —" }].concat(
           WKINDS.map(function(o){ return { v: o.k, n: o.n }; })),
@@ -5323,7 +5509,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
   }
   function editItem(id){
     var m = month(ui.month), it = null;
-    m.items.forEach(function(x){ if(x.id === id) it = x; });
+    it = byId(m.items, id);
     if(!it) return;
     ask({ title: "تعديل العملية",
       msg: it.auto ? "سُجّلت تلقائياً — تعديلها يجعلها يدوية." : "",
@@ -5362,6 +5548,8 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
       { key: "name",
         label: addMode ? "الاسم — اسمٌ في كلّ سطر لعدّة بنودٍ معاً" : "الاسم",
         type: addMode ? "area" : "text",
+        /* في الإضافة الجملية أسماءٌ كثيرةٌ في حقلٍ واحد، فلا يقود الوجه */
+        guess: !addMode,
         ph: addMode ? "قسط سيارة\nتابي = 250\nتمارا" : "اكتب اسم البند",
         value: by.name !== undefined ? by.name : (x.n || "") },
       { key: "emo", label: "الرمز", type: "hidden", emo: true,
@@ -5390,7 +5578,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
   /* طقمُ حقول البند: يُبنى كلَّما تغيّر نوعُه */
   function catDlgFields(c, cls, t, by){
     return [
-      { key: "name", label: "اسم البند",
+      { key: "name", label: "اسم البند", guess: true,
         value: by.name !== undefined ? by.name : c.n },
       { key: "emo", label: "الرمز", type: "hidden", emo: true,
         value: by.emo !== undefined ? by.emo : (c.img || c.e) },
@@ -6260,7 +6448,8 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
        ما يُطلب منك فعله · أرقامك · ما يحتاج انتباهك · أين ذهب المال ·
        ثم هل أنت على خطتك · ثم أرصدتك وأهدافك · ثم الصورة الأوسع ·
        والأرشيف أخيراً. */
-    return ["act","kpi","spend","recon","alert","plan","env",
+    PART.mig = migCard();
+    return ["mig","act","kpi","spend","recon","alert","plan","env",
             "goals","net","own","inv","months","trend","arch"]
       .map(function(nm){ return PART[nm] || ""; }).join("");
   }
@@ -7752,13 +7941,19 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
               ? '<span class="gmode ' + (gMode(g) === "endless" ? "endless" : "calc") + '">'
                 + gModeName(gMode(g)) + '</span>' : "")
           + '</b>'
-          + '<s>' + (tg > 0
-              ? 'المُدَّخر ' + fmt(sv) + ' من ' + fmt(tg)
-              : 'المُدَّخر ' + fmt(sv) + ' · بلا سقف') + '</s>'
+          + '<s>' + (goalIdle(g)
+              ? 'بلا مبلغٍ شهريّ — لا يُقتطع من دخلك شيء'
+              : (tg > 0
+                  ? 'المُدَّخر ' + fmt(sv) + ' من ' + fmt(tg)
+                  : 'المُدَّخر ' + fmt(sv) + ' · بلا سقف')) + '</s>'
           + (tg > 0 ? '<span class="ptrack"><i style="width:'
               + Math.max(0, Math.min(100, sv / tg * 100)) + '%;background:' + g.c + '"></i></span>' : "")
           + '</span></span>'
-          + '<span class="pv plan">' + fmt(mo) + '</span>'
+          + (goalIdle(g)
+              ? ('<span class="pv"><button class="mini gset" data-gsugg="' + g.id
+                 + '" title="' + esc("يقسم الباقي على اثني عشر شهراً — تعدّله بعدها")
+                 + '">حدّده</button></span>')
+              : ('<span class="pv plan">' + fmt(mo) + '</span>'))
           + '<span class="pv' + (mv ? "" : " dim") + '">' + fmt(mv) + '</span>'
           + '<span class="pv' + (left ? "" : " dim") + '">' + fmt(left) + '</span></div>';
       }).join("");
@@ -7871,6 +8066,15 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
              incObj(k).own ? "مخصص لهذا الشهر وحده" : "من الافتراضي العامّ",
              incObj(k).own ? '<button class="mini" data-increset="1">أرجِعه للعامّ</button>'
                            : '<span class="pill">عامّ</span>')
+      + (function(){
+          /* مرشدُ الترقية: يُستدعى متى شاء — والوعدُ في التنبيه أن يُوجد هنا */
+          var _mg = migFind().length;
+          return _mg
+            ? mrow("مرشد الترقية",
+                   _mg + " شيئاً يمكن نقلُه إلى مكانه",
+                   '<button class="mini" data-migshow="1">اعرضها</button>')
+            : "";
+        })()
       + mrow("معالج بداية الشهر", MM.setup === true ? "أُنجز" : "لم يُنجز بعد",
              '<button class="mini" data-rewiz="1">أعد تشغيله</button>')
       + '</div>';
@@ -7965,11 +8169,11 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
         + iconOf(c) + '</button>'
         + '<span class="qt' + (subs ? " has" : "") + '"'
         + (subs ? (' data-qsub="' + c.k + '" title="'
-                   + esc(subs + " فروع — اضغط لتفتحها")) + '"' : "")
+                   + esc(subs + " فروع — اضغط الصفّ لتفتحها")) + '"' : "")
         + '><b>' + esc(c.n)
         + (subs
             ? ('<span class="qsx' + (ui.openQ[c.k] ? " on" : "") + '">'
-               + '<i>▾</i>' + subs + '</span>')
+               + '<i>▾</i><em>' + subs + '</em></span>')
             : "")
         + '</b>'
         + '<s>' + (capRow ? ('سقفٌ لا يُحجز · ' + fmt(Math.max(0, left)) + ' قبل بلوغه')
@@ -8242,8 +8446,9 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
       + LOGFAMS.map(function(f){
           var n = f.k ? (cnt[f.k] || 0) : rows.length;
           if(f.k && !n) return "";
-          return '<button class="' + (fil === f.k ? "on" : "") + '" data-logfil="'
-            + f.k + '">' + esc(f.n) + '<s>' + n + '</s></button>';
+          return '<button class="chip sm' + (fil === f.k ? " on" : "")
+            + '" data-logfil="' + f.k + '">' + esc(f.n)
+            + '<i>' + n + '</i></button>';
         }).join("")
       + '</div><div class="card">';
 
@@ -8300,6 +8505,115 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
       + fmt(it.a) + '</b></span></span>'
       + '<span class="rt"><button class="del" data-del="' + esc(it.id)
       + '" title="احذفها">×</button></span></div>';
+  }
+
+  /* ═══ مرشدُ الترقية: ما بُني بأدواتٍ أقدم يجد بيته ═══ */
+  var MIGGOAL = "زواج زفاف عرس طوارئ طواري احتياطي حج عمرة بيت شقة ارض سيارة "
+              + "دفعة مقدم ادخار توفير مدخرات هدف حلم مشروع دراسة جامعة سفر";
+  var MIGINV  = "استثمار اسهم سهم محفظة تداول صندوق مؤشر ذهب فضة عقار كريبتو "
+              + "بيتكوين ريت صكوك";
+  function migWordHit(name, bag){
+    var t = arNorm(name), keys = arNorm(bag).split(" ");
+    for(var i = 0; i < keys.length; i++)
+      if(keys[i].length > 2 && t.indexOf(keys[i]) >= 0) return keys[i];
+    return "";
+  }
+  /* كم صُرف من بندٍ في كلّ ما مضى، وفي كم شهرٍ خُطّط له */
+  function migCatStat(c){
+    var spent = 0, planned = 0, months = 0;
+    for(var mk in (state.months || {})){
+      var m = state.months[mk];
+      if(!m) continue;
+      var p = catPlan(c, mk);
+      if(p > 0){ planned += p; months++; }
+      (m.items || []).forEach(function(it){ if(it.c === c.k) spent += num(it.a); });
+    }
+    return { spent: money(spent), planned: money(planned), months: months };
+  }
+  /* ما يستحقّ العرض — بالبنية أوّلاً ثمّ الاسم */
+  function migFind(){
+    var out = [];
+    (state.cats || []).forEach(function(c){
+      if(isInvCat(c) || c.hidden) return;
+      if((c.subs || []).length) return;        /* بندٌ بفروعٍ مصروفٌ حقّاً */
+      var st = migCatStat(c);
+      if(st.months < 2 || st.planned <= 0) return;
+      var word = migWordHit(c.n, MIGGOAL);
+      /* حُجز ولم يُصرف: ادّخارٌ سُمّي مصروفاً. والاسمُ يُقوّي لا يَحكم. */
+      var idle = st.spent <= st.planned * 0.15;
+      if(!idle && !word) return;
+      if(!idle && word && st.spent > st.planned * 0.5) return;
+      out.push({ t: "c2g", id: c.k, n: c.n, e: c.e || "🎯",
+                 m: catPlan(c, ui.month), saved: st.spent,
+                 why: idle
+                   ? ("خُطّط له " + fmt(st.planned) + " في " + arMonths(st.months)
+                      + " ولم يُصرف منه إلّا " + fmt(st.spent))
+                   : ("اسمُه يقول إنّه ادّخار") });
+    });
+    (state.goals || []).forEach(function(g){
+      if(g.arch) return;
+      var word = migWordHit(g.n, MIGINV);
+      if(gMode(g) !== "endless" && !word) return;
+      out.push({ t: "g2i", id: g.id, n: g.n, e: g.e || "📈",
+                 m: num(g.m), saved: goalSaved(g),
+                 why: word ? "اسمُه من باب الاستثمار"
+                           : "بلا نهاية — وهو وصفُ المحفظة لا الهدف" });
+    });
+    return out;
+  }
+  function migSkipped(){
+    var o = state.migSkip;
+    return (o && typeof o === "object") ? o : (state.migSkip = {});
+  }
+  function migOpen(){
+    return migFind().filter(function(x){ return !migSkipped()[x.t + ":" + x.id]; });
+  }
+  /* النقلُ نفسُه — لا يُحذف شيء: البندُ يُخفى والهدفُ يُؤرشف */
+  function migApply(x){
+    if(x.t === "c2g"){
+      var c = catOf(x.id);
+      if(!c) return;
+      var g = { id: uid(), n: c.n, e: c.e || "🎯", c: "#0F7355",
+                mode: "fixed", target: money(Math.max(x.saved, x.m * 12)),
+                mult: 1, saved: money(x.saved), m: money(x.m),
+                date: "", arch: false, from: c.k };
+      state.goals.push(g);
+      c.hidden = true;                 /* يُخفى ولا يُحذف: سجلُّه باقٍ */
+      toast("صار «" + c.n + "» هدفاً");
+    } else {
+      var gg = goalOf(x.id);
+      if(!gg) return;
+      state.invest.push({ id: uid(), n: gg.n, e: gg.e || "📈", kind: "self",
+                          m: money(num(gg.m)), val: money(goalSaved(gg)),
+                          in: money(goalSaved(gg)), from: gg.id });
+      gg.arch = true;
+      toast("صارت «" + gg.n + "» محفظة");
+    }
+    save();
+  }
+  function migCard(){
+    var L = migOpen();
+    if(!L.length || state.migHide) return "";
+    var x = L[0];
+    return '<div class="flag mig"><b>وجدتُ ما يمكن نقلُه إلى مكانه</b>'
+      + '<div class="migone">'
+      + '<span class="ic" style="background:var(--card-2)">' + esc(x.e) + '</span>'
+      + '<span><b class="nm">' + esc(x.n) + '</b>'
+      + '<s class="sub">' + esc(x.why) + '</s></span></div>'
+      + (x.t === "c2g"
+          ? ('بندٌ في خطّتك يشبه <b>الهدف</b>. نقلُه يجعل له مستهدفاً ومتى '
+             + 'تبلغه، ويبقى المُدَّخر <b>' + fmt(x.saved) + '</b> والقسط <b>'
+             + fmt(x.m) + '</b> كما هما. والبندُ يُخفى ولا يُحذف — سجلُّه باقٍ.')
+          : ('هدفٌ يشبه <b>المحفظة</b>. الفرقُ أنّ الهدفَ مالٌ تضعه فيزيد بما '
+             + 'تضعه وحدَه، والمحفظةَ مالٌ يتحرّك من نفسه فيُقاس ربحُه. '
+             + 'ينتقل بمالِه <b>' + fmt(x.saved) + '</b> وقسطِه <b>' + fmt(x.m)
+             + '</b>، ويُؤرشف الهدفُ ولا يُحذف.'))
+      + '<div class="acts"><button class="act solid" data-migok="' + esc(x.t + ":" + x.id)
+      + '">انقله</button>'
+      + '<button class="act" data-migno="' + esc(x.t + ":" + x.id)
+      + '">اتركه كما هو</button>'
+      + (L.length > 1 ? ('<span class="mign">وبعده ' + (L.length - 1) + '</span>') : "")
+      + '<button class="act" data-mighide="1">لاحقاً</button></div></div>';
   }
 
   /* ═══ ٤ · الاستثمار ═══ */
@@ -8531,7 +8845,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
     var k = String(a.link || "");
     if(k.charAt(0) !== "i") return null;
     var id = k.slice(2), out = null;
-    state.invest.forEach(function(v){ if(v.id === id) out = v; });
+    out = byId(state.invest, id);
     if(!out || invAccts(out).length !== 1) return null;   /* عدة محافظ: لا نسب الربح لواحدة */
     return out;
   }
@@ -10051,7 +10365,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
       try{ sessionStorage.setItem("kh_tab", ui.tab); }catch(e){} render(); });
     on("[data-ledmode]", function(b){ ui.ledger = b.getAttribute("data-ledmode"); render(); });
     ch("[data-led]", function(el){
-      var p = el.getAttribute("data-led").split("|"), c = catOf(p[0]), mk = p[1];
+      var p = pair(el, "data-led"), c = catOf(p[0]), mk = p[1];
       if(!c) return;
       if(isLocked(mk)){ toast(mName(mk) + " مُقفَل — افتحه من شاشة الخطة"); render(); return; }
       ledgerSet(c, mk, num(el.value));
@@ -10288,7 +10602,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
       if(imp.length && isPast(mk)) render();   /* يعيد الحقل لقيمته حتى تؤكّد */
     });
     ch("[data-sub]", function(el){
-      var p = el.getAttribute("data-sub").split("|"), c = catOf(p[0]), x = subOf(c, p[1]);
+      var p = pair(el, "data-sub"), c = catOf(p[0]), x = subOf(c, p[1]);
       if(!x) return;
       var _bp = linePlan(x, ui.month, lineKey(p[0], p[1]));
       if(hasOvr(ui.month)) setP(ui.month, lineKey(p[0], p[1]), el.value);
@@ -10298,7 +10612,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
       save(); render();
     });
     on("[data-sugg]", function(b){
-      var p = b.getAttribute("data-sugg").split("|"), ck = p[0], v = num(p[1]);
+      var p = pair(b, "data-sugg"), ck = p[0], v = num(p[1]);
       if(hasOvr(ui.month)) setP(ui.month, ck, v);
       else catOf(ck).p = v;
       toast("اعتُمد متوسط آخر ٣ أشهر");
@@ -10405,7 +10719,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
         } });
     });
     on("[data-delsub]", function(b){
-      var p = b.getAttribute("data-delsub").split("|"), c = catOf(p[0]);
+      var p = pair(b, "data-delsub"), c = catOf(p[0]);
       c.subs = (c.subs || []).filter(function(x){ return x.id !== p[1]; });
       save(); render();
     });
@@ -10439,7 +10753,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
 
     /* الأهداف */
     ch("[data-goal]", function(el){
-      var p = el.getAttribute("data-goal").split("|");
+      var p = pair(el, "data-goal");
       state.goals.forEach(function(g){ if(g.id === p[0]) g[p[1]] = num(el.value); });
       save(); render();
     });
@@ -10455,7 +10769,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
     });
     on("[data-raise]", function(b){
       var id = b.getAttribute("data-raise"), g = null;
-      state.goals.forEach(function(x){ if(x.id === id) g = x; });
+      g = byId(state.goals, id);
       if(!g) return;
       ask({ title: "ارفع مستهدف «" + g.n + "»",
         msg: "الحالي <b>" + fmt(goalTarget(g)) + "</b> ريال · المُدَّخر <b>" + fmt(goalSaved(g)) + "</b>",
@@ -10473,7 +10787,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
     /* الإيقافُ ليس أرشفة: القسطُ يُحفظ ليُردّ، لا يُصفَّر فيضيع */
     on("[data-wpause]", function(b){
       var id = b.getAttribute("data-wpause"), w = null;
-      wishList().forEach(function(x){ if(x.id === id) w = x; });
+      w = byId(wishList(), id);
       var g = wishGoal(w);
       if(!g) return;
       if(num(g.m) > 0){ g.pm = num(g.m); g.m = 0; }
@@ -10482,7 +10796,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
     });
     on("[data-wresume]", function(b){
       var id = b.getAttribute("data-wresume"), w = null;
-      wishList().forEach(function(x){ if(x.id === id) w = x; });
+      w = byId(wishList(), id);
       var g = wishGoal(w);
       if(!g) return;
       if(num(g.pm) > 0){ g.m = num(g.pm); g.pm = 0; }
@@ -10491,7 +10805,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
     });
     on("[data-wrate]", function(b){
       var id = b.getAttribute("data-wrate"), w = null;
-      wishList().forEach(function(x){ if(x.id === id) w = x; });
+      w = byId(wishList(), id);
       var g = wishGoal(w);
       if(!g) return;
       ask({ title: "قسطُ «" + g.n + "»",
@@ -10504,7 +10818,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
     /* يُفكّ الارتباطُ ولا يُحذف الهدف: فيه مالٌ ادُّخر */
     on("[data-wunplan]", function(b){
       var id = b.getAttribute("data-wunplan"), w = null;
-      wishList().forEach(function(x){ if(x.id === id) w = x; });
+      w = byId(wishList(), id);
       if(!w) return;
       w.goal = "";
       toast("فُكّ الارتباط — والهدفُ باقٍ في مكانه بماله");
@@ -10513,7 +10827,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
     /* تراجعٌ عن شراء: تُرفع عمليتُه وبندُه اللاحق ويُردّ ما سُحب من خطّته */
     on("[data-wundo]", function(b){
       var id = b.getAttribute("data-wundo"), w = null;
-      wishList().forEach(function(x){ if(x.id === id) w = x; });
+      w = byId(wishList(), id);
       if(!w) return;
       ask({ title: "تراجعٌ عن شراء «" + w.n + "»",
         msg: "تُرفع عمليتُها من " + esc(mName(w.bm || ui.month))
@@ -10541,7 +10855,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
         } });
     });
     on("[data-wuse]", function(b){
-      var p = b.getAttribute("data-wuse").split("|");
+      var p = pair(b, "data-wuse");
       wishList().forEach(function(x){
         if(x.id === p[0]){ x.use = Math.round(num(p[1])); x.useAt = Date.now(); }
       });
@@ -10551,7 +10865,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
     on("[data-wimp]", function(b, e){
       /* النقاطُ داخل رأس البطاقة — فلا تصل الضغطةُ إلى مقبض الفتح */
       if(e && e.stopPropagation) e.stopPropagation();
-      var p = b.getAttribute("data-wimp").split("|");
+      var p = pair(b, "data-wimp");
       wishList().forEach(function(x){ if(x.id === p[0]) x.imp = Math.round(num(p[1])); });
       save(); render();
     });
@@ -10573,7 +10887,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
     });
     on("[data-wedit]", function(b){
       var id = b.getAttribute("data-wedit"), w = null;
-      wishList().forEach(function(x){ if(x.id === id) w = x; });
+      w = byId(wishList(), id);
       if(!w) return;
       ask({ title: "تعديل «" + w.n + "»",
         html: emoPickHTML(w.e || "🎁") + coverPickHTML(w.img || ""),
@@ -10583,7 +10897,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
     });
     /* تصير هدفاً: تُدَّخر لها كما يُدَّخر لبقيّة أهدافه — بآلته لا بآلةٍ ثانية */
     on("[data-wgoal]", function(b){
-      var p = b.getAttribute("data-wgoal").split("|"), w = null;
+      var p = pair(b, "data-wgoal"), w = null;
       wishList().forEach(function(x){ if(x.id === p[0]) w = x; });
       if(!w) return;
       var n = Math.max(1, Math.round(num(p[1]) || 1));
@@ -10627,7 +10941,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
     });
     on("[data-wbuy]", function(b){
       var id = b.getAttribute("data-wbuy"), w = null;
-      wishList().forEach(function(x){ if(x.id === id) w = x; });
+      w = byId(wishList(), id);
       if(!w) return;
       /* تصير مصروفاً في بندها: فلا تُكتب مرّتين ولا تُنسى */
       var gB = wishGoal(w), gotB = wishGot(w);
@@ -10695,7 +11009,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
     });
     on("[data-wdel]", function(b){
       var id = b.getAttribute("data-wdel"), w = null;
-      wishList().forEach(function(x){ if(x.id === id) w = x; });
+      w = byId(wishList(), id);
       if(!w) return;
       var g3 = wishGoal(w), got3 = g3 ? goalSaved(g3) : 0;
       var f3 = [];
@@ -10852,7 +11166,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
     });
     on("[data-imgclear]", function(){
       var el = document.querySelector("[data-emofield]");
-      if(el) el.value = "";
+      if(el){ el.value = ""; el.removeAttribute("data-emopick"); }
       var fc = document.querySelector(".emoface");
       if(fc) fc.textContent = "🙂";
       toast("أُزيلت الصورة — اختر رمزاً");
@@ -10867,6 +11181,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
       if(!el) return;
       var e = b.getAttribute("data-emo");
       el.value = e;
+      el.setAttribute("data-emopick", "1");   /* اختار بيده — فلا ظنَّ بعدُ */
       /* الوجه يتغيّر في مكانه: إعادةُ الرسم تُغلق الحوار وتُفقد حقوله */
       var face = document.querySelector(".emoface");
       if(face) face.textContent = e;
@@ -10893,12 +11208,12 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
       try{ el.focus({ preventScroll: true }); }catch(e){}
     });
     ch("[data-qsubspend]", function(el){
-      var p = el.getAttribute("data-qsubspend").split("|");
+      var p = pair(el, "data-qsubspend");
       setQuickSub(ui.month, p[0], p[1], el.value);
       flashRow(p[0]); save(); render();
     });
     on("[data-qfull]", function(b){
-      var p = b.getAttribute("data-qfull").split("|");
+      var p = pair(b, "data-qfull");
       var c = catOf(p[0]);
       if(!c) return;
       if(p.length > 1){
@@ -10982,21 +11297,23 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
     on("[data-geditb]", function(b, e){
       if(e) e.stopPropagation();
       var id = b.getAttribute("data-geditb"), g = null;
-      state.goals.forEach(function(x){ if(x.id === id) g = x; });
+      g = byId(state.goals, id);
       if(!g) return;
       var md = gMode(g), derived = goalFromAccts(g);
       ask({ title: "تعديل «" + g.n + "»",
         msg: "النوع يحدّد كيف يُحسب المستهدف ومتى يتوقف الاقتطاع.",
         html: emoPickHTML(g.e),
         fields: [
-          { label: "الاسم", value: g.n },
+          { label: "الاسم", value: g.n, guess: true },
           /* الوجهُ فوقُ يكتبه — فحقلٌ ثانٍ بالاسم نفسِه لغو */
           { label: "الرمز", type: "hidden", emo: true, value: g.e },
           { label: "النوع", type: "select", value: md,
             options: GMODES.map(function(y){ return { v: y.k, n: y.n }; }) },
-          { label: "المبلغ المستهدف (للمحدَّد) · أو المضاعف (للمحسوب)", type: "number",
+          { key: "target", suggests: "monthly",
+            label: "المبلغ المستهدف (للمحدَّد) · أو المضاعف (للمحسوب)", type: "number",
             value: md === "fixed" ? num(g.target) : (num(g.mult) || 1) },
-          { label: "كم يُقتطع شهرياً", type: "number", value: num(g.m) },
+          { key: "monthly", label: "كم يُقتطع شهرياً", type: "number",
+            value: num(g.m) },
           { label: derived ? "المُدَّخر (محسوب من الحساب المرتبط)" : "المُدَّخر الآن",
             type: "number", value: derived ? goalSaved(g) : num(g.saved) }
         ],
@@ -11024,9 +11341,43 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
       toast("أُضيف «" + t.n + "» — حدّد مبلغه الشهري");
       save(); render();
     });
+    on("[data-migok]", function(b){
+      var p = b.getAttribute("data-migok").split(":");
+      var x = null;
+      migFind().forEach(function(y){ if(y.t === p[0] && String(y.id) === p[1]) x = y; });
+      if(!x) return;
+      migApply(x); render();
+    });
+    on("[data-migno]", function(b){
+      migSkipped()[b.getAttribute("data-migno")] = 1;
+      save(); render();
+    });
+    on("[data-mighide]", function(){
+      state.migHide = true; toast("تجده في الإعدادات متى شئت"); save(); render();
+    });
+    on("[data-migshow]", function(){
+      state.migHide = false; state.migSkip = {}; ui.tab = "dash";
+      save(); render();
+    });
+    on("[data-gsugg]", function(b, e){
+      if(e && e.stopPropagation) e.stopPropagation();
+      var g = goalOf(b.getAttribute("data-gsugg"));
+      if(!g) return;
+      var v = goalSuggest(g);
+      confirmDlg("مبلغُ «" + g.n + "» الشهريّ",
+        "الباقي <b>" + fmt(Math.max(0, goalTarget(g) - goalSaved(g)))
+        + "</b> على اثني عشر شهراً = <b>" + fmt(v) + "</b> شهرياً."
+        + "<br>يُقتطع من دخلك ابتداءً من هذا الشهر — وتعدّله متى شئت من «تعديل».",
+        "اعتمِدْه", function(){
+          var _b = num(g.m);
+          g.m = money(v);
+          logAmt(ui.month, "g:" + g.id, "", _b, g.m, "plan");
+          toast("صار " + fmt(v) + " شهرياً"); save(); render();
+        });
+    });
     on("[data-goarch]", function(b){
       var id = b.getAttribute("data-goarch"), g = null;
-      state.goals.forEach(function(x){ if(x.id === id) g = x; });
+      g = byId(state.goals, id);
       if(!g) return;
       confirmDlg("أرشفةُ «" + g.n + "»؟",
         "يُخفى من أهدافك ويعود <b>" + fmt(num(g.m))
@@ -11038,7 +11389,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
     });
     on("[data-delgoal]", function(b){
       var id = b.getAttribute("data-delgoal"), g = null;
-      state.goals.forEach(function(x){ if(x.id === id) g = x; });
+      g = byId(state.goals, id);
       if(!g) return;
       var _sv = goalSaved(g), _m = num(g.m);
       var _lk = accts().filter(function(a){ return a.link === "g:" + id; }).length;
@@ -11057,7 +11408,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
 
     /* الاستثمار */
     ch("[data-inv]", function(el){
-      var p = el.getAttribute("data-inv").split("|");
+      var p = pair(el, "data-inv");
       state.invest.forEach(function(v){
         if(v.id !== p[0]) return;
         v[p[1]] = num(el.value);
@@ -11089,14 +11440,14 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
         } });
     });
     on("[data-inmode]", function(b){
-      var p = b.getAttribute("data-inmode").split("|"), v0 = null;
+      var p = pair(b, "data-inmode"), v0 = null;
       state.invest.forEach(function(x){ if(x.id === p[0]) v0 = x; });
       if(!v0) return;
       v0.entry = p[1]; save(); render();
     });
     ch("[data-invclose]", function(el){
       var id = el.getAttribute("data-invclose"), v0 = null;
-      state.invest.forEach(function(x){ if(x.id === id) v0 = x; });
+      v0 = byId(state.invest, id);
       if(!v0) return;
       var mk = ui.month, x = num(el.value);
       var prev = invValAt(v0, shift(mk, -1)); if(prev === null) prev = 0;
@@ -11125,7 +11476,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
     });
     on("[data-addwallet]", function(b){
       var id = b.getAttribute("data-addwallet"), v0 = null;
-      state.invest.forEach(function(x){ if(x.id === id) v0 = x; });
+      v0 = byId(state.invest, id);
       if(!v0) return;
       ask({ title: "محفظة أخرى داخل " + v0.n,
         msg: "الجهة هي <b>" + esc(v0.n) + "</b> — اكتب اسم المحفظة وحدها، لا اسم الجهة معها.",
@@ -11143,7 +11494,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
     });
     on("[data-delinv]", function(b){
       var id = b.getAttribute("data-delinv"), v0 = null;
-      state.invest.forEach(function(x){ if(x.id === id) v0 = x; });
+      v0 = byId(state.invest, id);
       if(!v0) return;
       confirmDlg("حذف «" + v0.n + "»؟", "الحسابات المرتبطة بها ستعود «تشغيلي».", "احذف", function(){
         accts().forEach(function(a){ if(a.link === "i:" + id) a.link = "ops"; });
@@ -11201,11 +11552,11 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
       editItem(b.getAttribute("data-edit"));
     });
     on("[data-editsub]", function(b){
-      var p = b.getAttribute("data-editsub").split("|");
+      var p = pair(b, "data-editsub");
       editSub(p[0], p[1]);
     });
     on("[data-mvcat]", function(b){
-      var p = b.getAttribute("data-mvcat").split("|"), d = +p[1], i = -1;
+      var p = pair(b, "data-mvcat"), d = +p[1], i = -1;
       state.cats.forEach(function(c, ix){ if(c.k === p[0]) i = ix; });
       var j = i + d;
       if(i < 0 || j < 0 || j >= state.cats.length) return;
@@ -11249,7 +11600,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
     on("[data-editcat]", function(b){ editCat(b.getAttribute("data-editcat")); });
     on("[data-editgoal]", function(b){
       var id = b.getAttribute("data-editgoal"), g = null;
-      state.goals.forEach(function(x){ if(x.id === id) g = x; });
+      g = byId(state.goals, id);
       if(!g) return;
       editSimple("تعديل الهدف: " + g.e + " " + g.n, g,
         [{ label: "الاسم", value: g.n, key: "n" }, { label: "الرمز", value: g.e, key: "e" }],
@@ -11257,7 +11608,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
     });
     on("[data-editinv]", function(b){
       var id = b.getAttribute("data-editinv"), v0 = null;
-      state.invest.forEach(function(x){ if(x.id === id) v0 = x; });
+      v0 = byId(state.invest, id);
       if(!v0) return;
       editSimple("تعديل جهة الاستثمار: " + v0.n, v0,
         [{ label: "الاسم", value: v0.n, key: "n" }],
@@ -11404,13 +11755,13 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
         onCancel: function(){ render(); } });
     });
     on("[data-alink]", function(b){
-      var p0 = b.getAttribute("data-alink").split("|");
+      var p0 = pair(b, "data-alink");
       state.cats.forEach(function(x){ if(x.acct === p0[0]) delete x.acct; });
-      var p = b.getAttribute("data-alink").split("|"), a = acctOf(p[0]);
+      var p = pair(b, "data-alink"), a = acctOf(p[0]);
       if(a){ a.link = p[1]; save(); render(); }
     });
     on("[data-mv]", function(b){
-      var p = b.getAttribute("data-mv").split("|"), a = acctOf(p[0]), kind = p[1];
+      var p = pair(b, "data-mv"), a = acctOf(p[0]), kind = p[1];
       if(!a) return;
       var isOut = kind === "out";
       var warn = "";
@@ -11473,7 +11824,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
         } });
     });
     on("[data-acat]", function(b){
-      var p = b.getAttribute("data-acat").split("|"), a = acctOf(p[0]), c = catOf(p[1]);
+      var p = pair(b, "data-acat"), a = acctOf(p[0]), c = catOf(p[1]);
       if(!a || !c) return;
       if(c.acct === a.id){ delete c.acct; toast("أُلغي تخصيص «" + c.n + "»"); }
       else {
@@ -11500,7 +11851,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
       save(); render();
     });
     on("[data-akind]", function(b){
-      var p = b.getAttribute("data-akind").split("|"), a = acctOf(p[0]);
+      var p = pair(b, "data-akind"), a = acctOf(p[0]);
       if(a){ a.kind = p[1]; save(); render(); }
     });
     on("[data-marksal]", function(b){
@@ -11859,7 +12210,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
     });
     on("[data-repn]", function(b){ ui.repN = +b.getAttribute("data-repn") || 6; render(); });
     on("[data-clsset]", function(b){
-      var p = b.getAttribute("data-clsset").split("|");
+      var p = pair(b, "data-clsset");
       if(!clsDraft) return;
       clsDraft[p[0]] = p[1];
       /* تُعاد كتلة النافذة وحدها ثم تُربط أزرارها من جديد */
@@ -12000,7 +12351,7 @@ background:transparent;color:var(--ink-3);font-size:15px;line-height:1;cursor:po
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+26";
+  var APP_VERSION = "1.5.0-beta+27";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
