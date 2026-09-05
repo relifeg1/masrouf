@@ -1773,6 +1773,10 @@ border-inline-start:2px solid var(--accent);border-bottom:1px solid var(--line)}
 .ispark.big{padding:12px 16px 6px;margin-bottom:14px;background:var(--card);
 border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
 .ispark.big .sb{flex:1 1 0;max-width:52px}
+.ni.hp{width:88px;padding:5px 6px;font-size:13px;text-align:center}
+.ygrid .v.z{opacity:.65}
+.ygrid .gp{color:var(--ok)}
+.ygrid .gn{color:var(--warn)}
 .kpis.k4{grid-template-columns:1fr 1fr}
 @media (min-width:1060px){.kpis.k4{grid-template-columns:repeat(4,1fr)}}
 .ispark.big i{border-radius:5px 5px 0 0}
@@ -3020,6 +3024,7 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
           ? acctSelect("data-isel", v.id, "i:" + v.id)
             + linkedChips("i:" + v.id, "inv", "data-iunlink")
           : acctSelectOne("data-ipick", v.id, "i:" + v.id))
+      + invHoldHTML(v)
       + '<div class="lab" style="margin-top:12px">ما هي هذه المحفظة</div>'
       + '<div class="f2grid">'
       + '<div class="f2"><label>نوعُها</label><select class="sel" data-invtype="'
@@ -3040,6 +3045,12 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
           return '<option value="' + t.k + '"' + (invRiskOf(v).k === t.k ? " selected" : "")
             + '>' + esc(t.n) + '</option>'; }).join("")
       + '</select></div>'
+      + '<div class="f2"><label>كيف تتابعها</label><select class="sel" '
+      + 'data-invtrack="' + v.id + '">'
+      + '<option value="total"' + (invTrack(v) === "total" ? " selected" : "")
+      + '>قيمةٌ إجماليّةٌ واحدة</option>'
+      + '<option value="hold"' + (invTrack(v) === "hold" ? " selected" : "")
+      + '>ممتلكاتٌ بكمّيّةٍ وسعر</option></select></div>'
       + '<div class="f2"><label>هدفُها (اختياريّ)</label>'
       + '<input class="ni" type="number" inputmode="numeric" data-invtgt="' + v.id
       + '" value="' + (num(v.tgt) || "") + '" placeholder="مثلاً 100000"></div>'
@@ -3061,6 +3072,44 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
           : '<button class="mini" data-invout="' + v.id + '">− سحبتُ منها</button>')
       + '<button class="mini bad" data-delinv="' + v.id + '">احذف المحفظة</button>'
       + '</div>' + invLedger(v) + '</div></div></div>';
+  }
+  /* ممتلكاتُ المحفظة — لمن يديرها بنفسه */
+  function invHoldHTML(v){
+    if(invTrack(v) !== "hold") return "";
+    var L = invHolds(v), cash = invCash(v);
+    var h = '<div class="lab" style="margin-top:12px">ممتلكاتُها</div>';
+    if(!L.length){
+      h += '<div class="empty" style="padding:10px 0"><b>لا ممتلكاتٍ بعد</b>'
+        + 'نقدُها <b>' + fmt(cash) + '</b> — اشترِ به فيصير ممتلكاً '
+        + 'له كمّيّةٌ وسعر.'
+        + (cash > 0 ? "" : '<br>وإن كان صفراً فأودع فيها من شاشة المصروف أوّلاً.')
+        + '</div>';
+    } else {
+      h += '<div class="ygrid"><table><thead><tr>'
+        + '<th class="cn">الممتلك</th><th>الكمّيّة</th><th>سعرُ اليوم</th>'
+        + '<th>قيمتُه</th><th>متوسّطُ شرائك</th><th>ربحُه</th><th></th>'
+        + '</tr></thead><tbody>'
+        + L.map(function(x){
+            var pr = holdProfit(x);
+            return '<tr><td class="cn">' + esc(x.n) + '</td>'
+              + '<td class="v">' + esc(String(num(x.q))) + '</td>'
+              + '<td class="v"><input class="ni hp" type="number" inputmode="decimal" '
+              + 'step="any" data-holdp="' + v.id + '|' + x.id + '" value="'
+              + num(x.p) + '"></td>'
+              + '<td class="v">' + fmt(holdVal(x)) + '</td>'
+              + '<td class="v z">' + fmt(holdAvg(x)) + '</td>'
+              + '<td class="v ' + (pr >= 0 ? "gp" : "gn") + '">'
+              + (pr >= 0 ? "+" : "−") + fmt(Math.abs(pr)) + '</td>'
+              + '<td class="v"><button class="mini" data-holdsell="' + v.id + '|'
+              + x.id + '">بِعْ</button></td></tr>';
+          }).join("")
+        + '</tbody></table></div>';
+    }
+    return h + '<div class="capline" style="border-bottom:0">'
+      + '<span>نقدٌ في المحفظة <b>' + fmt(cash) + '</b></span>'
+      + '<span class="fill"></span>'
+      + '<button class="mini" data-holdbuy="' + v.id + '">+ اشتريتُ ممتلكاً</button>'
+      + '</div>';
   }
   /* دفترُ الحركات: يُطوى ويُفتح — تفصيلٌ لا يُقرأ كلَّ مرّة */
   function invLedger(v){
@@ -3225,6 +3274,33 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
   }
   /* طريقةُ المتابعة: قيمةٌ إجماليّة أو ممتلكاتٌ بكمّيّةٍ وسعر */
   function invTrack(v){ return (v && v.track === "hold") ? "hold" : "total"; }
+  /* ═══ الممتلكات: كمّيّةٌ وسعرٌ وكلفة ═══
+     `q` كمّيّتُك · `p` آخرُ سعرٍ كتبتَه · `c` ما دفعتَه في هذه الكمّيّة.
+     فقيمتُه q×p، وكلفتُه c، وربحُه فرقُهما، ومتوسّطُ شرائك c÷q. */
+  function invHolds(v){
+    if(!v) return [];
+    if(!Array.isArray(v.hold)) v.hold = [];
+    return v.hold;
+  }
+  function holdVal(x){ return money(num(x && x.q) * num(x && x.p)); }
+  function holdCost(x){ return money(num(x && x.c)); }
+  function holdAvg(x){ var q = num(x && x.q); return q > 0 ? money(num(x.c) / q) : 0; }
+  function holdProfit(x){ return money(holdVal(x) - holdCost(x)); }
+  /* نقدُ المحفظة: ما أودعتَه ولمّا تشترِ به */
+  function invCash(v){ return money(num(v && v.cash)); }
+  function invHoldVal(v){
+    var t = 0;
+    invHolds(v).forEach(function(x){ t += holdVal(x); });
+    return money(t + invCash(v));
+  }
+  /* بعد كلّ تغييرٍ في الممتلكات تُكتب قيمةُ الشهر من المشتقّ لا باليد */
+  function invSyncHold(v, mk){
+    if(invTrack(v) !== "hold") return;
+    var val = invHoldVal(v);
+    if(!v.hist) v.hist = {};
+    v.hist[mk || ui.month] = val;
+    v.val = val;
+  }
   function invZak(v){ return !v || v.zak !== false; }
   /* النوعُ يُخمَّن من الاسم مرّةً — ولا يُخترع لما لا يدلّ */
   var INVGUESS = [
@@ -3251,7 +3327,8 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
      مالاً — بل صحّح ما كتب. ولو عُدّ سحباً لطُرح مرّتين: مرّةً في
      الإيداع نفسِه ومرّةً في خصم المسحوب. (التقطه deptest.) */
   var INVMV = { in: "أودعت", inx: "صحّحتَ الإيداع",
-                out: "سحبت", val: "صارت قيمتُها" };
+                out: "سحبت", val: "صارت قيمتُها",
+                buy: "اشتريت", sell: "بعت" };
   function invMoves(v){
     if(!v) return [];
     if(!Array.isArray(v.mv)) v.mv = [];
@@ -3282,6 +3359,40 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
     for(var i=0;i<keys.length;i++){ if(keys[i] <= mk) out = num(h[keys[i]]); else break; }
     return out;
   }
+  /* شراء: النقدُ يخرج والكمّيّةُ والكلفةُ تزيدان */
+  function holdBuy(v, name, q, price){
+    q = num(q); price = money(price);
+    if(!(q > 0) || !(price > 0)) return false;
+    var cost = money(q * price);
+    if(cost > invCash(v)) return "cash";
+    var L = invHolds(v), x = null;
+    L.forEach(function(y){ if(arNorm(y.n) === arNorm(name)) x = y; });
+    if(!x){ x = { id: uid(), n: String(name).trim(), q: 0, p: price, c: 0 }; L.push(x); }
+    x.q = num(x.q) + q;
+    x.c = money(num(x.c) + cost);
+    x.p = price;
+    v.cash = money(invCash(v) - cost);
+    invMove(v, "buy", cost, ui.month, x.n + " × " + q);
+    invSyncHold(v, ui.month);
+    return true;
+  }
+  /* بيع: الكلفةُ تخرج بنسبة الكمّيّة المباعة، والنقدُ يعود للمحفظة */
+  function holdSell(v, id, q, price){
+    var x = byId(invHolds(v), id);
+    if(!x) return false;
+    q = num(q); price = money(price);
+    if(!(q > 0) || q > num(x.q) + 1e-9) return "qty";
+    var part = money(num(x.c) * q / num(x.q));   /* كلفةُ ما بِعت */
+    var got = money(q * price);
+    x.q = num(x.q) - q;
+    x.c = money(num(x.c) - part);
+    x.p = price;
+    if(num(x.q) <= 1e-9) v.hold = invHolds(v).filter(function(y){ return y.id !== id; });
+    v.cash = money(invCash(v) + got);
+    invMove(v, "sell", got, ui.month, x.n + " × " + q);
+    invSyncHold(v, ui.month);
+    return money(got - part);        /* ربحُ البيعة */
+  }
   function invPut(v, mk){ return num(distMap(mk)["i:" + v.id]); }
   /* ما سُحب من محفظةٍ في شهر — يُقرأ من دفترها */
   function invOutOf(v, mk){
@@ -3300,6 +3411,15 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
     var a = money(amt);
     if(!(a > 0)) return false;
     if(invFromAccts(v)) return false;      /* مالُها رصيدُ حسابها */
+    if(invTrack(v) === "hold"){
+      /* يُسحب من النقد — وما زاد عليه يحتاج بيعَ ممتلكٍ أوّلاً */
+      if(a > invCash(v)) return "cash";
+      v.cash = money(invCash(v) - a);
+      v["in"] = money(num(v["in"]) - a);
+      invMove(v, "out", a, mk, "");
+      invSyncHold(v, mk);
+      return true;
+    }
     var now = invValAt(v, mk);
     if(now === null) now = invVal(v);
     setInvValue(v, mk, money(Math.max(0, num(now) - a)));
@@ -3689,16 +3809,25 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
       var dif = t - prev;
       /* صافي ما وضعتَ يتحرّك بالفرق — ويُسمح بالسلب في السحب لا هنا */
       v["in"] = money(num(v["in"]) + dif);
-      /* والقيمةُ كذلك: تُقدَّر بما وضعتَ حتى تكتب الحقيقيّةَ آخر الشهر */
-      v.val = money(Math.max(0, num(v.val) + dif));
+      if(invTrack(v) === "hold"){
+        /* محفظةُ ممتلكات: المالُ يدخل نقداً ينتظر الشراء */
+        v.cash = money(Math.max(0, invCash(v) + dif));
+      } else {
+        /* والقيمةُ كذلك: تُقدَّر بما وضعتَ حتى تكتب الحقيقيّةَ آخر الشهر */
+        v.val = money(Math.max(0, num(v.val) + dif));
+      }
       /* وتُثبَّت لقطةُ الشهر: خانةُ «قيمتها اليوم» تعرض اللقطةَ لا
          القيمةَ الجارية، فبدونها تبقى فارغةً ويبقى الرسمُ بلا نقطة —
          فيُقرأ كأنّ الإيداعَ لم يصل. والربحُ يبقى صفراً لأنّ القيمةَ
          زادت بمقدار ما أودعتَ لا أكثر. */
-      var _pv = invValAt(v, shift(mk, -1));
-      if(_pv === null) _pv = 0;
-      /* والقيمةُ لا تنسى ما سُحب في الشهر نفسِه */
-      setInvValue(v, mk, money(_pv + t - invOutOf(v, mk)));
+      if(invTrack(v) === "hold"){
+        invSyncHold(v, mk);
+      } else {
+        var _pv = invValAt(v, shift(mk, -1));
+        if(_pv === null) _pv = 0;
+        /* والقيمةُ لا تنسى ما سُحب في الشهر نفسِه */
+        setInvValue(v, mk, money(_pv + t - invOutOf(v, mk)));
+      }
       if(dif) invMove(v, dif > 0 ? "in" : "inx", Math.abs(dif), mk, "من المصروف");
     }
     return t;
@@ -3971,7 +4100,10 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
   function goalHeld(g){ return goalFromAccts(g) || !!goalInv(g); }
   function invVal(v){
     var l = linkedTo("i:" + v.id);
-    return l.length ? linkedSum("i:" + v.id) : num(v.val);
+    if(l.length) return linkedSum("i:" + v.id);
+    /* محفظةُ الممتلكات قيمتُها محسوبةٌ لا مكتوبة */
+    if(invTrack(v) === "hold") return invHoldVal(v);
+    return num(v.val);
   }
   function invFromAccts(v){ return linkedTo("i:" + v.id).length > 0; }
 
@@ -11984,6 +12116,85 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
     on("[data-mighide]", function(){
       state.migHide = true; toast("تجده في الإعدادات متى شئت"); save(); render();
     });
+    ch("[data-invtrack]", function(el){
+      var v = byId(state.invest, el.getAttribute("data-invtrack"));
+      if(!v) return;
+      var want = el.value;
+      if(invTrack(v) === want) return;
+      if(want === "hold"){
+        /* القيمةُ الحاليّةُ تصير نقداً ينتظر أن يُوزَّع — فلا يضيع مال */
+        v.cash = money(invVal(v));
+        v.track = "hold";
+        toast("صارت قيمتُها " + fmt(v.cash) + " نقداً — اشترِ به ممتلكاتِك");
+      } else {
+        /* والعكسُ: الممتلكاتُ ونقدُها تصير قيمةً واحدة */
+        var val = invHoldVal(v);
+        v.track = "total";
+        v.hold = [];
+        delete v.cash;
+        v.val = val;
+        if(!v.hist) v.hist = {};
+        v.hist[ui.month] = val;
+        toast("صارت قيمةً واحدةً " + fmt(val));
+      }
+      invSyncHold(v, ui.month);
+      save(); render();
+    });
+    ch("[data-holdp]", function(el){
+      var p = pair(el, "data-holdp");
+      var v = byId(state.invest, p[0]);
+      if(!v) return;
+      var x = byId(invHolds(v), p[1]);
+      if(!x) return;
+      x.p = money(el.value);
+      invSyncHold(v, ui.month);
+      save(); render();
+    });
+    on("[data-holdbuy]", function(b){
+      var v = byId(state.invest, b.getAttribute("data-holdbuy"));
+      if(!v) return;
+      var cash = invCash(v);
+      ask({ title: "شراءٌ في «" + v.n + "»",
+        msg: "نقدُ المحفظة <b>" + fmt(cash) + "</b> — ولا تشترِ بأكثرَ منه. "
+           + "وإن أردتَ الزيادة فأودع فيها من شاشة المصروف أوّلاً.",
+        fields: [{ label: "ما هو؟", value: "", ph: "أرامكو · بتكوين", w: "wide" },
+                 { label: "الكمّيّة", type: "number", value: "", w: "half" },
+                 { label: "سعرُ الوحدة", type: "number", value: "", w: "half" }],
+        ok: "سجّل الشراء",
+        onOk: function(vv){
+          if(!String(vv[0] || "").trim()) return;
+          var r = holdBuy(v, vv[0], vv[1], vv[2]);
+          if(r === "cash"){
+            toast("كلفتُه أكبرُ من نقد المحفظة (" + fmt(invCash(v)) + ")");
+            return;
+          }
+          if(r){ toast("سُجّل الشراء · نقدُها الآن " + fmt(invCash(v)));
+                 save(); render(); }
+        } });
+    });
+    on("[data-holdsell]", function(b){
+      var p = pair(b, "data-holdsell");
+      var v = byId(state.invest, p[0]);
+      if(!v) return;
+      var x = byId(invHolds(v), p[1]);
+      if(!x) return;
+      ask({ title: "بيعٌ من «" + esc(x.n) + "»",
+        msg: "عندك <b>" + num(x.q) + "</b> بمتوسّط شراءٍ <b>" + fmt(holdAvg(x))
+           + "</b>. والثمنُ يعود <b>نقداً في المحفظة</b> — فإن أردتَه في "
+           + "جيبك فاسحبه بعدها.",
+        fields: [{ label: "الكمّيّة المباعة", type: "number", value: num(x.q),
+                   w: "half" },
+                 { label: "سعرُ البيع", type: "number", value: num(x.p), w: "half" }],
+        ok: "سجّل البيع",
+        onOk: function(vv){
+          var r = holdSell(v, x.id, vv[0], vv[1]);
+          if(r === "qty"){ toast("لا تبع أكثرَ ممّا تملك (" + num(x.q) + ")"); return; }
+          if(r === false) return;
+          toast((r >= 0 ? "ربحتَ " : "خسرتَ ") + fmt(Math.abs(r))
+                + " · نقدُها الآن " + fmt(invCash(v)));
+          save(); render();
+        } });
+    });
     ch("[data-invtype]", function(el){
       var v = byId(state.invest, el.getAttribute("data-invtype"));
       if(!v) return;
@@ -12035,7 +12246,12 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
             toast("لا تسحب أكثرَ من قيمتها (" + fmt(cur0) + ")");
             return;
           }
-          if(invWithdraw(v, a, ui.month)){
+          var _r = invWithdraw(v, a, ui.month);
+          if(_r === "cash"){
+            toast("نقدُ المحفظة " + fmt(invCash(v)) + " — بِعْ ممتلكاً أوّلاً");
+            return;
+          }
+          if(_r){
             toast("سُحب " + fmt(a) + " · قيمتُها الآن " + fmt(invVal(v)));
             save(); render();
           }
@@ -13110,7 +13326,7 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+41";
+  var APP_VERSION = "1.5.0-beta+42";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
