@@ -3154,7 +3154,7 @@ white-space:nowrap}
             + linkedChips("i:" + v.id, "inv", "data-iunlink")
           : acctSelectOne("data-ipick", v.id, "i:" + v.id))
       + '<div class="abtns">'
-      + '<button class="mini" data-addwallet="' + v.id + '">+ محفظةٌ في الجهة نفسِها</button>'
+      + '<button class="mini" data-addwallet="' + v.id + '">+ محفظةٌ أخرى مثلها</button>'
       + '<button class="mini bad" data-delinv="' + v.id + '">احذف المحفظة</button>'
       + '</div></div>';
   }
@@ -3229,8 +3229,9 @@ white-space:nowrap}
   function invClose(v, mk){
     var as = invAccts(v);
     if(as.length > 1)
-      return '<div class="ahint" style="padding:8px 0 0">هذه الجهة فيها '
-        + as.length + ' محافظ — حدّث كل محفظة من تبويب «الحسابات».</div>';
+      return '<div class="ahint" style="padding:8px 0 0">هذه المحفظة فيها '
+        + as.length + ' حسابات — قيمتُها مجموعُ أرصدتها، تُحدَّث من تبويب '
+        + '«الحسابات».</div>';
     var prev = invValAt(v, shift(mk, -1)); if(prev === null) prev = 0;
     var put = invPut(v, mk), now = invValAt(v, mk), mode = invEntry(v);
     var gain = now === null ? null : Math.round(now - prev - put);
@@ -7274,7 +7275,7 @@ white-space:nowrap}
         + '<span class="ov" style="color:var(--ok)">' + fmt(gA) + '</span></div>'
         + '<div class="own"><span class="ol"><span class="od" style="background:var(--ok-2)"></span>'
         + '<span><span class="on">في محافظ الاستثمار</span><span class="os">'
-        + state.invest.length + ' جهة</span></span></span>'
+        + arNum2(state.invest.length) + '</span></span></span>'
         + '<span class="ov" style="color:var(--ok)">' + fmt(iA) + '</span></div>'
         + (LB2 ? '<div class="own"><span class="ol"><span class="od" style="background:var(--warn)"></span>'
             + '<span><span class="on">ما عليك</span><span class="os">أقساط والتزامات</span></span></span>'
@@ -7330,7 +7331,7 @@ white-space:nowrap}
       var iv = investVal(), ii = investIn(), ipr = iv - ii;
       var im2 = invMonthly(), icap2 = invCat() ? catCap(invCat(), k) : 0;
       h += '<div class="sec"><h2>طريقك في الاستثمار</h2>'
-        + '<span class="hint">' + state.invest.length + ' جهة</span></div>'
+        + '<span class="hint">' + arNum2(state.invest.length) + '</span></div>'
         + '<div class="card"><div class="invpath">'
         + '<div class="ip"><span>قيمة محافظك اليوم</span><b>' + fmt(iv) + '</b></div>'
         + '<div class="ip"><span>ما ساهمت به إجمالاً</span><b>' + fmt(ii) + '</b></div>'
@@ -10980,7 +10981,8 @@ white-space:nowrap}
     }).join("");
     h += '<div style="padding:12px 15px"><button class="addbtn" data-addgoal="1">+ هدف جديد</button></div></div>';
 
-    h += '<div class="sec"><h2>جهات الاستثمار</h2><span class="hint">' + state.invest.length + ' جهة</span></div><div class="card">';
+    h += '<div class="sec"><h2>محافظ الاستثمار</h2><span class="hint">'
+      + arNum2(state.invest.length) + '</span></div><div class="card">';
     h += state.invest.map(function(v){
       return mrow(v.n, (v.kind === "auto" ? "آلي" : "ذاتي") + " · قيمتها " + fmt(invVal(v)),
         '<button class="mini" data-editinv="' + v.id + '">تعديل</button>');
@@ -13724,7 +13726,7 @@ white-space:nowrap}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+49";
+  var APP_VERSION = "0.1-beta";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
