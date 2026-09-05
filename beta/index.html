@@ -238,7 +238,7 @@ h1,h2,h3{font-family:"Alexandria","IBM Plex Sans Arabic",sans-serif;margin:0;lin
 .ic,.eic,.grow .gic,.env .ei{width:34px;height:34px;border-radius:10px;flex:none;
   display:flex;align-items:center;justify-content:center;font-size:16px}
 .nm{font-size:15px;font-weight:500;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.sub{font-size:11px;color:var(--ink-3);display:block;margin-top:1px}
+.sub{font-size:11px;color:var(--ink-3);display:block;margin-top:1px;text-decoration:none}
 .track{display:block;height:6px;border-radius:99px;background:var(--track);overflow:hidden;margin-top:6px}
 .track i{display:block;height:100%;border-radius:99px}
 .rt{display:block;text-align:left;flex:none}
@@ -1389,16 +1389,16 @@ color:var(--ink-3);cursor:pointer;font-size:11px;flex:none}
   .v-dash > .topbar, .v-year > .topbar, .v-plan > .topbar,
   .v-accts > .topbar, .v-inv > .topbar, .v-set > .topbar{position:static}
 
-  /* ══ المصروف: نموذج ثابت + قائمة — شبكة صريحة لأن جانبيه متقاربان ══ */
-  .v-spend{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);
-    column-gap:16px;align-items:start;grid-auto-flow:row dense}
-  .v-spend > *{grid-column:1}
-  .v-spend > .topbar, .v-spend > .mstrip2, .v-spend > footer{grid-column:1 / -1}
-  .v-spend > .card:has(.qtab){grid-column:1}
-  .v-spend > .modesw{grid-column:2}
-  .v-spend > .card:has(.amt-row){grid-column:2;position:sticky;top:14px}
+  /* ══ المصروف: بابٌ واحدٌ للإدخال، فلا عمودَ ثانٍ لنموذجٍ رُفع ══
+     كانت شبكةً بعمودين: الجدولُ في الأوّل والنموذجُ الطويلُ في الثاني.
+     رُفع النموذجُ وبقيت الشبكة، فبقي ثلثُ الصفحة فارغاً أبداً. */
+  .v-spend{display:block}
   .v-spend > .sec{margin-top:0;margin-bottom:8px}
   .v-spend > .card, .v-spend > .hintnote{margin-bottom:14px}
+  /* والذيلُ في عمودين: قائمتان قصيرتان لا تستحقّ كلٌّ منهما صفحةً */
+  .sgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    column-gap:16px;align-items:start;grid-auto-flow:row dense}
+  .sgc > .sec:first-child{margin-top:0}
 }
 
 @media (min-width:1200px){
@@ -1574,14 +1574,51 @@ align-items:center;justify-content:center;transition:.12s}
 .qok:hover{border-color:var(--ok);color:var(--ok)}
 .qok.on{background:var(--ok);border-color:var(--ok);color:#fff}
 .qtab.qsub .qok{width:19px;height:19px;font-size:11px}
-.qtab .qsx{margin-inline-start:7px;border:1px solid var(--line);background:transparent;
-color:var(--ink-3);font:600 10px/1 inherit;padding:3px 6px;border-radius:99px;cursor:pointer;
-vertical-align:middle}
-.qtab .qsx.on{color:var(--accent);border-color:var(--accent)}
-.qtab.qsub{background:var(--card-2);font-size:12px}
-.qtab.qsub .qn{padding-inline-start:26px}
+/* حبّةُ الفروع: عددُها ظاهرٌ وعلامتُها تدور حين تُفتح */
+.qtab .qsx{display:inline-flex;align-items:center;gap:4px;margin-inline-start:7px;
+border:1px solid var(--line);background:transparent;color:var(--ink-3);
+font:600 10px/1 inherit;padding:4px 8px;border-radius:99px;cursor:pointer;
+vertical-align:middle;transition:.14s}
+.qtab .qsx>i{font-style:normal;font-size:8px;line-height:1;display:inline-block;
+transition:transform .18s}
+.qtab .qsx:hover{border-color:var(--accent);color:var(--accent)}
+.qtab .qsx.on{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
+.qtab .qsx.on>i{transform:rotate(-180deg)}
+/* لوحُ الفروع: مُزاحٌ عن أبيه، له عمودٌ في جهة الاسم يجمعه */
+.qtab.qsub{background:var(--card-2);font-size:12px;
+border-inline-start:2px solid var(--accent);
+animation:qsubIn .18s ease-out both}
+.qtab.qsub .qn{padding-inline-start:22px}
 .qtab.qsub .qt b{font-weight:600;color:var(--ink-2)}
+.qtab.qsub.rest{border-top:1px dashed var(--line);background:transparent}
 .qtab.qsub.rest .qt b{color:var(--ink-3);font-weight:500}
+.qtab.qsub.rest .qv{color:var(--ink-3);opacity:1}
+@keyframes qsubIn{from{opacity:0;transform:translateY(-5px)}}
+@media(prefers-reduced-motion:reduce){
+  .qtab.qsub{animation:none}
+  .qtab .qsx>i{transition:none} }
+
+/* سجلُّ التعديلات: كم كان · وكم صار · ومتى */
+.lgr{grid-template-columns:34px minmax(0,1fr) auto auto;gap:10px}
+.lgr .sub{white-space:normal;line-height:1.7}
+.lgr .sub em{font-style:normal;font-family:"IBM Plex Mono",monospace;
+color:var(--ink-2);font-size:11px}
+.lgmv{display:flex;align-items:center;gap:7px}
+.lgn{display:flex;flex-direction:column;align-items:center;gap:1px;min-width:56px;
+padding:4px 9px;border-radius:9px;background:var(--card-2)}
+.lgn>s{text-decoration:none;font-size:9.5px;color:var(--ink-3)}
+.lgn>b{font-family:"IBM Plex Mono",monospace;font-size:14px;font-weight:600;
+color:var(--ink-3);font-variant-numeric:tabular-nums;direction:ltr}
+.lgn.to{background:var(--accent-soft)}
+.lgn.to>b{color:var(--ink)}
+.lgmv>i{font-style:normal;color:var(--ink-3);font-size:12px}
+.subh .ds{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--ink-3)}
+@media(max-width:620px){
+  .lgr{grid-template-columns:34px minmax(0,1fr) auto;gap:4px 10px}
+  .lgr>.ic{grid-row:1}
+  .lgr>span:nth-child(2){grid-column:2;grid-row:1}
+  .lgr>.rt{grid-column:3;grid-row:1}
+  .lgmv{grid-column:2 / -1;grid-row:2;margin-top:4px} }
 .qtab{display:grid;grid-template-columns:minmax(0,1fr) 78px 84px 58px;gap:4px;
   align-items:center;padding:8px 12px;border-bottom:1px solid var(--line)}
 .qtab.head{background:var(--card-2);font-size:10px;color:var(--ink-3);position:sticky;top:0;z-index:2}
@@ -7743,8 +7780,8 @@ vertical-align:middle}
         + '<span class="qt"><b>' + esc(c.n)
         + (subs
             ? ('<button class="qsx' + (ui.openQ[c.k] ? " on" : "")
-               + '" data-qsub="' + c.k + '" title="فروعه">'
-               + (ui.openQ[c.k] ? "▾" : "▸") + ' ' + subs + '</button>')
+               + '" data-qsub="' + c.k + '" title="'
+               + esc(subs + " فروع — تُفتح وتُغلق") + '"><i>▾</i>' + subs + '</button>')
             : "")
         + '</b>'
         + '<s>' + (capRow ? ('سقفٌ لا يُحجز · ' + fmt(Math.max(0, left)) + ' قبل بلوغه')
@@ -7794,8 +7831,8 @@ vertical-align:middle}
               }).join("")
               + '<div class="qtab qsub rest"><span class="qn"><span class="qt">'
               + '<b>الباقي بلا فرع</b><s>من سقف البند</s></span></span>'
-              + '<span class="qv dim">' + fmt(catFree(c, k)) + '</span>'
-              + '<span class="qv dim">·</span><span class="qv dim">·</span></div>')
+              + '<span class="qv">' + fmt(catFree(c, k)) + '</span>'
+              + '<span class="qv"></span><span class="qv"></span></div>')
             : "");
     }).join("");
     h += '<div class="qtab foot"><span class="qn">'
@@ -7900,9 +7937,13 @@ vertical-align:middle}
        فمنها ما يجيء من بندٍ ثابتٍ أو أمنيةٍ تُشترى، ولا بابَ غيرها
        لتصحيحه أو حذفه. */
     h += viewQuick();
+    var _tailAt = h.length;
 
+    /* الذيلُ يُبنى قطعاً ثمّ يُصفّ في عمودين — قائمتان قصيرتان لا
+       تستحقّ كلٌّ منهما عرضَ الصفحة كلَّه */
+    var TAIL = [];
     h += '<div class="sec"><h2>عملياتُ الشهر</h2><span class="hint">'
-      + m.items.length + ' للمراجعة</span></div><div class="card">';
+      + m.items.length + ' — ما لم تكتبه بيدك في الجدول</span></div><div class="card">';
     if(!m.items.length){
       h += '<div class="empty"><b>لا عمليات بعد</b>'
         + 'اكتب المبالغَ في الجدول أعلاه — وما يُسجَّل تلقائياً أو يجيء من '
@@ -7920,6 +7961,7 @@ vertical-align:middle}
       }).join("");
     }
     h += '</div>';
+    TAIL.push(h.slice(_tailAt)); h = h.slice(0, _tailAt);
 
     var keys = Object.keys(state.months).filter(function(x){ return actuals(x).sum > 0; }).sort().slice(-6);
     if(keys.length > 1){
@@ -7933,8 +7975,14 @@ vertical-align:middle}
               + (x === k ? "var(--accent)" : "var(--line-2)") + '"></i></span>'
               + '<span class="rt"><span class="a" style="font-size:13.5px">' + fmt(s2) + '</span></span></div>';
           }).join("") + '</div>';
+      TAIL.push(h.slice(_tailAt)); h = h.slice(0, _tailAt);
     }
-    h += spendLogHTML(k);
+    var _lg = spendLogHTML(k);
+    if(_lg) TAIL.push(_lg);
+    if(TAIL.length)
+      h += '<div class="sgrid">'
+         + TAIL.map(function(x){ return '<div class="sgc">' + x + '</div>'; }).join("")
+         + '</div>';
     return h;
   }
 
@@ -7972,7 +8020,10 @@ vertical-align:middle}
       var dl = dayLabel(e.t);
       if(dl !== day){
         day = dl;
-        h += '<div class="mrow subh"><span class="mn">' + esc(dl) + '</span></div>';
+        var _d = new Date(e.t);
+        h += '<div class="mrow subh"><span class="mn">' + esc(dl) + '</span>'
+          + '<span class="ds">' + _d.getFullYear() + "-" + pad(_d.getMonth() + 1)
+          + "-" + pad(_d.getDate()) + '</span></div>';
       }
       var c = catOf(e.c), sub = e.s ? subOf(c, e.s) : null;
       var dlt = num(e.o) - num(e.f);
@@ -7981,11 +8032,14 @@ vertical-align:middle}
         + esc((c && c.e) || "•") + '</span>'
         + '<span><b class="nm">' + esc((c && c.n) || "بند محذوف")
         + (sub ? (' · ' + esc(sub.n)) : "") + '</b>'
-        + '<s class="sub">' + esc(clockAr(e.t)) + ' · '
-        + esc(LOGKIND[e.k] || "تعديل") + ' · '
-        + fmt(e.f) + ' ← ' + fmt(e.o) + '</s></span>'
+        + '<s class="sub"><em>' + esc(clockAr(e.t)) + '</em> · '
+        + esc(LOGKIND[e.k] || "تعديل") + '</s></span>'
+        /* الرقمان مسمَّيان: «كان» و«صار» — فلا يُخمَّن أيُّهما قبل */
+        + '<span class="lgmv"><span class="lgn"><s>كان</s><b>'
+        + fmt(e.f) + '</b></span><i>←</i>'
+        + '<span class="lgn to"><s>صار</s><b>' + fmt(e.o) + '</b></span></span>'
         + '<span class="rt"><b class="a ' + (dlt < 0 ? "wno" : "wok") + '">'
-        + (dlt > 0 ? "+" : "−") + fmt(Math.abs(dlt)) + '</b></span></div>';
+        + (dlt > 0 ? "+" : dlt < 0 ? "−" : "") + fmt(Math.abs(dlt)) + '</b></span></div>';
     });
     h += '<div class="wact"><button class="mini" data-logclr="1">'
       + 'امسح سجلَّ الشهر</button></div></div>';
@@ -11680,7 +11734,7 @@ vertical-align:middle}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "1.5.0-beta+23";
+  var APP_VERSION = "1.5.0-beta+24";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
