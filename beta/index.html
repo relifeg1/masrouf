@@ -2610,7 +2610,8 @@ white-space:nowrap}
   var CLS_ORDER = { need: 0, duty: 1, want: 2 };
   function sortMode(){ return ui.sort || "manual"; }
   function orderedCats(mk){
-    var list = visibleCats().slice(), m = sortMode();
+    /* بنودُ الصرف وحدَها — والاستثمارُ له قسمُه */
+    var list = catRows().slice(), m = sortMode();
     if(m === "manual") return list;
     var A = actuals(mk), av = {}, lf = {};
     list.forEach(function(c){
@@ -8937,6 +8938,31 @@ white-space:nowrap}
       }
       return s;
     }).join("");
+    /* استثمارُك في الخطة: سقفُك وما وزّعتَه — بعد أن خرج البندُ من صفوفها */
+    if((state.invest || []).length && (!LAY || LAY === "save")){
+      var pcap = invCap(k), pused = invMonthly();
+      h += '<div class="ptab head" style="position:static">'
+        + '<span>استثمارُك</span><span>شهرياً</span><span>أودعت</span><span>المتبقي</span></div>';
+      h += (state.invest || []).map(function(v){
+        var pm = num(v.m), pp = invPut(v, k);
+        return '<div class="ptab tap" data-tab="inv">'
+          + '<span class="pn"><span class="pi" style="background:var(--accent-soft);color:var(--accent)">'
+          + (v.kind === "auto" ? "🤖" : "📊") + '</span>'
+          + '<span class="pnm"><b>' + esc(v.n) + '</b>'
+          + '<s>قيمتُها ' + fmt(invVal(v)) + '</s></span></span>'
+          + '<span class="pv plan">' + fmt(pm) + '</span>'
+          + '<span class="pv' + (pp ? "" : " dim") + '">' + fmt(pp) + '</span>'
+          + '<span class="pv' + (pm - pp ? "" : " dim") + '">' + fmt(pm - pp) + '</span></div>';
+      }).join("");
+      h += '<div class="ptab foot"><span class="pn">'
+        + '<span class="pi" style="background:var(--card-2)">Σ</span>'
+        + '<span class="pnm"><b>مجموع الاستثمار</b><s>'
+        + (isFinite(pcap) ? ('سقفُك ' + fmt(pcap)
+             + (pcap > pused ? (' · غير موزَّع ' + fmt(pcap - pused)) : ''))
+           : arNum2((state.invest || []).length)) + '</s></span></span>'
+        + '<span class="pv">' + fmt(pused) + '</span>'
+        + '<span class="pv"></span><span class="pv"></span></div>';
+    }
     h += zeroToggle(SP.zero.length);
     h += '<div class="ptab foot' + (PV ? " pv" : "") + '"><span class="pn">'
       + '<span class="pi" style="background:var(--card-2)">Σ</span>'
@@ -9134,7 +9160,7 @@ white-space:nowrap}
   function viewQuick(){
     var k = ui.month, A = actuals(k), h = "";
     var PA = actuals(shift(k, -1));           /* الشهر الماضي: تلميحٌ لا أكثر */
-    var CS = visibleCats();
+    var CS = catRows();
     var done = 0, canFill = 0;
     CS.forEach(function(c){
       if((A.by[c.k] || 0) > 0) done++;
@@ -9334,8 +9360,43 @@ white-space:nowrap}
         + 'وإلا فارصده يُقرأ من الحساب.</div>';
     }
 
-    /* قسمُ الاستثمار المستقلُّ رُفع: صار بندُ «استثمار» في الجدول
-       يتفرّع إلى محافظه، فلا يُقرأ الشيءُ في مكانين. */
+    /* ── استثمارُك: أُعيد قسمُه إليه ──
+       كان صفوفاً تحت بند «استثمار» في الجدول، وخرج البندُ من بنود
+       الصرف — فنُقلت صفوفُه هنا بأعمدتها ومقبضها نفسِه. */
+    var QI = state.invest || [];
+    if(QI.length){
+      var IT = 0, ID = 0;
+      var icap2 = invCap(k);
+      h += '<div class="sec"><h2>استثمارُك</h2>'
+        + '<span class="hint">المخطّطُ من دخلك مقابل ما أودعتَه فعلاً</span></div><div class="card">';
+      h += '<div class="qtab head"><span>المحفظة</span><span>المخطط</span>'
+        + '<span>أودعت</span><span>المتبقي</span></div>';
+      h += QI.map(function(v){
+        var mo3 = num(v.m), pu3 = invPut(v, k), lf4 = mo3 - pu3;
+        IT += mo3; ID += pu3;
+        return '<div class="qtab' + (ui.flash === "i:" + v.id ? " flash" : "") + '">'
+          + '<span class="qn"><span class="qi" style="background:var(--accent-soft);color:var(--accent)">'
+          + (v.kind === "auto" ? "🤖" : "📊") + '</span>'
+          + '<span class="qt"><b>' + esc(v.n) + '</b>'
+          + '<s>قيمتُها الآن ' + fmt(invVal(v))
+          + (invGoal(v) ? (' · تحمل هدف «' + esc(invGoal(v).n) + '»') : "") + '</s></span></span>'
+          + '<span class="qv' + (mo3 ? "" : " dim") + '">' + fmt(mo3) + '</span>'
+          + '<input class="qin' + (pu3 ? " has" : "") + '" type="text" '
+          + 'inputmode="decimal" data-iquick="' + v.id + '" value="'
+          + (pu3 || "") + '" placeholder="0">'
+          + '<span class="qv' + (lf4 > 0 ? "" : " dim") + '">' + fmt(lf4) + '</span></div>';
+      }).join("");
+      h += '<div class="qtab foot"><span class="qn">'
+        + '<span class="qi" style="background:var(--card-2)">Σ</span>'
+        + '<span class="qt"><b>مجموع الاستثمار</b><s>' + arNum2(QI.length)
+        + (isFinite(icap2) ? (' · سقفُك ' + fmt(icap2)) : "") + '</s></span></span>'
+        + '<span class="qv">' + fmt(IT) + '</span>'
+        + '<span class="qv" style="font-size:15px">' + fmt(ID) + '</span>'
+        + '<span class="qv">' + fmt(IT - ID) + '</span></div></div>';
+      h += '<div class="hintnote" data-note="n1e0c7f5">هنا <b>ما تودعه</b> '
+        + 'هذا الشهر — وقيمةُ المحفظة وربحُها في تبويب «الاستثمار». '
+        + 'والمبلغُ يصل المحفظةَ بالفرق، فلا يُحسب مرّتين.</div>';
+    }
 
     return h;
   }
@@ -13776,7 +13837,7 @@ white-space:nowrap}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "0.2-beta+5";
+  var APP_VERSION = "0.2-beta+6";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
