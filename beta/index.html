@@ -4200,10 +4200,15 @@ white-space:nowrap}
          زادت بمقدار ما أودعتَ لا أكثر. */
       if(invTrack(v) === "hold"){
         invSyncHold(v, mk);
+      } else if(v.hist && v.hist[mk] !== undefined){
+        /* لقطةٌ لهذا الشهر — كتبتَها أنت أو بُنيت بإيداعٍ سابق.
+           فالإيداعُ **يزيدها بفرقه** ولا يعيد بناءها من الصفر: من كتب
+           قيمتَه ثمّ أودع كان نموُّه يُمحى صامتاً. */
+        setInvValue(v, mk, money(Math.max(0, num(v.hist[mk]) + dif)));
       } else {
+        /* لا لقطةَ بعد: تُشتقّ. والقيمةُ لا تنسى ما سُحب في الشهر نفسِه */
         var _pv = invValAt(v, shift(mk, -1));
         if(_pv === null) _pv = 0;
-        /* والقيمةُ لا تنسى ما سُحب في الشهر نفسِه */
         setInvValue(v, mk, money(_pv + t - invOutOf(v, mk)));
       }
       if(dif) invMove(v, dif > 0 ? "in" : "inx", Math.abs(dif), mk, "من المصروف");
@@ -13837,7 +13842,7 @@ white-space:nowrap}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "0.2-beta+6";
+  var APP_VERSION = "0.2-beta+7";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
