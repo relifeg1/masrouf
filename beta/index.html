@@ -2674,7 +2674,10 @@ white-space:nowrap}
       if(!c) return null;              /* لا بندَ ولا سقف — كما كان */
       state.invCap = num(c.p);         /* يُنقل مرّةً فلا يُفقد */
     }
-    return num(state.invCap);
+    /* والصفرُ غيابُ سقفٍ لا حدٌّ عند الصفر: من لم يكتب سقفاً فلا سقفَ
+       عليه. ولولا ذلك لصدّ أوّلَ محفظةٍ تُضاف بعد «ابدأ من جديد». */
+    var b = num(state.invCap);
+    return b > 0 ? b : null;
   }
   function invCap(mk){
     var b = invCapBase();
@@ -9130,12 +9133,18 @@ white-space:nowrap}
         + '<span>استثمارُك</span><span>شهرياً</span><span>أودعت</span><span>المتبقي</span></div>';
       h += (state.invest || []).map(function(v){
         var pm = num(v.m), pp = invPut(v, k);
-        return '<div class="ptab tap" data-tab="inv">'
-          + '<span class="pn"><span class="pi" style="background:var(--accent-soft);color:var(--accent)">'
+        /* المبلغُ يُكتب هنا — فشاشةُ الخطة هي التي يُعدَّل منها كلُّ
+           شيء. والاسمُ وحدَه مقبضٌ ينقل إلى تفصيل المحفظة. */
+        return '<div class="ptab">'
+          + '<span class="pn" data-tab="inv" style="cursor:pointer">'
+          + '<span class="pi" style="background:var(--accent-soft);color:var(--accent)">'
           + (v.kind === "auto" ? "🤖" : "📊") + '</span>'
           + '<span class="pnm"><b>' + esc(v.n) + '</b>'
-          + '<s>قيمتُها ' + fmt(invVal(v)) + '</s></span></span>'
-          + '<span class="pv plan">' + fmt(pm) + '</span>'
+          + '<s>قيمتُها ' + fmt(invVal(v))
+          + (invGoal(v) ? (' · تحمل هدف «' + esc(invGoal(v).n) + '»') : "")
+          + '</s></span></span>'
+          + '<input class="qin plan" type="number" inputmode="decimal" step="any" '
+          + 'data-inv="' + v.id + '|m" value="' + num(v.m) + '">'
           + '<span class="pv' + (pp ? "" : " dim") + '">' + fmt(pp) + '</span>'
           + '<span class="pv' + (pm - pp ? "" : " dim") + '">' + fmt(pm - pp) + '</span></div>';
       }).join("");
@@ -10094,7 +10103,9 @@ white-space:nowrap}
         + '<input class="ni s" type="number" inputmode="numeric" data-invcap="1"'
         + ' value="' + (isFinite(icap) ? icap : "") + '">'
         + (iover ? ('<span class="capwarn">تجاوزتَه بـ ' + fmt(iover) + '</span>')
-                 : ('<span>متبقٍ <b>' + fmt(Math.max(0, icap - iused)) + '</b></span>'))
+             : (isFinite(icap)
+                 ? ('<span>متبقٍ <b>' + fmt(Math.max(0, icap - iused)) + '</b></span>')
+                 : '<span>بلا سقف — اكتبه إن أردتَ حدّاً</span>'))
         + '</div>'
         + '<div class="ahint" style="padding:0 15px 12px">هذا سقفُك أنت — '
         + 'تكتبه هنا ويُحجز في بند «استثمار» من خطتك.</div>';
@@ -14281,7 +14292,7 @@ white-space:nowrap}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "0.2-beta+10";
+  var APP_VERSION = "0.2-beta+11";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
