@@ -2796,6 +2796,9 @@ white-space:nowrap}
   }
   function carryOf(c, mk){
     var mode = carryMode();
+    /* بندٌ يدّخر لهدف: يُرحَّل فائضُه ولو أُطفئ الترحيلُ عامّةً —
+       فادّخارٌ لا يتراكم لا يبلغ هدفاً أبداً (ق٥). */
+    if(c && c.goal && byId(state.goals, c.goal)) mode = "all";
     if(mode === "none") return 0;
     var keys = Object.keys(state.months).sort(), carry = 0;
     for(var i=0;i<keys.length;i++){
@@ -3099,7 +3102,14 @@ white-space:nowrap}
   }
   function planExp(){ var s = 0; state.cats.forEach(function(c){ s += catPlan(c); }); return s; }
   function activeGoals(){ return state.goals.filter(function(g){ return !g.arch; }); }
-  function planGoals(){ var s = 0; activeGoals().forEach(function(g){ s += goalMonthly(g); }); return s; }
+  /* الأهدافُ المملوكةُ لبنودٍ حصّتُها محسوبةٌ في `planExp` — فلو
+     جُمعت هنا أيضاً لخرج من راتبك ضعفُ ما تريد. وهو الحرزُ نفسُه الذي
+     يحمي الاستثمارَ في `allocated`. */
+  function planGoals(){
+    var s = 0;
+    activeGoals().forEach(function(g){ if(!goalCat(g)) s += goalMonthly(g); });
+    return s;
+  }
   function planInv(){ return invMonthly(); }
   /* الاستثمار بند داخل planExp \u2014 لا يُجمع مرتين */
   function allocated(){ return planExp() + planGoals() + (invCat() ? 0 : planInv()); }
@@ -4458,7 +4468,27 @@ white-space:nowrap}
     return { t: "جهة محذوفة", cls: "ops" };
   }
   /* المُدَّخر يُشتق من الحسابات المرتبطة إن وُجدت */
+  /* ═══ بندٌ يدّخر لهدف ═══
+     البندُ يملك الرقمَ والهدفُ يقرؤه — فلا يُكتب مرّتين ولا يُحجز
+     مرّتين. ويُقرأ من جهتين: أيُّ بندٍ يملك هذا الهدف، وأيُّ هدفٍ
+     يقرأ من هذا البند. */
+  function goalCat(g){
+    if(!g || !g.id) return null;
+    var out = null;
+    (state.cats || []).forEach(function(c){
+      if(!c.hidden && c.goal === g.id && !out) out = c;
+    });
+    return out;
+  }
+  function catGoal(c){
+    if(!c || !c.goal) return null;
+    var g = byId(state.goals, c.goal);
+    return (g && !g.arch) ? g : null;
+  }
   function goalSaved(g){
+    /* بندٌ يملكه: رصيدُ ظرفه هو مُدَّخرُه — ما حجزتَه ولم تصرفه */
+    var gc = goalCat(g);
+    if(gc) return Math.max(0, money(catPlan(gc) + carryOf(gc) - (actuals(ui.month).by[gc.k] || 0)));
     var l = linkedTo("g:" + g.id);
     if(l.length) return linkedSum("g:" + g.id);
     /* مالُه يقعد في محفظة: قيمتُها هي مُدَّخرُه — رقمٌ واحدٌ لا رقمان */
@@ -4567,6 +4597,9 @@ white-space:nowrap}
   /* المكتمل يتوقّف اقتطاعه تلقائياً، ويستأنف إن نقص رصيده */
   function goalMonthly(g, mk){
     if(isDone(g)) return 0;
+    /* بندٌ يملكه: قسطُه خطّةُ ذلك البند — ولا يُكتب في الهدف */
+    var gc = goalCat(g);
+    if(gc) return catPlan(gc, mk || ui.month);
     var m = state.months[mk || ui.month];
     if(m && m.gm && m.gm[g.id] !== undefined) return num(m.gm[g.id]);
     return num(g.m);
@@ -6594,6 +6627,16 @@ white-space:nowrap}
       { key: "acct", label: "حسابه المخصَّص", type: "select",
         value: by.acct !== undefined ? by.acct : (c.acct || ""),
         options: acctPickOptions() },
+      { key: "goal", label: "يدّخر لهدف (اختياريّ)", type: "select",
+        value: by.goal !== undefined ? by.goal : (c.goal || ""),
+        options: [{ v: "", n: "— لا يدّخر لهدف —" }].concat(
+          activeGoals().filter(function(g){
+            /* لا يُعرض هدفٌ مالُه في حسابٍ أو محفظة، ولا هدفٌ ملكه
+               بندٌ آخر — فمصدرٌ واحدٌ للرقم لا مصدران */
+            if(linkedTo("g:" + g.id).length || goalInv(g)) return false;
+            var o = goalCat(g);
+            return !o || o.k === c.k;
+          }).map(function(g){ return { v: g.id, n: g.e + " " + g.n }; })) },
       { key: "cls", label: "التصنيف", type: "select", value: cls,
         options: CLASSES.map(function(y){ return { v: y.k, n: y.n }; }) },
       { key: "type", label: "النوع", type: "select", value: t, rerender: true,
@@ -6716,6 +6759,48 @@ white-space:nowrap}
     }
     return false;
   }
+  /* وصلُ بندٍ بهدف: يغيّر ما يخرج من راتبك، فيُقال بالرقم قبل أن يقع.
+     ولا يُسأل إن لم يتغيّر شيء — فسؤالٌ بلا أثرٍ يُعلّم تخطّي الأسئلة. */
+  function linkCatGoal(c, gid){
+    var old = c.goal || "", nw = gid || "";
+    if(nw === old) return;
+    var g = nw ? byId(state.goals, nw) : null;
+    var og = old ? byId(state.goals, old) : null;
+    var put = function(){
+      if(nw) c.goal = nw; else delete c.goal;
+      save(); render();
+    };
+    if(nw && g){
+      var was = num(g.m), now = catPlan(c);
+      if(was === now){ put(); return; }
+      ask({ title: "يدّخر «" + c.n + "» لـ«" + g.n + "»؟",
+        msg: "<b>قسطُ «" + esc(g.n) + "» يصير " + fmt(now) + " بدل "
+           + fmt(was) + "</b> — لأنّ البندَ يملك الرقم والهدفُ يقرؤه، "
+           + "فلا يُحجز مالُك مرّتين.<br>"
+           + "ومُدَّخرُه يصير <b>رصيدَ ظرف «" + esc(c.n) + "»</b>: ما حجزتَه "
+           + "ولم تصرفه. وترفع القسطَ برفع خطّة البند."
+           /* وما يقلّ من راتبك هو قسطُ الهدف كلُّه لا فرقُ الرقمين:
+              خطّةُ البند محجوزةٌ قبل الوصل وبعده، والهدفُ كان يحجز
+              لنفسه فوقها — فصار يُموَّل منها. */
+           + (was > 0
+               ? ("<br>ويقلّ ما تحجزه من راتبك بـ<b>" + fmt(was)
+                  + "</b> — كان «" + esc(g.n) + "» يحجز لنفسه فوق خطّة "
+                  + "البند، وصار يُموَّل منها.")
+               : ""),
+        ok: "أوصِلهما", onOk: put, cancel: "لا" });
+      return;
+    }
+    /* فكُّ الوصل: يعود الهدفُ إلى رقمه ومُدَّخره المكتوبين */
+    if(og){
+      ask({ title: "يفكّ «" + c.n + "» عن «" + og.n + "»؟",
+        msg: "يعود الهدفُ إلى قسطه ومُدَّخره المكتوبين فيه — "
+           + "<b>قسطُه " + fmt(num(og.m)) + "</b> — ولا يُقرأ من ظرف البند بعدها. "
+           + "ولا يضيع شيء: البندُ يبقى بخطّته ورصيده.",
+        ok: "افصلهما", onOk: put, cancel: "لا" });
+      return;
+    }
+    put();
+  }
   /* خصائص البند الأساسي: تصنيف · نوع · ترحيل */
   function editCat(ck){
     var c = catOf(ck), t = typeOf(c);
@@ -6744,6 +6829,8 @@ white-space:nowrap}
         if(by.due !== undefined){ if(by.due) c2.due = String(by.due).trim(); else delete c2.due; }
         toast("حُدّث «" + c2.n + "»");
         save();
+        /* الوصلُ آخرُ ما يُطبَّق: يفتح حوارَه بعد أن يُحفظ ما سواه */
+        linkCatGoal(c2, by.goal || "");
       } });
   }
   function editSub(ck, sid){
@@ -9252,7 +9339,9 @@ white-space:nowrap}
               : dn ? dn + ' عملية مفصّلة (' + fmt(det) + ')'
               : (cry ? (cry > 0 ? "مُرحَّل +" : "مُرحَّل −") + fmt(Math.abs(cry))
                        + ' · المتاح ' + fmt(avail)
-                 : (avail ? 'بلا رصيد مُرحَّل' : 'بلا خطة'))) + '</s></span></span>'
+                 : (avail ? 'بلا رصيد مُرحَّل' : 'بلا خطة')))
+          + (catGoal(c) ? (' · يدّخر لـ«' + esc(catGoal(c).n) + '»') : "")
+          + '</s></span></span>'
         /* الأنواع المحسوبة لا تُكتب: رقمُها يُشتقّ من دورةٍ أو نسبةٍ أو
            سقف. فلو عُرض حقلاً يُكتب فيه لظنّ صاحبُه أنّ ما يكتبه يُؤخذ. */
         + (roCalc ? ('<span class="qin plan ro" title="' + esc(roWhy) + '">'
@@ -9348,7 +9437,9 @@ white-space:nowrap}
           + (dn ? "✓" : g.e) + '</span>'
           + '<span class="qt"><b>' + esc(g.n) + '</b>'
           + '<s>' + (dn ? "مكتمل — لا اقتطاع"
-              : "المُدَّخر " + fmt(sv) + (tg ? " من " + fmt(tg) : " · بلا سقف")) + '</s></span></span>'
+              : "المُدَّخر " + fmt(sv) + (tg ? " من " + fmt(tg) : " · بلا سقف"))
+          + (goalCat(g) ? (' · رصيدُ ظرف «' + esc(goalCat(g).n) + '»') : "")
+          + '</s></span></span>'
           + '<span class="qv' + (mo ? "" : " dim") + '">' + fmt(mo) + '</span>'
           + '<input class="qin' + (mv ? " has" : "") + '" type="number" inputmode="decimal" step="any" '
           + 'data-gquick="' + g.id + '" value="' + (mv || "") + '" placeholder="0">'
@@ -12552,8 +12643,12 @@ white-space:nowrap}
       g = byId(state.goals, id);
       if(!g) return;
       var md = gMode(g), derived = goalFromAccts(g);
+      var _gc = goalCat(g);
       ask({ title: "تعديل «" + g.n + "»",
-        msg: "النوع يحدّد كيف يُحسب المستهدف ومتى يتوقف الاقتطاع.",
+        msg: "النوع يحدّد كيف يُحسب المستهدف ومتى يتوقف الاقتطاع."
+           + (_gc ? ("<br><b>قسطُه " + fmt(goalMonthly(g)) + " يُكتب في بند «"
+                     + esc(_gc.n) + "»</b> — والمُدَّخرُ رصيدُ ظرفِه. "
+                     + "فالرقمُ في مكانٍ واحد.") : ""),
         html: emoPickHTML(g.e),
         fields: [
           { label: "الاسم", value: g.n, guess: true },
@@ -12564,8 +12659,10 @@ white-space:nowrap}
           { key: "target", suggests: "monthly",
             label: "المبلغ المستهدف (للمحدَّد) · أو المضاعف (للمحسوب)", type: "number",
             value: md === "fixed" ? num(g.target) : (num(g.mult) || 1) },
-          { key: "monthly", label: "كم يُقتطع شهرياً", type: "number",
-            value: num(g.m) },
+          (_gc
+            ? { key: "monthly", type: "hidden", value: num(g.m) }
+            : { key: "monthly", label: "كم يُقتطع شهرياً", type: "number",
+                value: num(g.m) }),
           { label: derived ? "المُدَّخر (محسوب من الحساب المرتبط)" : "المُدَّخر الآن",
             type: "number", value: derived ? goalSaved(g) : num(g.saved) }
         ],
@@ -13842,7 +13939,7 @@ white-space:nowrap}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "0.2-beta+7";
+  var APP_VERSION = "0.2-beta+8";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
