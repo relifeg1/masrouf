@@ -3188,9 +3188,15 @@ white-space:nowrap}
   /* الأهدافُ المملوكةُ لبنودٍ حصّتُها محسوبةٌ في `planExp` — فلو
      جُمعت هنا أيضاً لخرج من راتبك ضعفُ ما تريد. وهو الحرزُ نفسُه الذي
      يحمي الاستثمارَ في `allocated`. */
+  /* الأهدافُ التي يملك مالَها غيرُها لا تحجز لنفسها: حصّتُها محجوزةٌ
+     في بابها — بندٌ في `planExp` أو محفظةٌ في سقف الاستثمار. ولو
+     جُمعت هنا أيضاً لخرج من راتبك ضعفُ ما تريد. */
+  function goalHeldElsewhere(g){ return !!goalCat(g) || !!goalInv(g); }
   function planGoals(){
     var s = 0;
-    activeGoals().forEach(function(g){ if(!goalCat(g)) s += goalMonthly(g); });
+    activeGoals().forEach(function(g){
+      if(!goalHeldElsewhere(g)) s += goalMonthly(g);
+    });
     return s;
   }
   function planInv(){ return invMonthly(); }
@@ -4683,6 +4689,10 @@ white-space:nowrap}
     /* بندٌ يملكه: قسطُه خطّةُ ذلك البند — ولا يُكتب في الهدف */
     var gc = goalCat(g);
     if(gc) return catPlan(gc, mk || ui.month);
+    /* ومحفظةٌ يقعد فيها مالُه: إيداعُها الشهريُّ قسطُه — فمُدَّخرُه
+       يُقرأ منها أصلاً، فيتبعها القسط. رقمٌ واحدٌ لا رقمان. */
+    var gv = goalInv(g);
+    if(gv) return num(gv.m);
     var m = state.months[mk || ui.month];
     if(m && m.gm && m.gm[g.id] !== undefined) return num(m.gm[g.id]);
     return num(g.m);
@@ -10090,7 +10100,11 @@ white-space:nowrap}
         + 'تكتبه هنا ويُحجز في بند «استثمار» من خطتك.</div>';
     }
     h += '<div class="qadd"><button class="addbtn sm" data-addinv="1">'
-      + '+ محفظةٌ جديدة</button></div></div>';
+      + '+ محفظةٌ جديدة</button>'
+      + ((state.invest || []).length
+          ? '<button class="mini bad" data-invreset="1" style="margin-inline-start:auto">'
+            + 'ابدأ من جديد</button>' : "")
+      + '</div></div>';
 
     cut("port");
 
@@ -12722,6 +12736,62 @@ white-space:nowrap}
           save();
         } });
     }
+    /* تصفيرُ الاستثمار وحدَه — بيده لا بيدي، وبعد عدٍّ صريح */
+    function invResetDo(keepGoals){
+      var L = (state.invest || []).slice();
+      L.forEach(function(v){
+        var g = invGoal(v);
+        if(g){
+          if(keepGoals){ g.saved = money(invVal(v)); delete g.inv; }
+          else { g.arch = true; delete g.inv; }
+        }
+        /* حساباتُ المحفظة تُفكّ لا تُحذف — رصيدُها مالُك في المصرف */
+        (accts() || []).forEach(function(a){
+          if(a.link === "i:" + v.id) delete a.link;
+        });
+      });
+      state.invest = [];
+      /* إيداعاتٌ لأوعيةٍ لم تعد موجودة */
+      Object.keys(state.months || {}).forEach(function(k){
+        var d = state.months[k] && state.months[k].dist;
+        if(!d) return;
+        Object.keys(d).forEach(function(key){
+          if(key.indexOf("i:") === 0) delete d[key];
+        });
+      });
+      state.invCap = 0;
+      var ic = invCat(); if(ic) ic.p = 0;
+      save(); render();
+    }
+    on("[data-invreset]", function(){
+      var L = state.invest || [];
+      if(!L.length){ toast("لا محافظَ عندك أصلاً"); return; }
+      var val = 0; L.forEach(function(v){ val += invVal(v); });
+      var gs = [];
+      L.forEach(function(v){ var g = invGoal(v); if(g) gs.push(g.n); });
+      ask({ title: "ابدأ استثماراتك من جديد؟",
+        msg: "يُحذف <b>" + arNum2(L.length) + "</b> قيمتُها اليوم <b>"
+           + fmt(val) + "</b>، ويُصفَّر سقفُك الشهريّ، وتُمحى إيداعاتُها "
+           + "المسجّلةُ في الأشهر."
+           + (gs.length
+               ? ("<br><b>ومُدَّخرُ " + (gs.length === 1 ? "هدف «" + esc(gs[0]) + "»"
+                    : gs.length + " أهدافٍ") + " يُقرأ من هذه المحافظ</b> — "
+                  + "فاختر ماذا يحلّ به أدناه.")
+               : "")
+           + "<br><b>خذ نسخةً احتياطيّةً أوّلاً</b> من الإعدادات — "
+           + "فهذا لا يُتراجع عنه."
+           + "<br>وحساباتُ المصرف لا تُحذف: تُفكّ وتبقى بأرصدتها.",
+        fields: gs.length
+          ? [{ key: "gk", label: "الأهدافُ الموصولة", type: "select", value: "keep",
+               options: [
+                 { v: "keep", n: "أبقِها — ويُكتب مُدَّخرُها رقماً فيها" },
+                 { v: "arch", n: "أرشِفها معها — كانت من آثار القوالب" }] }]
+          : [],
+        ok: "صفِّر استثماراتي", onOk: function(v, by){
+          invResetDo(!by || by.gk !== "arch");
+          toast("بدأتَ من جديد — أضِف محفظتَك الأولى");
+        }, cancel: "لا" });
+    });
     /* ═══ حركاتُ الأظرف ═══ */
     /* وجهةُ السحب — تُعرض في كلِّ حوارٍ يُخرج مالاً من ظرف */
     function envDestOpts(exceptK){
@@ -14211,7 +14281,7 @@ white-space:nowrap}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "0.2-beta+9";
+  var APP_VERSION = "0.2-beta+10";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
