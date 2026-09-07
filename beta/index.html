@@ -2657,28 +2657,52 @@ white-space:nowrap}
     state.invest.forEach(function(v){ t += num(v.m); });
     return t;
   }
+  /* ═══ سقفُ الاستثمار الشهريّ ═══
+     كان يقعد في خطّة بند «استثمار»، وسيُرفع البند. فنُقل إلى بابه:
+     `state.invCap`. ويُكتب في البيتين ما دام البندُ قائماً — فتبقى
+     كلُّ قارئةٍ قديمةٍ صادقةً حتى تُرفع. */
+  function invCapBase(){
+    if(state.invCap === undefined || state.invCap === null){
+      var c = invCat();
+      if(!c) return null;              /* لا بندَ ولا سقف — كما كان */
+      state.invCap = num(c.p);         /* يُنقل مرّةً فلا يُفقد */
+    }
+    return num(state.invCap);
+  }
   function invCap(mk){
+    var b = invCapBase();
+    if(b === null) return Infinity;
+    mk = mk || ui.month;
+    /* سقفُ شهرٍ عدّلتَه بيدك يعلو السقفَ العامّ — كما في بقيّة الخطة */
+    var o = planOvr(mk);
+    if(o && o[INVK] !== undefined) return num(o[INVK]);
+    if(mk < planFrom()) return 0;
+    return b;
+  }
+  /* يُكتب السقفُ في بابه، ويُنسخ في البند ما دام قائماً */
+  function invCapSet(v, mk){
+    v = Math.max(0, money(v));
     var c = invCat();
-    return c ? catCap(c, mk || ui.month) : Infinity;
+    if(mk && planOwn(mk)){ setP(mk, INVK, v); return; }
+    state.invCap = v;
+    if(c) c.p = v;
   }
   function invFree(mk, exceptId){
-    var c = invCat();
-    if(!c) return Infinity;
+    var cap = invCap(mk);
+    if(!isFinite(cap)) return Infinity;
     var others = 0;
     state.invest.forEach(function(v){ if(v.id !== exceptId) others += num(v.m); });
-    return Math.max(0, catCap(c, mk || ui.month) - others);
+    return Math.max(0, cap - others);
   }
   /* يمنع تجاوز سقف الاستثمار الشهري */
   function clampInv(v){
-    var c = invCat(), room = invFree(ui.month, v.id);
-    if(!c || room === Infinity || num(v.m) <= room) return false;
-    var cap = catCap(c, ui.month), want = num(v.m);
+    var room = invFree(ui.month, v.id);
+    if(room === Infinity || num(v.m) <= room) return false;
+    var cap = invCap(ui.month), want = num(v.m);
     overCapDlg({
-      catName: c.n, lineName: v.n, cap: cap, others: cap - room, room: room, want: want,
-      raise: function(){
-        if(hasOvr(ui.month)) setP(ui.month, c.k, (cap - room) + want);
-        else c.p = (cap - room) + want;
-      },
+      catName: "الاستثمار", lineName: v.n, cap: cap, others: cap - room,
+      room: room, want: want,
+      raise: function(){ invCapSet((cap - room) + want, ui.month); },
       clampIt: function(){ v.m = room; }
     });
     return true;
@@ -9807,12 +9831,12 @@ white-space:nowrap}
     /* السقفُ حيث يُقرأ: تحت المجموع لا في قسمٍ قائمٍ بذاته */
     var IC = invCat();
     if(IC){
-      var icap = catCap(IC, ui.month), iused = invMonthly();
+      var icap = invCap(ui.month), iused = invMonthly();
       var iover = Math.max(0, iused - icap);
       h += '<div class="capline"><span>موزَّعٌ على محافظك <b>' + fmt(iused)
         + '</b> من سقفك الشهريّ</span>'
-        + '<input class="ni s" type="number" inputmode="numeric" data-plan="' + INVK
-        + '" value="' + rawP(IC, ui.month, INVK) + '">'
+        + '<input class="ni s" type="number" inputmode="numeric" data-invcap="1"'
+        + ' value="' + (isFinite(icap) ? icap : "") + '">'
         + (iover ? ('<span class="capwarn">تجاوزتَه بـ ' + fmt(iover) + '</span>')
                  : ('<span>متبقٍ <b>' + fmt(Math.max(0, icap - iused)) + '</b></span>'))
         + '</div>'
@@ -11682,6 +11706,16 @@ white-space:nowrap}
       render();
     });
 
+    /* السقفُ يُكتب في بابه — ولا يقلّ عن مجموع المحافظ */
+    ch("[data-invcap]", function(el){
+      var v = Math.max(0, money(el.value)), need = invMonthly();
+      if(v < need){
+        v = need;
+        toast("السقف لا يقل عن مجموع المحافظ (" + fmt(need) + ") — خفّضها أولاً");
+      }
+      invCapSet(v, ui.month);
+      save(); render();
+    });
     ch("[data-plan]", function(el){
       var ck = el.getAttribute("data-plan"), c = catOf(ck), v = num(el.value);
       var mk = ui.month;
@@ -13736,7 +13770,7 @@ white-space:nowrap}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "0.2-beta+3";
+  var APP_VERSION = "0.2-beta+4";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
