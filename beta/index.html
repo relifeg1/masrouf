@@ -5286,14 +5286,18 @@ white-space:nowrap}
     { k: "mrg", n: "الزواج", e: "💍", c: "#C2407A",
       mode: "fixed", mult: 1,
       hint: "هدفٌ بمبلغٍ محدَّد ينتهي ببلوغه" },
-    { k: "inv", n: "استثمار مستمر", e: "📈", c: "#4C3AE3",
-      mode: "endless", mult: 1,
-      hint: "يقتطع شهرياً بلا نهايةٍ حتى توقفه" }
+    /* ليس هدفاً: من أراد أن يُنمّي مالَه فبابُه المحفظة لا الهدف.
+       والسطرُ باقٍ هنا لأنّ من يبحث عن الاستثمار يبحث عنه في الأهداف —
+       فيُدلّ على بابه بدل أن يُترك يظنّ أنّه دخله. */
+    { k: "inv", n: "محفظة استثمار", e: "📈", c: "#4C3AE3",
+      wallet: true,
+      hint: "مالٌ يُنمّى — قيمتُه وربحُه في شاشة الاستثمار" }
   ];
   function goalTpls(){
     var have = {};
     (state.goals || []).forEach(function(g){ have[String(g.n || "").trim()] = 1; });
-    return GTPL.filter(function(t){ return !have[t.n]; });
+    /* المحفظةُ تتعدّد — فلا تُخفى بأخذِ واحدة، بخلاف الهدف */
+    return GTPL.filter(function(t){ return t.wallet || !have[t.n]; });
   }
 
   /* ── لوحة الحاسبة ──
@@ -12378,13 +12382,34 @@ white-space:nowrap}
       });
     });
 
+    /* موضعٌ واحدٌ لإنشاء المحفظة — يُنادى من شاشتها ومن قوالب الأهداف */
+    function askAddInv(){
+      ask({ title: "محفظةُ استثمارٍ جديدة", msg: "وعاءٌ فيه مالُك: أسهمٌ أو كريبتو أو صندوق — بتطبيقٍ آليّ أو تديره بنفسك.",
+        fields: [{ label: "اسم المحفظة", value: "", ph: "اكتب الاسم" },
+                 { label: "المساهمة الشهرية", type: "number", value: "" }],
+        ok: "أضف",
+        onOk: function(v){
+          if(!v[0]) return;
+          var iid = uid();
+          state.invest.push({ id: iid, n: v[0], kind: "auto", m: num(v[1]), "in": 0, val: 0 });
+          /* كل محفظة تُنشأ ومعها حسابها */
+          var sn0 = {}; sn0[todayKey()] = 0;
+          accts().push({ id: uid(), bank: v[0], n: ordName("المحفظة", 0), link: "i:" + iid,
+                         kind: "wallet", bal: 0, log: [], snap: sn0 });
+          state.invest.forEach(function(x){ if(x.id === iid) clampInv(x); });
+          toast("أُضيفت المحفظة ومعها حسابها");
+          save();
+        } });
+    }
     on("[data-addgoal]", function(){
       /* الجاهزات في جدولٍ واحد — فالزيادة سطرٌ لا تعديلٌ في ثلاثة مواضع */
       var TPL = goalTpls();
 
       ask({ title: "هدف جديد",
         msg: "الهدف <b>محدَّد</b> ينتهي عند بلوغه · <b>محسوب</b> مستهدفه من راتبك أو مصروفك "
-           + "· <b>بلا نهاية</b> يقتطع دائماً حتى توقفه.",
+           + "· <b>بلا نهاية</b> يقتطع دائماً حتى توقفه.<br>"
+           + "وما تريد أن <b>تُنمّيه</b> لا أن تحفظه فمكانُه محفظةٌ لا هدف — "
+           + "فيها قيمتُه وربحُه وزكاتُه.",
         html: (TPL.length
           ? ('<ul class="dlist">' + TPL.map(function(t){
                return '<li><span>' + t.e + ' ' + esc(t.n) + '</span>'
@@ -12456,6 +12481,8 @@ white-space:nowrap}
       GTPL.forEach(function(x){ if(x.k === key) t = x; });
       if(!t) return;
       dlg = null;
+      /* المحفظةُ ليست هدفاً: يُنقل إلى شاشتها ويُفتح حوارُها هي */
+      if(t.wallet){ ui.tab = "inv"; render(); askAddInv(); return; }
       state.goals.push({ id: uid(), n: t.n, e: t.e, c: t.c,
                          mode: t.mode, mult: t.mult, target: 0, saved: 0,
                          m: 0, date: "", arch: false });
@@ -12762,24 +12789,7 @@ white-space:nowrap}
       });
       save(); render();
     });
-    on("[data-addinv]", function(){
-      ask({ title: "محفظةُ استثمارٍ جديدة", msg: "وعاءٌ فيه مالُك: أسهمٌ أو كريبتو أو صندوق — بتطبيقٍ آليّ أو تديره بنفسك.",
-        fields: [{ label: "اسم المحفظة", value: "", ph: "اكتب الاسم" },
-                 { label: "المساهمة الشهرية", type: "number", value: "" }],
-        ok: "أضف",
-        onOk: function(v){
-          if(!v[0]) return;
-          var iid = uid();
-          state.invest.push({ id: iid, n: v[0], kind: "auto", m: num(v[1]), "in": 0, val: 0 });
-          /* كل جهة استثمار تُنشأ ومعها حسابها */
-          var sn0 = {}; sn0[todayKey()] = 0;
-          accts().push({ id: uid(), bank: v[0], n: ordName("المحفظة", 0), link: "i:" + iid,
-                         kind: "wallet", bal: 0, log: [], snap: sn0 });
-          state.invest.forEach(function(x){ if(x.id === iid) clampInv(x); });
-          toast("أُضيفت المحفظة ومعها حسابها");
-          save();
-        } });
-    });
+    on("[data-addinv]", function(){ askAddInv(); });
     on("[data-inmode]", function(b){
       var p = pair(b, "data-inmode"), v0 = null;
       state.invest.forEach(function(x){ if(x.id === p[0]) v0 = x; });
@@ -13726,7 +13736,7 @@ white-space:nowrap}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "0.2-beta+2";
+  var APP_VERSION = "0.2-beta+3";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
