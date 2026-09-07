@@ -2595,6 +2595,12 @@ white-space:nowrap}
     return '<span class="tpill tp-' + t + '">' + typeInfo(t).n + '</span>';
   }
   function visibleCats(){ return state.cats.filter(function(c){ return !c.hidden; }); }
+  /* بنودُ الظرف: ما يُصرف حتى ينفد. والاستثمارُ يُترك لينمو، فلا ظرفَ
+     له ولا رصيدَ سابق. ومُرشِّحٌ للعرض وحده — `visibleCats` يقرأ منها
+     الحسابُ نفسُه، فلا تُمسّ. */
+  function catRows(){
+    return visibleCats().filter(function(c){ return !isInvCat(c); });
+  }
 
   /* ── ترتيب البنود ──
      «ترتيبك» هو ترتيبك اليدوي من الإعدادات ويبقى الافتراضي.
@@ -2915,7 +2921,7 @@ white-space:nowrap}
   /* كل بند ظرف: ما بقي فيه = (خطة الشهر + المرحَّل) − ما صُرف */
   function envelopes(mk){
     var A = actuals(mk);
-    return visibleCats().map(function(c){
+    return catRows().map(function(c){
       var cry = carryOf(c, mk), avail = catPlan(c, mk) + cry, sp = A.by[c.k] || 0;
       return { c: c, carry: cry, avail: avail, spent: sp, left: avail - sp,
                trail: carryTrail(c, mk) };
@@ -10247,7 +10253,7 @@ white-space:nowrap}
   /* ═══ ٤ · حسابات البنود (الأظرف) ═══ */
   function viewEnv(){
     var k = ui.month, A = actuals(k), h = "";
-    var rows = visibleCats().map(function(c){
+    var rows = catRows().map(function(c){
       var cry = carryOf(c, k), avail = catPlan(c, k) + cry, sp = A.by[c.k] || 0;
       return { c: c, carry: cry, plan: catPlan(c, k), avail: avail, spent: sp,
                left: avail - sp, chg: envChange(c, k) };
@@ -13770,7 +13776,7 @@ white-space:nowrap}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "0.2-beta+4";
+  var APP_VERSION = "0.2-beta+5";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
