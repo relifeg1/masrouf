@@ -1902,6 +1902,9 @@ white-space:nowrap}
 .envhead .t{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:600;color:var(--ink)}
 
 /* ══ صفحة حسابات البنود ══ */
+/* سجلُّ الحركات: صفوفٌ كصفوف التطبيق، والمقبضُ في طرفها */
+.envlog .row .nm{font-size:14px}
+.envlog .row .rt .b{text-decoration:none}
 .ecard{cursor:pointer}
 .ecard:hover{background:var(--card-2)}
 .ecard.zero{opacity:.45}
@@ -2828,6 +2831,65 @@ white-space:nowrap}
     return money(t);
   }
   function envMoved(mk){ return envList(mk).length > 0; }
+  /* حركاتُ الشهر مجموعةً: النقلُ الواحدُ مجموعةٌ واحدةٌ بمعرّفه،
+     وما لا معرّفَ له مجموعةٌ بنفسه. */
+  function envGroups(mk){
+    var L = envList(mk).slice().sort(function(p, q){ return num(q.t) - num(p.t); });
+    var by = {}, out = [];
+    L.forEach(function(x){
+      var key = x.ref || ("@" + x.id);
+      if(!by[key]){ by[key] = { key: key, ref: x.ref || "", id: x.id,
+                                t: num(x.t), outs: [], ins: [] }; out.push(by[key]); }
+      var g = by[key];
+      if(num(x.t) > g.t) g.t = num(x.t);
+      if(x.kind === "out" || x.kind === "cut") g.outs.push(x);
+      else g.ins.push(x);
+    });
+    return out;
+  }
+  /* سطرُ السجلّ: من أين إلى أين، وكم، ومقبضُ ردٍّ جملةً */
+  function envLogHTML(mk){
+    var GG = envGroups(mk);
+    if(!GG.length) return "";
+    var nm = function(x){ var c = catOf(x.k); return c ? (c.e + " " + c.n) : x.k; };
+    return '<div class="sec"><h2>حركاتُ أظرفك</h2>'
+      + '<span class="hint">' + esc(mName(mk)) + ' — من أين إلى أين</span></div>'
+      + '<div class="card envlog">'
+      + GG.map(function(g){
+          var oS = 0, iS = 0;
+          g.outs.forEach(function(x){ oS += num(x.a); });
+          g.ins.forEach(function(x){ iS += num(x.a); });
+          var head, ic, tone;
+          if(g.outs.length && g.ins.length){
+            ic = "⇄"; tone = "accent";
+            head = "من " + (g.outs.length === 1 ? esc(nm(g.outs[0]))
+                            : arNum2b(g.outs.length))
+                 + " ← " + esc(nm(g.ins[0]));
+          } else if(g.outs.length){
+            ic = "↑"; tone = "warn";
+            head = "سحبتُ من " + esc(nm(g.outs[0]));
+          } else {
+            ic = "↓"; tone = "ok";
+            head = "أضفتُ إلى " + esc(nm(g.ins[0]));
+          }
+          var det = g.outs.map(function(x){
+            return fmt(x.a) + " من " + esc(nm(x)); }).join(" · ");
+          var why = (g.outs[0] && g.outs[0].n) || (g.ins[0] && g.ins[0].n) || "";
+          return '<div class="row"><span class="ic" style="background:var(--'
+            + tone + '-soft);color:var(--' + tone + ')">' + ic + '</span>'
+            + '<span><b class="nm">' + head + '</b>'
+            + '<s class="sub">'
+            + (g.outs.length > 1 ? esc(det) : (why ? esc(why) : "بلا سبب"))
+            + '</s></span>'
+            + '<span class="rt"><b class="a">' + fmt(oS || iS) + '</b>'
+            + '<s class="b"><button class="mini" data-envundo="'
+            + esc(g.ref || g.id) + '">تراجعْ</button></s></span></div>';
+        }).join("")
+      + '</div>'
+      + '<div class="hintnote" data-note="n7c31ad0">هنا <b>نقلُ المال بين '
+      + 'أظرفك</b> وما سحبتَه أو أضفتَه. وأمّا ما <b>صرفتَه</b> من ظرفٍ '
+      + 'فمكانُه شاشةُ المصروف — فالصرفُ ليس نقلاً.</div>';
+  }
   /* تُكتب الحركة. و`ref` يجمع حركاتِ سحبٍ واحدٍ من عدّة أظرف. */
   function envMove(c, mk, kind, amt, note, to, ref, back){
     var a = money(Math.abs(num(amt)));
@@ -10569,6 +10631,7 @@ white-space:nowrap}
       + fmt(tSpent) + '</span></div>'
       + '</div></div>';
 
+    h += envLogHTML(k);
     h += '<div class="sec"><h2>حسابات بنودك</h2>'
       + '<span class="hint">' + rows.length + ' حساباً مستقلاً</span>'
       + '<button class="mini" data-envbulk="1" style="margin-inline-start:auto">'
@@ -14256,7 +14319,7 @@ white-space:nowrap}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "0.2-beta+12";
+  var APP_VERSION = "0.2-beta+13";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
