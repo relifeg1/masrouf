@@ -902,6 +902,11 @@ display:flex;flex-wrap:wrap;gap:0 18px;align-items:flex-start}
   .v-env .card:has(> .ecard) > .envhead,
   .v-env .card:has(> .ecard) > .hintnote{grid-column:1 / -1;background:var(--card);
     border:1px solid var(--line);border-radius:12px}
+  /* ولوحُ الظرف المفتوح كذلك: أخٌ للبطاقة لا ابنٌ لها، فلولا هذا
+     لوقع خليّةً في العمود المجاور وتمدّدت بطاقتُه بطوله فارغةً. */
+  .v-env .card:has(> .ecard) > .epanel{grid-column:1 / -1;background:var(--card);
+    border:1px solid var(--line);border-radius:12px;padding:14px 15px;
+    box-shadow:var(--shadow)}
 
   /* ── الإعدادات: عمودان، فالأقسام الثمانية لا تُقرأ في تمرير واحد ── */
   .v-set .sec{margin-top:0}
@@ -2800,7 +2805,7 @@ white-space:nowrap}
   /* ═══ حركاتُ الظرف ═══
      الظرفُ حسابٌ يُشتقّ لا رقمٌ يُخزَّن — فما يُضاف يدخل المعادلةَ
      حركةً، لا رصيداً موازياً يختلف عنها. */
-  var ENVMV = { out: "سحبتُ منه", back: "أرجعتُ إليه",
+  var ENVMV = { out: "سحبتُ منه", back: "أضفتُ إليه",
                 top: "زدتُ دفعته", cut: "نقصتُ دفعته" };
   function envList(mk){
     var m = state.months[mk];
@@ -3628,6 +3633,9 @@ white-space:nowrap}
       + '<div class="acts"><button class="act solid" data-invall="1">'
       + 'اكتب قيمَها الآن</button>'
       + '<button class="act" data-invlater="1">لاحقاً</button></div></div>';
+  }
+  function arNum2b(n){
+    return n === 1 ? "ظرفٍ واحد" : n === 2 ? "ظرفين" : (n + " أظرف");
   }
   function arNum2(n){
     return n === 1 ? "محفظةٌ واحدة" : n === 2 ? "محفظتان" : (n + " محافظ");
@@ -10624,8 +10632,7 @@ white-space:nowrap}
                      + fmt(owed) + '</b> ووسمتَها «سأرجعها» ولم تُردّ بعد.</div>') : "")
           + '<div class="abtns" style="margin-bottom:12px">'
           + '<button class="mini" data-envout="' + c.k + '">− سحبتُ منه</button>'
-          + '<button class="mini" data-envback="' + c.k + '">+ أرجعتُ إليه</button>'
-          + '<button class="mini" data-envtop="' + c.k + '">± عدّلتُ دفعتَه</button>'
+          + '<button class="mini" data-envback="' + c.k + '">+ أضفتُ إليه</button>'
           + '</div>'
           + '<div class="lab">كشف حساب «' + esc(c.n) + '» — آخر ' + arMonths(L.length) + '</div>'
           + '<table class="eled"><thead><tr><th>الشهر</th><th>رصيد سابق</th><th>دخل</th>'
@@ -12804,81 +12811,37 @@ white-space:nowrap}
         }, cancel: "لا" });
     });
     /* ═══ حركاتُ الأظرف ═══ */
-    /* وجهةُ السحب — تُعرض في كلِّ حوارٍ يُخرج مالاً من ظرف */
-    function envDestOpts(exceptK){
-      var o = [{ v: "", n: "— خرج بلا وجهة —" }];
-      catRows().forEach(function(x){
-        if(x.k !== exceptK) o.push({ v: "c:" + x.k, n: "مصروفٌ في «" + x.n + "»" });
-      });
-      catRows().forEach(function(x){
-        if(x.k !== exceptK) o.push({ v: "e:" + x.k, n: "نقلٌ إلى ظرف «" + x.n + "»" });
-      });
-      return o;
-    }
-    /* الوجهةُ تُطبَّق: المصروفُ عمليّةٌ تُسجَّل، والنقلُ إرجاعٌ في ظرفٍ آخر */
-    function envApplyDest(dest, amt, mk, why){
-      if(!dest) return;
-      var p = String(dest).split(":"), t = catOf(p[1]);
-      if(!t) return;
-      if(p[0] === "e"){ envMove(t, mk, "back", amt, why || "نُقل من ظرفٍ آخر"); return; }
-      var m = month(mk);
-      m.items = m.items || [];
-      m.items.push({ id: uid(), c: t.k, a: money(amt), t: why || "من سحب ظرف",
-                     d: todayKey() });
-    }
     function envOne(ck, kind){
       var c = catOf(ck); if(!c) return;
       var bal = effPlan(c, ui.month) - (actuals(ui.month).by[c.k] || 0);
       var isOut = kind === "out";
-      var flds = [{ key: "amt", label: "المبلغ", type: "number", value: "" },
-                  { key: "why", label: "السبب (اختياريّ)", value: "",
-                    ph: isOut ? "مثال: طوارئ — تصليح المكيّف" : "" }];
-      if(isOut){
-        flds.push({ key: "dest", label: "إلى أين ذهب؟", type: "select", value: "",
-                    options: envDestOpts(c.k) });
-        flds.push({ key: "back", label: "أترجعه؟", type: "select", value: "1",
-                    options: [{ v: "1", n: "سأرجعه — ذكّرني" },
-                              { v: "", n: "نهائيّ" }] });
-      }
-      ask({ title: (isOut ? "سحبٌ من «" : (kind === "back" ? "إرجاعٌ إلى «" : "تعديلُ دفعة «"))
-              + c.n + "»",
+      ask({ title: (isOut ? "سحبٌ من «" : "إضافةٌ إلى «") + c.n + "»",
         msg: "رصيدُه الآن <b>" + fmt(bal) + "</b>."
-           + (isOut ? " والسحبُ يخرج من هذا الشهر ويتبعه إلى ما بعده."
-                    : (kind === "top"
-                        ? " والزيادةُ لهذا الشهر وحدَه — <b>لا تمسّ خطّتك</b>."
-                        : "")),
-        fields: kind === "top"
-          ? [{ key: "amt", label: "المبلغ (سالبٌ ينقص)", type: "number", value: "" },
-             { key: "why", label: "السبب (اختياريّ)", value: "" }]
-          : flds,
-        ok: isOut ? "اسحب" : "احفظ",
+           + (isOut ? " والنقصُ يتبعك إلى الشهر القادم."
+                    : " والزيادةُ لهذا الشهر — <b>لا تمسّ خطّتك</b>."),
+        fields: [{ key: "amt", label: "المبلغ", type: "number", value: "" },
+                 { key: "why", label: "السبب (اختياريّ)", value: "",
+                   ph: isOut ? "مثال: طوارئ" : "" }],
+        ok: isOut ? "اسحب" : "أضِف",
         onOk: function(v, by){
           var a = money(by.amt);
           if(!a) return;
-          if(kind === "top"){
-            envMove(c, ui.month, a > 0 ? "top" : "cut", Math.abs(a), by.why);
-            toast((a > 0 ? "زِيدت دفعةُ «" : "نُقصت دفعةُ «") + c.n + "» هذا الشهر");
-            save(); render(); return;
-          }
-          if(kind === "back"){
+          if(!isOut){
             envMove(c, ui.month, "back", a, by.why);
-            toast("أُرجع " + fmt(a) + " إلى «" + c.n + "»");
+            toast("أُضيف " + fmt(a) + " إلى «" + c.n + "»");
             save(); render(); return;
           }
           var doIt = function(){
-            envMove(c, ui.month, "out", a, by.why, by.dest, "", !!by.back);
-            envApplyDest(by.dest, a, ui.month, by.why);
+            envMove(c, ui.month, "out", a, by.why);
             toast("سُحب " + fmt(a) + " من «" + c.n + "»");
             save(); render();
           };
-          /* فوق الرصيد: يُستأذن ولا يُمنع (س٧) */
           var hit = envGoalHit(c, a);
           if(a > bal || hit){
             ask({ title: "تأكيدُ السحب",
               msg: (a > bal
                      ? ("تسحب <b>" + fmt(a) + "</b> ورصيدُه <b>" + fmt(bal)
-                        + "</b> — فيصير بالسالب <b>" + fmt(bal - a) + "</b>، "
-                        + "ويتبعك النقصُ إلى الشهر القادم. ")
+                        + "</b> — فيصير بالسالب <b>" + fmt(bal - a) + "</b>. ")
                      : "")
                  + hit,
               ok: "اسحب", onOk: doIt, cancel: "رجوع" });
@@ -12889,67 +12852,68 @@ white-space:nowrap}
     }
     on("[data-envout]", function(b){ envOne(b.getAttribute("data-envout"), "out"); });
     on("[data-envback]", function(b){ envOne(b.getAttribute("data-envback"), "back"); });
-    on("[data-envtop]", function(b){ envOne(b.getAttribute("data-envtop"), "top"); });
+
     on("[data-envundo]", function(b){
       var ref = b.getAttribute("data-envundo");
       var n = envUndo(ui.month, ref);
       if(n){ toast(n === 1 ? "رُدّت الحركة" : ("رُدّت " + n + " حركاتٍ معاً")); save(); render(); }
     });
-    /* ── السحبُ من أكثر من ظرف: خطوتان ── */
+    /* ── سحبٌ من عدّة أظرف إلى ظرفٍ واحد ──
+       قائمةٌ واحدة: تكتب المبلغَ أمام ما تريد، وما تُرك فارغاً لم
+       يُختَر. والمالُ ينتقل ولا يخرج — فمجموعُ أرصدتك لا يتغيّر. */
     on("[data-envbulk]", function(){
       var k = ui.month, A = actuals(k);
-      var pool = catRows().map(function(c){
+      var all = catRows().map(function(c){
         return { c: c, bal: money(effPlan(c, k) - (A.by[c.k] || 0)) };
-      }).filter(function(x){ return x.bal > 0; });
-      if(!pool.length){ toast("لا ظرفَ فيه رصيدٌ تسحب منه"); return; }
-      ask({ title: "سحبٌ من أكثر من ظرف",
-        msg: "تكتب المطلوبَ ووجهتَه، ثمّ يُقترح عليك توزيعُه <b>بنسبة "
-           + "أرصدة الأظرف</b> — لا بالتساوي — وتعدّله سطراً سطراً.",
-        fields: [
-          { key: "need", label: "كم تحتاج؟", type: "number", value: "" },
-          { key: "why", label: "السبب", value: "", ph: "مثال: تصليح السيارة" },
-          { key: "dest", label: "إلى أين يذهب؟", type: "select", value: "",
-            options: envDestOpts("") },
-          { key: "back", label: "أترجعه؟", type: "select", value: "",
-            options: [{ v: "", n: "نهائيّ" },
-                      { v: "1", n: "سأرجعه — ذكّرني" }] }],
-        ok: "التالي",
-        onOk: function(v, by){
-          var need = money(by.need);
-          if(!(need > 0)) return;
-          var tot = 0;
-          pool.forEach(function(x){ tot += x.bal; });
-          /* القسمةُ بنسبة الأرصدة — والباقي يُجبر في آخر سطرٍ فيطابق المطلوب */
-          var acc = 0;
-          pool.forEach(function(x, i){
-            x.want = (i === pool.length - 1)
-              ? Math.max(0, money(Math.min(need, tot) - acc))
-              : money(Math.round(Math.min(need, tot) * x.bal / tot));
-            acc += x.want;
-          });
-          ask({ title: "كم من كلِّ ظرف؟",
-            msg: "المطلوب <b>" + fmt(need) + "</b>. عدّل ما شئت — "
-               + "ولك أن تجمع أقلَّ أو أكثر، ويُقال لك.",
-            fields: pool.map(function(x){
-              return { key: x.c.k, label: x.c.e + " " + x.c.n + " — رصيدُه " + fmt(x.bal),
-                       type: "number", value: x.want || "" };
-            }),
-            ok: "اسحب",
-            onOk: function(v2, by2){
-              var ref = uid(), got = 0, n = 0;
-              pool.forEach(function(x){
-                var a = money(by2[x.c.k]);
-                if(!(a > 0)) return;
-                envMove(x.c, k, "out", a, by.why, by.dest, ref, !!by.back);
-                got += a; n++;
-              });
-              if(!n){ toast("لم يُسحب شيء"); return; }
-              envApplyDest(by.dest, got, k, by.why);
-              toast("سُحب " + fmt(got) + " من " + n + " أظرف"
-                    + (got !== need ? (" — والمطلوب " + fmt(need)) : ""));
-              save(); render();
-            } });
-        } });
+      });
+      if(all.length < 2){ toast("تحتاج ظرفين على الأقلّ"); return; }
+      var dests = all.map(function(x){
+        return { v: x.c.k, n: x.c.e + " " + x.c.n + " — رصيدُه " + fmt(x.bal) };
+      });
+      function step(destK){
+        var pool = all.filter(function(x){ return x.c.k !== destK; });
+        var dc = catOf(destK);
+        ask({ title: "سحبٌ إلى «" + (dc ? dc.n : "") + "»",
+          msg: "اكتب المبلغَ أمام كلِّ ظرفٍ تسحب منه — <b>وما تتركه "
+             + "فارغاً لا يُمسّ</b>. والمالُ ينتقل إلى «" + esc(dc ? dc.n : "")
+             + "» ولا يخرج من جيبك.",
+          fields: [{ key: "__d", label: "إلى أيِّ ظرفٍ تُجمع؟", type: "select",
+                     value: destK, options: dests, rerender: true }]
+            .concat(pool.map(function(x){
+              return { key: x.c.k, label: x.c.e + " " + x.c.n + " — رصيدُه "
+                         + fmt(x.bal), type: "number", value: "" };
+            })),
+          /* تبديلُ الوجهة يعيد بناءَ القائمة، فلا يبقى فيها ظرفُها */
+          rebuild: function(by){
+            if(by.__d && by.__d !== destK){ destK = by.__d; }
+            var p2 = all.filter(function(x){ return x.c.k !== destK; });
+            return [{ key: "__d", label: "إلى أيِّ ظرفٍ تُجمع؟", type: "select",
+                      value: destK, options: dests, rerender: true }]
+              .concat(p2.map(function(x){
+                return { key: x.c.k, label: x.c.e + " " + x.c.n + " — رصيدُه "
+                           + fmt(x.bal), type: "number",
+                         value: by[x.c.k] !== undefined ? by[x.c.k] : "" };
+              }));
+          },
+          ok: "اسحب",
+          onOk: function(v, by){
+            var d2 = catOf(by.__d || destK);
+            if(!d2) return;
+            var ref = uid(), got = 0, n = 0;
+            all.forEach(function(x){
+              if(x.c.k === d2.k) return;
+              var a = money(by[x.c.k]);
+              if(!(a > 0)) return;
+              envMove(x.c, k, "out", a, "سحبٌ إلى «" + d2.n + "»", "c:" + d2.k, ref);
+              got += a; n++;
+            });
+            if(!n){ toast("لم تكتب مبلغاً في أيّ ظرف"); return; }
+            envMove(d2, k, "back", got, "من " + arNum2b(n), "", ref);
+            toast("نُقل " + fmt(got) + " من " + arNum2b(n) + " إلى «" + d2.n + "»");
+            save(); render();
+          } });
+      }
+      step(all[0].c.k);
     });
     on("[data-addgoal]", function(){
       /* الجاهزات في جدولٍ واحد — فالزيادة سطرٌ لا تعديلٌ في ثلاثة مواضع */
@@ -14292,7 +14256,7 @@ white-space:nowrap}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "0.2-beta+11";
+  var APP_VERSION = "0.2-beta+12";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
