@@ -118,6 +118,8 @@ h1,h2,h3{font-family:"Alexandria","IBM Plex Sans Arabic",sans-serif;margin:0;lin
 .card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);margin-bottom:14px}
 .card.p{padding:16px}
 .sec{display:flex;align-items:baseline;justify-content:space-between;margin:20px 2px 9px}
+/* بطاقةٌ ذاتُ حدٍّ يليها عنوانُ قسم: عشرون بكسلاً تُقرأ التصاقاً */
+.card + .sec, .hintnote + .sec{margin-top:30px}
 .sec h2{font-size:15px;font-weight:600}
 .sec .hint{font-size:13px;color:var(--ink-3)}
 
@@ -2876,15 +2878,93 @@ padding:10px 15px;border-top:1px solid var(--line)}
     });
     return out;
   }
-  /* سطرُ السجلّ: من أين إلى أين، وكم، ومقبضُ ردٍّ جملةً */
+  /* بابُ الحركة: نقلٌ بين ظرفين، أو سحبٌ، أو إضافة */
+  var ENVFAMS = [{ k: "", n: "الكلّ" }, { k: "mv", n: "نقل" },
+                 { k: "out", n: "سحب" }, { k: "in", n: "إضافة" }];
+  function envFam(g){
+    return (g.outs.length && g.ins.length) ? "mv"
+         : (g.outs.length ? "out" : "in");
+  }
+  /* سطرُ السجلّ: من أين إلى أين، وكم، ومقبضُ ردٍّ جملةً.
+     وآلتُه آلةُ سجلِّ المتابعة: أبوابٌ ورؤوسُ أيّامٍ وصفحات. */
   function envLogHTML(mk){
-    var GG = envGroups(mk);
-    if(!GG.length) return "";
+    var ALL = envGroups(mk);
+    if(!ALL.length) return "";
     var nm = function(x){ var c = catOf(x.k); return c ? (c.e + " " + c.n) : x.k; };
+    var fil = ui.envFil || "";
+    var cnt = {};
+    ALL.forEach(function(g){ var f = envFam(g); cnt[f] = (cnt[f] || 0) + 1; });
+    var show = ALL.filter(function(g){ return !fil || envFam(g) === fil; });
+
+    /* صفحاتٌ: عشرُ حركاتٍ أو يوما نقلٍ — كسجلِّ المتابعة سواءً بسواء */
+    var PAGE_N = 10, PAGE_D = 2;
+    var pages = [], curP = [], seen = {}, dn = 0;
+    show.forEach(function(g){
+      var dl = dayLabel(g.t), fresh = !seen[dl];
+      if(curP.length && (curP.length >= PAGE_N || (fresh && dn >= PAGE_D))){
+        pages.push(curP); curP = []; seen = {}; dn = 0; fresh = true;
+      }
+      if(!seen[dl]){ seen[dl] = 1; dn++; }
+      curP.push(g);
+    });
+    if(curP.length) pages.push(curP);
+    if(!pages.length) pages = [[]];
+    var allOn = !!ui.envAll;
+    var pg = Math.max(0, Math.min(num(ui.envPage) || 0, pages.length - 1));
+    var total = show.length;
+    var GG = allOn ? show.slice(0, 300) : pages[pg];
+
+    var day = "";
     return '<div class="sec"><h2>سجلُّ الأظرف</h2>'
       + '<span class="hint">' + esc(mName(mk)) + ' — من أين إلى أين</span></div>'
+      + '<div class="wfil lfil">'
+      + ENVFAMS.map(function(f){
+          var n = f.k ? (cnt[f.k] || 0) : ALL.length;
+          if(f.k && !n) return "";
+          return '<button class="chip sm' + (fil === f.k ? " on" : "")
+            + '" data-envfil="' + f.k + '">' + esc(f.n)
+            + '<i>' + n + '</i></button>';
+        }).join("")
+      + '</div>'
       + '<div class="card envlog">'
+      + (GG.length ? "" :
+          ('<div class="empty"><b>لا شيءَ في هذا الباب</b>'
+           + 'لم تنقل في ' + esc(mName(mk)) + ' شيئاً من هذا النوع بعد.'
+           + '<div class="acts"><button class="act" data-envfil="">'
+           + 'أرِني كلَّ الحركات</button></div></div>'))
       + GG.map(function(g){
+          var hd = "", dl = dayLabel(g.t);
+          if(dl !== day){
+            day = dl;
+            var _d = new Date(g.t);
+            hd = '<div class="mrow subh"><span class="mn">' + esc(dl) + '</span>'
+               + '<span class="ds">' + (g.t ? (_d.getFullYear() + "-"
+                  + pad(_d.getMonth() + 1) + "-" + pad(_d.getDate())) : "—")
+               + '</span></div>';
+          }
+          return hd + envLogRow(g, nm);
+        }).join("")
+      + (pages.length > 1 || allOn
+          ? ('<div class="lgpg">'
+             + (allOn
+                 ? ('<span class="lgn">كلُّ حركات الشهر — ' + total + ' حركة</span>'
+                    + '<button class="mini" data-envall="0">أرِني صفحاتٍ</button>')
+                 : ('<button class="mini" data-envpg="' + (pg - 1) + '"'
+                    + (pg <= 0 ? " disabled" : "") + '>‹ السابق</button>'
+                    + '<span class="lgn">صفحة ' + (pg + 1) + ' من ' + pages.length
+                    + ' · ' + total + ' حركة</span>'
+                    + '<button class="mini" data-envpg="' + (pg + 1) + '"'
+                    + (pg >= pages.length - 1 ? " disabled" : "") + '>التالي ›</button>'
+                    + '<button class="mini" data-envall="1" style="margin-inline-start:auto">'
+                    + 'أظهِر كلَّ حركات الشهر</button>'))
+             + '</div>') : "")
+      + '</div>'
+      + '<div class="hintnote" data-note="n7c31ad0">هنا <b>نقلُ المال بين '
+      + 'أظرفك</b> وما سحبتَه أو أضفتَه. وأمّا ما <b>صرفتَه</b> من ظرفٍ '
+      + 'فمكانُه شاشةُ المصروف — فالصرفُ ليس نقلاً.</div>';
+  }
+  function envLogRow(g, nm){
+    return (function(g){
           var oS = 0, iS = 0;
           g.outs.forEach(function(x){ oS += num(x.a); });
           g.ins.forEach(function(x){ iS += num(x.a); });
@@ -2913,11 +2993,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
             + '<span class="rt"><b class="a">' + fmt(oS || iS) + '</b>'
             + '<s class="b"><button class="mini" data-envundo="'
             + esc(g.ref || g.id) + '">تراجعْ</button></s></span></div>';
-        }).join("")
-      + '</div>'
-      + '<div class="hintnote" data-note="n7c31ad0">هنا <b>نقلُ المال بين '
-      + 'أظرفك</b> وما سحبتَه أو أضفتَه. وأمّا ما <b>صرفتَه</b> من ظرفٍ '
-      + 'فمكانُه شاشةُ المصروف — فالصرفُ ليس نقلاً.</div>';
+    })(g);
   }
   /* تُكتب الحركة. و`ref` يجمع حركاتِ سحبٍ واحدٍ من عدّة أظرف. */
   function envMove(c, mk, kind, amt, note, to, ref, back){
@@ -9838,6 +9914,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
     /* الأحدثُ أوّلاً بالوقت لا بترتيب الحفظ — فبياناتُ جهازين تُدمج */
     rows.sort(function(a2, b2){ return b2.t - a2.t; });
 
+    var STEP = itemSteps(k);
     var fil = ui.logFil || "";
     var cnt = {};
     rows.forEach(function(r){
@@ -9895,7 +9972,8 @@ padding:10px 15px;border-top:1px solid var(--line)}
              + pad(_d.getMonth() + 1) + "-" + pad(_d.getDate())) : "—")
           + '</span></div>';
       }
-      h += (r.item ? logItemRow(r.item, r.t) : logEntryRow(r.e));
+      h += (r.item ? logItemRow(r.item, r.t, STEP[r.item.id])
+                   : logEntryRow(r.e));
     });
 
     /* شريطُ التقليب: لا يُعرض إن كانت صفحةً واحدة */
@@ -9935,8 +10013,22 @@ padding:10px 15px;border-top:1px solid var(--line)}
       + '<span class="rt"><b class="a ' + (dlt < 0 ? "wno" : "wok") + '">'
       + (dlt > 0 ? "+" : dlt < 0 ? "−" : "") + fmt(Math.abs(dlt)) + '</b></span></div>';
   }
+  /* رصيدُ كلِّ بندٍ قبل كلِّ عمليّةٍ وبعدها — يُحسب مرّةً للشهر كلِّه
+     بترتيب الوقت، فالعمليّةُ لا تعرف موضعَها من بندها وحدَها. */
+  function itemSteps(mk){
+    var m = state.months[mk] || {};
+    var IT = (Array.isArray(m.items) ? m.items : []).slice()
+      .sort(function(a, b){ return itemAt(a) - itemAt(b); });
+    var run = {}, out = {};
+    IT.forEach(function(it){
+      var c = String(it.c || ""), f = num(run[c] || 0), o = money(f + num(it.a));
+      run[c] = o;
+      out[it.id] = { f: f, o: o };
+    });
+    return out;
+  }
   /* عمليّة: مالٌ خرج — تُضغط فتُعدَّل وزرُّها يحذف */
-  function logItemRow(it, t){
+  function logItemRow(it, t, st){
     var c = catOf(it.c), sx = it.s ? subOf(c, it.s) : null;
     var src = it.auto ? "تلقائيّ" : (it.wish ? "شراءُ أمنية" : "عمليّة");
     return '<div class="row lgr itr tap" data-edit="' + esc(it.id) + '">'
@@ -9951,10 +10043,16 @@ padding:10px 15px;border-top:1px solid var(--line)}
       + '</b>'
       + '<s class="sub"><em>' + esc(t ? clockAr(t) : (it.d || "")) + '</em> · '
       + esc(src) + '</s></span>'
-      + '<span class="lgmv"><span class="lgn out"><s>صُرف</s><b>'
-      + fmt(it.a) + '</b></span></span>'
-      + '<span class="rt"><button class="del" data-del="' + esc(it.id)
-      + '" title="احذفها">×</button></span></div>';
+      /* كالقيد: كم كان البندُ وكم صار — والمبلغُ فرقُهما */
+      + (st
+          ? ('<span class="lgmv"><span class="lgn"><s>كان</s><b>'
+             + fmt(st.f) + '</b></span><i>←</i>'
+             + '<span class="lgn to"><s>صار</s><b>' + fmt(st.o) + '</b></span></span>')
+          : ('<span class="lgmv"><span class="lgn out"><s>صُرف</s><b>'
+             + fmt(it.a) + '</b></span></span>'))
+      + '<span class="rt"><b class="a wno">−' + fmt(it.a) + '</b>'
+      + '<s class="b"><button class="del" data-del="' + esc(it.id)
+      + '" title="احذفها">×</button></s></span></div>';
   }
 
   /* ═══ مرشدُ الترقية: ما بُني بأدواتٍ أقدم يجد بيته ═══ */
@@ -10825,9 +10923,6 @@ padding:10px 15px;border-top:1px solid var(--line)}
       + fmt(tBal) + '</b><s>الرصيد</s></span></div>';
     h += '</div>';
 
-    /* السجلُّ بعد البطاقات: يُرجَع إليه بعد النظر لا قبله */
-    h += envLogHTML(k);
-
     /* ── الأهداف والادخار ── */
     var AGE = activeGoals();
     if(AGE.length){
@@ -10891,6 +10986,10 @@ padding:10px 15px;border-top:1px solid var(--line)}
       + 'ويخرج منه ما صرفته، و<b>الباقي يبقى فيه للشهر القادم</b> — تماماً كحساب بنكي.<br>'
       + 'اضغط أي بند لترى كشف حسابه شهراً بشهر. وهذا رصيد تخطيطي، منفصل عن أرصدة بنوكك الحقيقية '
       + 'إلا إن ربطت بالبند حساباً من «تعديل البند».</div>';
+
+    /* والسجلُّ آخرَ الصفحة — تحت الأهداف والادخار: يُرجَع إليه بعد
+       النظر في الأرصدة كلِّها، لا يُستقبَل به. */
+    h += envLogHTML(k);
     return h;
   }
 
@@ -11964,6 +12063,20 @@ padding:10px 15px;border-top:1px solid var(--line)}
     var ch = function(sel, fn){ q(sel).forEach(function(el){ el.onchange = function(){
       diag("حقل", actName(sel, el)); fn(el); }; }); };
 
+    on("[data-envpg]", function(b){
+      ui.envPage = num(b.getAttribute("data-envpg"));
+      render();
+    });
+    on("[data-envall]", function(b){
+      ui.envAll = b.getAttribute("data-envall") === "1";
+      ui.envPage = 0;
+      render();
+    });
+    on("[data-envfil]", function(b){
+      ui.envPage = 0;                       /* بابٌ جديدٌ يبدأ من أوّله */
+      ui.envFil = b.getAttribute("data-envfil");
+      render();
+    });
     on("[data-logpg]", function(b){
       ui.logPage = num(b.getAttribute("data-logpg"));
       render();
@@ -14484,7 +14597,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "0.2-beta+17";
+  var APP_VERSION = "0.2-beta+18";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
