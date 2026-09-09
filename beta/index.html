@@ -2490,8 +2490,9 @@ padding:10px 15px;border-top:1px solid var(--line)}
        محسوبةٌ منها. فلو تُرك صفراً لقرأ الأبُ غيرَ ما يقرأ أبناؤه.
        ولا يُزاد في `sum`: ذاك مجموعُ الإنفاق، والإيداعُ ادّخارٌ يُعدّ
        في بابه — ولو عُدّ هنا لطُرح مرّتين من «يبقى من دخلك». */
-    var ip = invPutAll(k);
-    if(ip) by[INVK] = (by[INVK] || 0) + ip;
+    /* **يحلُّ محلَّها لا يُضاف إليها**: من كتب رقماً في خانة صرف
+       الاستثمار (فصار عمليّةً) وأودع في محفظته، كان يُعدّ مرّتين. */
+    if((state.invest || []).length || invCat()) by[INVK] = invPutAll(k);
     return { by: by, bySub: bySub, sum: sum };
   }
   /* ── أنواع البنود ── */
@@ -2756,7 +2757,9 @@ padding:10px 15px;border-top:1px solid var(--line)}
 
   /* ميزانية البند سقف — الفروع تقتسمها ولا تتجاوزها */
   function subsSum(c, mk){
-    if(isInvCat(c)) return invMonthly();
+    /* والاستثمارُ يتبع نافذةَ الخطة كبقيّة البنود: `invMonthly` رقمٌ
+       لا يعرف الشهر، فلولا هذا لظهر في يناير وخطّتُك بدأت في سبتمبر. */
+    if(isInvCat(c)) return (mk && mk < planFrom()) ? 0 : invMonthly();
     var s = 0;
     (c.subs || []).forEach(function(x){ s += linePlan(x, mk, lineKey(c.k, x.id)); });
     return s;
@@ -10932,7 +10935,10 @@ padding:10px 15px;border-top:1px solid var(--line)}
       var tot = 0;
       var tds = months.map(function(mk){
         var v = ledgerVal(c, mk); tot += v;
-        var ro = isLocked(mk) || mk > now;
+        /* صرفُ الاستثمار يُكتب في محافظه لا في بنده — ولو فُتح هنا
+           حقلٌ لصار للرقم بابان ولعُدَّ مرّتين. */
+        var ro = isLocked(mk) || mk > now
+                 || (isInvCat(c) && ledgerMode() !== "plan");
         return '<td class="' + (mk === now ? "now" : "") + '">'
           + (ro
               ? '<span class="lcell ro">' + (v ? fmt(v) : "·") + '</span>'
@@ -10945,7 +10951,11 @@ padding:10px 15px;border-top:1px solid var(--line)}
     }).join("");
     h += '</tbody></table></div>'
       + '<div class="lockbar">الأشهر القادمة والمُقفَلة للقراءة فقط. '
-      + 'وتعديل شهر مضى يُكتب في خطته وحدها — لا يمسّ خطتك الأساسية.</div>'
+      + 'وتعديل شهر مضى يُكتب في خطته وحدها — لا يمسّ خطتك الأساسية.'
+      + ((state.invest || []).length && ledgerMode() !== "plan"
+          ? ' وصرفُ <b>الاستثمار</b> يُكتب في محافظه من شاشة المصروف — '
+            + 'فلا يُعدّ مرّتين.' : "")
+      + '</div>'
       + '</div>';
     return h;
   }
@@ -14442,7 +14452,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "0.2-beta+15";
+  var APP_VERSION = "0.2-beta+16";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
