@@ -1915,6 +1915,13 @@ opacity:.45}
 /* ══ صفحة حسابات البنود ══ */
 /* سببُ العمليّة بجانب اسمها — يُقرأ معه لا بعده */
 .lgr .nm .why{color:var(--ink-2);font-weight:400}
+/* شراءُ أمنيةٍ: حدٌّ ذهبيٌّ ووسمٌ باسمها — يُميَّز من سطرٍ عابر */
+.lgr.wsh{position:relative;background:linear-gradient(to left,var(--gold-soft),transparent 62%)}
+.lgr.wsh::before{content:"";position:absolute;inset-inline-start:0;top:6px;bottom:6px;
+width:3px;border-radius:0 3px 3px 0;background:var(--gold)}
+.wshtag{font-size:10.5px;font-weight:500;color:var(--gold);background:var(--gold-soft);
+border:1px solid var(--gold);border-radius:99px;padding:1px 7px;margin-inline-start:6px;
+white-space:nowrap;vertical-align:middle}
 /* صفٌّ يُفتح في جداول السنة: اسمُه مقبضٌ وفروعُه تحته منزاحة */
 .yfold .cn[data-yfold]{cursor:pointer;user-select:none}
 .yfold .cn[data-yfold]:hover{color:var(--accent)}
@@ -6404,14 +6411,89 @@ padding:10px 15px;border-top:1px solid var(--line)}
   function wishOwn(x, mk){ var g = wishGoal(x); return g ? goalMonthly(g, mk) : 0; }
   /* الثمنُ المعتمَد: متوسّطُ المدى إن كان له مدى، وإلا فرقمُه.
      رقمٌ واحدٌ تُبنى عليه كلُّ الحسابات، فلا يختلف حسابان. */
-  /* ما يصلح للربط: عمليّاتُ الشهر التي لم تُوسَم بأمنيةٍ بعد.
+  /* عمليّةٌ مقترَحة: ما وافق ثمنَها في بندها */
+  function wishBuyHit(w, ck, sid){
+    var px = wishPrice(w), out = null;
+    wishFreeItems(ui.month, ck, sid).forEach(function(it){
+      if(!out && num(it.a) === px) out = it; });
+    return out;
+  }
+  function wishBuyFields(w, by){
+    var px = wishPrice(w), gB = wishGoal(w), gotB = wishGot(w);
+    var ck = String((by && by.cat !== undefined) ? by.cat : (w.cat || ""));
+    var pr = ck.split("|"), sid = pr[1] || "";
+    var free = wishFreeItems(ui.month, pr[0], sid);
+    var hit = wishBuyHit(w, pr[0], sid);
+    /* لا تُبنى الحقولُ ثانيةً إلّا حين يُبدَّل البند — وعندها تسقط
+       قائمةُ البند السابق كلُّها، فيُعاد الاقتراحُ من بندك الجديد لا
+       يُحمَل عنه ما لا يخصّه. */
+    var src = hit ? hit.id : "";
+    var amt = (by && by.amt !== undefined && String(by.amt) !== "") ? by.amt : px;
+    var f = [{ key: "cat", label: "البند", type: "select", value: ck,
+               rerender: true,
+               options: [{ v: "", n: "— اختر البند —" }].concat(catOptions()) },
+             { key: "amt", label: "المبلغ المدفوع", type: "number", value: amt }];
+    if(free.length)
+      f.push({ key: "src", label: "مصدرُ المبلغ", type: "select", value: src,
+               options: [{ v: "", n: "عمليّةٌ جديدة بـ" + fmt(num(amt) || px) }]
+                 .concat(free.map(function(it){
+                   var sx = it.s ? subOf(catOf(it.c), it.s) : null;
+                   return { v: it.id, n: fmt(it.a) + " · " + (it.d || "")
+                              + (sx ? (" · " + sx.n) : "")
+                              + (it.t ? (" · " + it.t) : "") };
+                 })) });
+    f.push({ key: "run", label: "كلفةٌ شهريّةٌ بعدها (اختياري)",
+             type: "number", value: (by && by.run !== undefined) ? by.run : (w.run || "") });
+    /* لها خطّة: أمن مالها تدفع أم من جيبك؟ */
+    if(gB && gotB > 0)
+      f.push({ key: "pay", label: "من أين تدفع؟", type: "select",
+               value: (by && by.pay) || "goal",
+               options: [{ v: "goal", n: "من خطّتها · اجتمع فيها " + fmt(gotB) },
+                         { v: "cash", n: "من جيبي — واترك مُدَّخرها" }] });
+    return f;
+  }
+  function wishBuyMsg(w, by){
+    var ck = String((by && by.cat) || ""), pr = ck.split("|");
+    var free = ck ? wishFreeItems(ui.month, pr[0], pr[1] || "") : [];
+    var hit = ck ? wishBuyHit(w, pr[0], pr[1] || "") : null;
+    var c0 = ck ? catOf(pr[0]) : null;
+    return "تُسجَّل مصروفاً في الشهر المفتوح. <b>اختر بندها</b>"
+      + (ck ? "" : " — وعندها تُعرض عليك عمليّاتُه إن كنتَ سجّلتَ مصروفَها")
+      + "."
+      + (hit ? (' وفي «' + esc((c0 && c0.n) || "") + '» عمليّةٌ بمبلغها — '
+                + '<b>اقتُرحت لك</b> فلا يُسجَّل المبلغُ مرّتين.')
+             : (free.length
+                 ? (' وفي «' + esc((c0 && c0.n) || "") + '» ' + (free.length === 1 ? "عمليّةٌ واحدة"
+                       : free.length === 2 ? "عمليّتان"
+                       : (free.length + " عمليّات"))
+                    + ' — اربِطها بواحدةٍ منها إن كنتَ سجّلتَ مصروفَها.')
+                 : ""))
+      + ' و«الكلفةُ الشهريّةُ بعدها» ما تدفعه شهريّاً <b>بسبب</b> '
+      + 'هذا الشراء بعد تمامه — اشتراكٌ أو تأمينٌ أو صيانة؛ يصير '
+      + 'بنداً ثابتاً في خطّتك. واتركه فارغاً إن لم يكن لها كلفةٌ متكرّرة.'
+      + (wishGoal(w) ? " وخطّتُها تُؤرشف بعدها فلا يُقتطع لها قسط." : "");
+  }
+  /* ما يصلح للربط: عمليّاتُ **البند المختار** التي لم تُوسَم بأمنيةٍ
+     بعد — الأحدثُ أوّلاً. وبلا بندٍ لا يُعرض شيء: القائمةُ تضيق تحت
+     اختيارك لا تسبقه.
      والإدخالُ السريع منها: هو مصروفُ البند مجموعاً، وربطُ الأمنية به
      لا يزيد ريالاً — إنّما يقول «هذه هي». */
-  function wishFreeItems(mk){
+  function wishFreeItems(mk, ck, sid){
     var m = state.months[mk];
-    if(!m || !m.items) return [];
-    return m.items.filter(function(it){ return it && !it.wish && num(it.a) > 0; })
-      .slice().sort(function(a, b){ return num(b.a) - num(a.a); }).slice(0, 40);
+    if(!m || !m.items || !ck) return [];
+    return m.items.filter(function(it){
+      return it && !it.wish && num(it.a) > 0 && it.c === ck
+             && (!sid || it.s === sid);
+    }).slice().sort(function(a, b){ return itemAt(b) - itemAt(a); }).slice(0, 40);
+  }
+  /* أمنيةُ العمليّة — إن كانت لها. وما اشتُري قبل أن يُوسَم يُعرف من
+     الجهة الأخرى: أمنيّةٌ تحمل معرّفَ عمليّته. */
+  function itemWish(it){
+    if(!it) return null;
+    if(it.wish) return byId(wishList(), it.wish);
+    var out = null;
+    wishList().forEach(function(w){ if(!out && w.itm === it.id) out = w; });
+    return out;
   }
   function wishPrice(x){
     if(!x) return 0;
@@ -9074,9 +9156,132 @@ padding:10px 15px;border-top:1px solid var(--line)}
         + 'تكون العيّنةُ صغيرة. وهذا دفترُك عن نفسك.</div></div>';
     }
 
-    /* ٦ · زرٌّ عائم */
+    /* ٦ · سجلُّ أمنياتك — بآلة سجلّ المتابعة نفسِها */
+    h += wishLogHTML();
+
+    /* ٧ · زرٌّ عائم */
     h += '<button class="wfab" data-addwish="1" title="أمنيةٌ جديدة">+</button>';
     return h;
+  }
+
+  /* ═══ سجلُّ الأمنيات ═══
+     يُشتقّ من أمنياتك لا يُخزَّن: ما أُضيف، وما اشتُري وبكم وتحت أيِّ
+     بند، وما قلتَه عن استعمالها. فلا يتضخّم دفترٌ ثانٍ ولا يكذب. */
+  var WLOGF = [{ k: "", n: "الكلّ" }, { k: "add", n: "أُضيفت" },
+               { k: "buy", n: "اشتُريت" }, { k: "use", n: "بعد الشراء" }];
+  function wishEvents(){
+    var out = [];
+    wishList().forEach(function(w){
+      var at = num(w.at || w.add);
+      if(at) out.push({ t: at, k: "add", w: w });
+      if(w.bought && num(w.bat)) out.push({ t: num(w.bat), k: "buy", w: w });
+      if(num(w.useAt)) out.push({ t: num(w.useAt), k: "use", w: w });
+    });
+    return out.sort(function(a, b){ return b.t - a.t; });
+  }
+  function wishEvRow(e){
+    var w = e.w, ic, tone, head, sub;
+    if(e.k === "add"){
+      ic = "＋"; tone = "accent";
+      head = "أضفتُ «" + esc(w.n) + "»";
+      sub = "ثمنُها " + fmt(wishPrice(w))
+          + (wishGoal(w) ? " · ولها خطّةُ شراء" : "");
+    } else if(e.k === "buy"){
+      ic = "🎁"; tone = "gold";
+      var it = null, c0 = null;
+      if(w.bm && state.months[w.bm]) it = byId(state.months[w.bm].items || [], w.itm);
+      if(it) c0 = catOf(it.c);
+      head = "اشتريتُ «" + esc(w.n) + "»";
+      sub = (c0 ? ("تحت «" + esc(c0.n) + "»") : "بلا بند")
+          + (w.bm ? (" · " + esc(mName(w.bm))) : "")
+          + (w.link ? " · مربوطةٌ بعمليّةٍ سجّلتَها" : "");
+    } else {
+      ic = num(w.use) >= 3 ? "✓" : "!";
+      tone = num(w.use) >= 3 ? "ok" : "warn";
+      head = "قلتَ عن «" + esc(w.n) + "»";
+      sub = num(w.use) >= 3 ? "أستعملها" : "لا أستعملها كما ظننت";
+    }
+    return '<div class="row' + (e.k === "buy" ? " lgr wsh" : "") + '">'
+      + '<span class="ic" style="background:var(--' + tone + '-soft);color:var(--'
+      + tone + ')">' + ic + '</span>'
+      + '<span><b class="nm">' + head + '</b><s class="sub">' + sub + '</s></span>'
+      + '<span class="rt"><b class="a">'
+      + (e.k === "buy" ? fmt(num(w.paid)) : (e.k === "add" ? fmt(wishPrice(w)) : "—"))
+      + '</b></span></div>';
+  }
+  function wishLogHTML(){
+    var ALL = wishEvents();
+    if(!ALL.length) return "";
+    var fil = ui.wlogFil || "";
+    var cnt = {};
+    ALL.forEach(function(e){ cnt[e.k] = (cnt[e.k] || 0) + 1; });
+    var show = ALL.filter(function(e){ return !fil || e.k === fil; });
+
+    /* صفحاتٌ: عشرةُ أحداثٍ أو يوما أمنياتٍ — كسجلّ المتابعة */
+    var PAGE_N = 10, PAGE_D = 2;
+    var pages = [], curP = [], seen = {}, dn = 0;
+    show.forEach(function(e){
+      var dl = dayLabel(e.t), fresh = !seen[dl];
+      if(curP.length && (curP.length >= PAGE_N || (fresh && dn >= PAGE_D))){
+        pages.push(curP); curP = []; seen = {}; dn = 0; fresh = true;
+      }
+      if(!seen[dl]){ seen[dl] = 1; dn++; }
+      curP.push(e);
+    });
+    if(curP.length) pages.push(curP);
+    if(!pages.length) pages = [[]];
+    var allOn = !!ui.wlogAll;
+    var pg = Math.max(0, Math.min(num(ui.wlogPage) || 0, pages.length - 1));
+    var total = show.length;
+    var GG = allOn ? show.slice(0, 300) : pages[pg];
+
+    var day = "";
+    return '<div class="sec"><h2>سجلُّ أمنياتك</h2>'
+      + '<span class="hint">ما أضفتَ وما اشتريتَ ومتى</span></div>'
+      + '<div class="wfil lfil">'
+      + WLOGF.map(function(f){
+          var n = f.k ? (cnt[f.k] || 0) : ALL.length;
+          if(f.k && !n) return "";
+          return '<button class="chip sm' + (fil === f.k ? " on" : "")
+            + '" data-wlogfil="' + f.k + '">' + esc(f.n)
+            + '<i>' + n + '</i></button>';
+        }).join("")
+      + '</div><div class="card">'
+      + (GG.length ? "" :
+          ('<div class="empty"><b>لا شيءَ في هذا الباب</b>'
+           + 'لم يجرِ لأمنياتك شيءٌ من هذا النوع بعد.'
+           + '<div class="acts"><button class="act" data-wlogfil="">'
+           + 'أرِني كلَّ ما جرى</button></div></div>'))
+      + GG.map(function(e){
+          var hd = "", dl = dayLabel(e.t);
+          if(dl !== day){
+            day = dl;
+            var _d = new Date(e.t);
+            hd = '<div class="mrow subh"><span class="mn">' + esc(dl) + '</span>'
+               + '<span class="ds">' + (e.t ? (_d.getFullYear() + "-"
+                  + pad(_d.getMonth() + 1) + "-" + pad(_d.getDate())) : "—")
+               + '</span></div>';
+          }
+          return hd + wishEvRow(e);
+        }).join("")
+      + (pages.length > 1 || allOn
+          ? ('<div class="lgpg">'
+             + (allOn
+                 ? ('<span class="lgn">كلُّ ما جرى — ' + total + ' حدثاً</span>'
+                    + '<button class="mini" data-wlogall="0">أرِني صفحاتٍ</button>')
+                 : ('<button class="mini" data-wlogpg="' + (pg - 1) + '"'
+                    + (pg <= 0 ? " disabled" : "") + '>‹ السابق</button>'
+                    + '<span class="lgn">صفحة ' + (pg + 1) + ' من ' + pages.length
+                    + ' · ' + total + ' حدثاً</span>'
+                    + '<button class="mini" data-wlogpg="' + (pg + 1) + '"'
+                    + (pg >= pages.length - 1 ? " disabled" : "") + '>التالي ›</button>'
+                    + '<button class="mini" data-wlogall="1" style="margin-inline-start:auto">'
+                    + 'أظهِر كلَّ ما جرى</button>'))
+             + '</div>') : "")
+      + '</div>'
+      + '<div class="hintnote" data-note="n5b19e2c">هذا السجلُّ <b>يُشتقّ من '
+      + 'أمنياتك</b> لا يُخزَّن دفتراً ثانياً — فما حذفتَه منها يخرج منه، '
+      + 'وما اشتريتَه تجد عمليّتَه في سجلّ المصروف موسومةً باسمها.</div>';
   }
 
   /* ملاحظتُها ورابطُها: مقاسٌ ولونٌ ومتجرٌ رأيتَها فيه */
@@ -10099,19 +10304,31 @@ padding:10px 15px;border-top:1px solid var(--line)}
   /* عمليّة: مالٌ خرج — تُضغط فتُعدَّل وزرُّها يحذف */
   function logItemRow(it, t, st){
     var c = catOf(it.c), sx = it.s ? subOf(c, it.s) : null;
-    var src = it.auto ? "تلقائيّ" : (it.wish ? "شراءُ أمنية" : "عمليّة");
-    return '<div class="row lgr itr tap" data-edit="' + esc(it.id) + '">'
+    var wh = itemWish(it);
+    var src = it.auto ? "تلقائيّ" : (wh ? "شراءُ أمنية" : "عمليّة");
+    return '<div class="row lgr itr tap' + (wh ? " wsh" : "")
+      + '" data-edit="' + esc(it.id) + '">'
       + '<span class="ic" style="background:' + ((c && c.c) || "var(--card-2)") + '22;color:'
       + ((c && c.c) || "var(--ink-3)") + '">' + esc((c && c.e) || "•") + '</span>'
       /* السببُ بجانب الاسم لا في ذيل السطر: من يقرأ السجلَّ يريد أن
          يعرف **على ماذا صرف** قبل أن يعرف متى وبأيّ باب. */
       + '<span><b class="nm">' + esc((c && c.n) || "بندٌ محذوف")
       + (sx ? (' · ' + esc(sx.n)) : "")
-      + (it.t && !/^(إدخال سريع|سُجّل تلقائياً)$/.test(it.t)
+      /* والأمنيةُ تُعلن نفسَها بوسمها: تحت أيِّ بندٍ وقعت، وأيَّ
+         أمنيةٍ كانت — لا تختلط بعمليّةٍ عابرة. */
+      + (wh ? ('<span class="wshtag">' + esc(wh.e || "🎁") + ' '
+               + esc(wh.n) + '</span>') : "")
+      /* وسمُ الأمنية يحمل الهُويّة، فتنزل الملاحظةُ إلى الذيل — ولو
+         بقيت بجانبه لتزاحما وانقطع كلاهما. */
+      + (!wh && it.t && !/^(إدخال سريع|سُجّل تلقائياً)$/.test(it.t)
           ? ('<span class="why"> — ' + esc(it.t) + '</span>') : "")
       + '</b>'
       + '<s class="sub"><em>' + esc(t ? clockAr(t) : (it.d || "")) + '</em> · '
-      + esc(src) + '</s></span>'
+      + esc(src)
+      + (wh && it.t && it.t !== wh.n
+          && !/^(إدخال سريع|سُجّل تلقائياً)$/.test(it.t)
+          ? (' · ' + esc(it.t)) : "")
+      + '</s></span>'
       /* كالقيد: كم كان البندُ وكم صار — والمبلغُ فرقُهما */
       + (st
           ? ('<span class="lgmv"><span class="lgn"><s>كان</s><b>'
@@ -12227,6 +12444,20 @@ padding:10px 15px;border-top:1px solid var(--line)}
       ui.envFil = b.getAttribute("data-envfil");
       render();
     });
+    on("[data-wlogpg]", function(b){
+      ui.wlogPage = num(b.getAttribute("data-wlogpg"));
+      render();
+    });
+    on("[data-wlogall]", function(b){
+      ui.wlogAll = b.getAttribute("data-wlogall") === "1";
+      ui.wlogPage = 0;
+      render();
+    });
+    on("[data-wlogfil]", function(b){
+      ui.wlogPage = 0;                        /* بابٌ جديدٌ يبدأ من أوّله */
+      ui.wlogFil = b.getAttribute("data-wlogfil");
+      render();
+    });
     on("[data-yfold]", function(b){
       yToggle(b.getAttribute("data-yfold"));
       render();
@@ -12930,49 +13161,19 @@ padding:10px 15px;border-top:1px solid var(--line)}
       if(!w) return;
       /* تصير مصروفاً في بندها: فلا تُكتب مرّتين ولا تُنسى */
       var gB = wishGoal(w), gotB = wishGot(w);
-      var pxB = wishPrice(w);
-      /* عمليّاتُ الشهر المفتوح التي لا أمنيةَ لها — يُربط بإحداها بدل
-         أن يُكتب المبلغُ ثانيةً. وما وافق سعرَها يُقترح. */
-      var free = wishFreeItems(ui.month);
-      var hit = null;
-      free.forEach(function(it){ if(!hit && num(it.a) === pxB) hit = it; });
-      var srcOpts = [{ v: "", n: "عمليّةٌ جديدة بـ" + fmt(pxB) }].concat(
-        free.map(function(it){
-          var c0 = catOf(it.c);
-          return { v: it.id, n: fmt(it.a) + " · " + ((c0 && c0.n) || "بلا بند")
-                     + " · " + (it.d || "") + (it.t ? (" · " + it.t) : "") };
-        }));
-      var fB = [{ key: "cat", label: "البند", type: "select",
-                  value: w.cat || "",
-                  options: [{ v: "", n: "— اختر البند —" }].concat(catOptions()) },
-                { key: "amt", label: "المبلغ المدفوع", type: "number", value: pxB }];
-      if(free.length)
-        fB.push({ key: "src", label: "مصدرُ المبلغ", type: "select",
-                  value: hit ? hit.id : "", options: srcOpts });
-      fB.push({ key: "run", label: "كلفةٌ شهريّةٌ بعدها (اختياري)",
-                type: "number", value: w.run || "" });
-      /* لها خطّة: أمن مالها تدفع أم من جيبك؟ */
-      if(gB && gotB > 0)
-        fB.push({ key: "pay", label: "من أين تدفع؟", type: "select", value: "goal",
-                  options: [{ v: "goal", n: "من خطّتها · اجتمع فيها " + fmt(gotB) },
-                            { v: "cash", n: "من جيبي — واترك مُدَّخرها" }] });
       ask({ title: "اشتريتَ «" + w.n + "»",
-        msg: "تُسجَّل مصروفاً في الشهر المفتوح. <b>اختر بندها</b>."
-             + (hit ? (' وفي شهرك عمليّةٌ بمبلغها — <b>اقتُرحت لك</b> '
-                       + 'فلا يُسجَّل المبلغُ مرّتين.')
-                    : (free.length ? ' وإن كنتَ سجّلتَ مصروفَها فاربِطها به '
-                                     + 'من «مصدر المبلغ».' : ""))
-             + ' و«الكلفةُ الشهريّةُ بعدها» ما تدفعه شهريّاً <b>بسبب</b> '
-             + 'هذا الشراء بعد تمامه — اشتراكٌ أو تأمينٌ أو صيانة؛ يصير '
-             + 'بنداً ثابتاً في خطّتك. واتركه فارغاً إن لم يكن لها كلفةٌ متكرّرة.'
-             + (gB ? " وخطّتُها تُؤرشف بعدها فلا يُقتطع لها قسط." : ""),
-        fields: fB,
+        msg: wishBuyMsg(w, { cat: w.cat || "" }),
+        fields: wishBuyFields(w, null),
+        /* بدّل البندَ فتبدّلت قائمةُ عمليّاته تحته */
+        rebuild: function(by){
+          dlg.msg = wishBuyMsg(w, by);
+          return wishBuyFields(w, by);
+        },
         ok: "سجّلها مصروفاً",
-        /* لا تُسجَّل بلا بند — إلّا أن تُربط بعمليّةٍ لها بندُها */
+        /* لا تُسجَّل بلا بند — وهو الذي تُقرأ عمليّاتُه تحته */
         guard: function(v, by){
-          var lk = by.src ? byId((state.months[ui.month] || {}).items || [], by.src) : null;
-          if(!lk && !String(by.cat || "")) return "اختر البندَ أوّلاً";
-          if(!lk && !num(by.amt)) return "اكتب المبلغَ المدفوع";
+          if(!String(by.cat || "")) return "اختر البندَ أوّلاً";
+          if(!by.src && !num(by.amt)) return "اكتب المبلغَ المدفوع";
           return "";
         },
         onOk: function(v, by){
@@ -14812,7 +15013,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "0.2-beta+20";
+  var APP_VERSION = "0.2-beta+21";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
