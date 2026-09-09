@@ -1915,6 +1915,18 @@ opacity:.45}
 /* ══ صفحة حسابات البنود ══ */
 /* سببُ العمليّة بجانب اسمها — يُقرأ معه لا بعده */
 .lgr .nm .why{color:var(--ink-2);font-weight:400}
+/* صفٌّ يُفتح في جداول السنة: اسمُه مقبضٌ وفروعُه تحته منزاحة */
+.yfold .cn[data-yfold]{cursor:pointer;user-select:none}
+.yfold .cn[data-yfold]:hover{color:var(--accent)}
+.ychev{font-style:normal;font-size:9px;color:var(--ink-3);margin-inline-start:5px;
+display:inline-block;transition:transform .15s}
+.ychev.on{transform:rotate(180deg);color:var(--accent)}
+.ykn{font-style:normal;font-size:9px;color:var(--ink-3);margin-inline-start:4px;
+background:var(--card-2);border-radius:99px;padding:1px 5px}
+tr.ykid .cn{padding-inline-start:22px;color:var(--ink-2);font-size:12px}
+tr.ykid .v{color:var(--ink-2)}
+tr.ygrp .cn{background:var(--card-2);color:var(--ink-3);font-size:10px;
+letter-spacing:.04em;padding:5px 10px;text-align:start}
 /* شريطُ تقليب السجلّ */
 .lgpg{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
 padding:10px 15px;border-top:1px solid var(--line)}
@@ -4321,11 +4333,50 @@ padding:10px 15px;border-top:1px solid var(--line)}
   }
   function catYear(ck, y){
     var now = todayKey();
+    /* الاستثمارُ يُقرأ من إيداع محافظه — مصدرِه الوحيد. ولو قُرئ من
+       العمليّات لقال هذا الجدولُ رقماً والدفترُ آخر. */
+    var iv = isInvCat(catOf(ck));
     return yearMonths(y).map(function(k){
-      var m = (k > now) ? null : state.months[k], v = 0;
+      if(k > now) return 0;
+      if(iv) return invPutAll(k);
+      var m = state.months[k], v = 0;
       if(m) m.items.forEach(function(it){ if(it.c === ck) v += num(it.a); });
       return v;
     });
+  }
+  /* فروعُ البند عبر السنة — والمحفظةُ فرعُ الاستثمار */
+  function subYear(ck, sid, y){
+    var now = todayKey();
+    return yearMonths(y).map(function(k){
+      if(k > now || !state.months[k]) return 0;
+      return money(subTotal(k, sid));
+    });
+  }
+  function walYear(v, y){
+    var now = todayKey();
+    return yearMonths(y).map(function(k){
+      return k > now ? 0 : num(distMap(k)["i:" + v.id]);
+    });
+  }
+  function goalYear(g, y){
+    var now = todayKey();
+    return yearMonths(y).map(function(k){
+      return (k > now || !state.months[k]) ? 0 : money(goalMoved(g, k));
+    });
+  }
+  /* ما يُفتح من صفوف الجداول السنويّة */
+  function yOpen(k){ return !!(ui.yOpen || {})[k]; }
+  function yToggle(k){
+    if(!ui.yOpen) ui.yOpen = {};
+    if(ui.yOpen[k]) delete ui.yOpen[k]; else ui.yOpen[k] = 1;
+  }
+  /* فروعُ البند المعروضة: فروعُه، أو محافظُ الاستثمار */
+  function yKids(c){
+    if(isInvCat(c))
+      return (state.invest || []).map(function(v){
+        return { id: v.id, n: v.n, e: v.e || "📈", wal: v }; });
+    return (c.subs || []).map(function(x){
+      return { id: x.id, n: x.n, e: "•", sub: x }; });
   }
   function curYear(){ return ui.year || (ui.month || todayKey()).slice(0,4); }
 
@@ -11077,8 +11128,43 @@ padding:10px 15px;border-top:1px solid var(--line)}
                 + 'data-led="' + c.k + '|' + mk + '" value="' + (v || "") + '" placeholder="·">')
           + '</td>';
       }).join("");
-      return '<tr><td class="cn">' + c.e + ' ' + esc(c.n) + '</td>' + tds
-        + '<td class="v tot">' + fmt(tot) + '</td></tr>';
+      /* البندُ ذو الفروع يُضغط فيفتح — كما في المصروف والخطة */
+      var kids = yKids(c), open = kids.length && yOpen("l:" + c.k);
+      var r = '<tr' + (kids.length ? ' class="yfold"' : "") + '>'
+        + '<td class="cn"' + (kids.length ? ' data-yfold="l:' + c.k + '"' : "") + '>'
+        + c.e + ' ' + esc(c.n)
+        + (kids.length ? '<i class="ychev' + (open ? " on" : "") + '">▾</i>'
+                         + '<em class="ykn">' + kids.length + '</em>' : "")
+        + '</td>' + tds + '<td class="v tot">' + fmt(tot) + '</td></tr>';
+      if(!open) return r;
+      r += kids.map(function(kd){
+        var st = 0;
+        var ktds = months.map(function(mk){
+          var kv, wr = "";
+          if(kd.wal){
+            kv = num(distMap(mk)["i:" + kd.wal.id]);
+            /* المحفظةُ تُكتب في الصرف: إيداعُها. وخطّتُها في شاشتها. */
+            if(mode !== "plan") wr = 'data-ledwal="' + kd.wal.id + '|' + mk + '"';
+          } else if(mode === "plan"){
+            kv = linePlan(kd.sub, mk, lineKey(c.k, kd.sub.id));
+            wr = 'data-ledsub="' + c.k + '|' + kd.sub.id + '|' + mk + '"';
+          } else {
+            kv = money(subTotal(mk, kd.sub.id));
+            wr = 'data-ledsub="' + c.k + '|' + kd.sub.id + '|' + mk + '"';
+          }
+          st += kv;
+          var ro = isLocked(mk) || mk > now || !wr;
+          return '<td class="' + (mk === now ? "now" : "") + '">'
+            + (ro
+                ? '<span class="lcell ro">' + (kv ? fmt(kv) : "·") + '</span>'
+                : '<input class="lcell" type="number" inputmode="numeric" '
+                  + wr + ' value="' + (kv || "") + '" placeholder="·">')
+            + '</td>';
+        }).join("");
+        return '<tr class="ykid"><td class="cn">' + esc(kd.e + " " + kd.n) + '</td>'
+          + ktds + '<td class="v tot">' + fmt(st) + '</td></tr>';
+      }).join("");
+      return r;
     }).join("");
     h += '</tbody></table></div>'
       + '<div class="lockbar">الأشهر القادمة والمُقفَلة للقراءة فقط. '
@@ -11153,10 +11239,22 @@ padding:10px 15px;border-top:1px solid var(--line)}
     h += ledgerGrid(y);
 
     /* ── البنود عبر الأشهر ── */
+    var sumOf = function(v){ var t = 0; v.forEach(function(x){ t += x; }); return t; };
     var cats = visibleCats().map(function(c){
-      var v = catYear(c.k, y), t = 0;
-      v.forEach(function(x){ t += x; });
-      return { c: c, v: v, t: t };
+      var v = catYear(c.k, y);
+      return { c: c, v: v, t: sumOf(v), inv: isInvCat(c) };
+    }).filter(function(x){ return x.t > 0; })
+      .sort(function(a, b){ return b.t - a.t; });
+    /* الاستثمارُ ينزل آخرَ المصروف، والادخارُ مجموعةٌ بعده: مرتَّبةٌ
+       بأبوابها لا مختلطةً — فالثلاثةُ ليست شيئاً واحداً. */
+    var invRow = null;
+    cats = cats.filter(function(x){
+      if(x.inv){ invRow = x; return false; }
+      return true;
+    });
+    var goalRows = activeGoals().map(function(g){
+      var v = goalYear(g, y);
+      return { g: g, v: v, t: sumOf(v) };
     }).filter(function(x){ return x.t > 0; })
       .sort(function(a, b){ return b.t - a.t; });
 
@@ -11166,18 +11264,52 @@ padding:10px 15px;border-top:1px solid var(--line)}
         + '<div class="ygrid"><table><thead><tr><th class="cn">البند</th>'
         + yearMonths(y).map(function(k){ return '<th>' + k.slice(5) + '</th>'; }).join("")
         + '<th>المجموع</th><th>الشهري</th></tr></thead><tbody>';
-      h += cats.map(function(x){
-        var peak = Math.max.apply(null, x.v);
-        var nz = x.v.filter(function(q){ return q > 0; }).length;
-        return '<tr><td class="cn">' + x.c.e + ' ' + esc(x.c.n) + '</td>'
-          + x.v.map(function(q){
+      /* صفٌّ واحدٌ في الجدول: قِمّتُه حمراءُ ومتوسّطُه على أشهره العاملة */
+      var yrow = function(name, v, t, fold, open, nk, cls){
+        var peak = Math.max.apply(null, v);
+        var nz = v.filter(function(q){ return q > 0; }).length;
+        return '<tr class="' + (cls || "") + (fold ? " yfold" : "") + '">'
+          + '<td class="cn"' + (fold ? ' data-yfold="' + fold + '"' : "") + '>'
+          + name
+          + (fold ? '<i class="ychev' + (open ? " on" : "") + '">▾</i>'
+                    + '<em class="ykn">' + nk + '</em>' : "")
+          + '</td>'
+          + v.map(function(q){
               return '<td class="v ' + (q ? (q === peak && peak > 0 ? "hot" : "") : "z") + '">'
                 + (q ? fmt(q) : "·") + '</td>';
             }).join("")
-          + '<td class="v tot">' + fmt(x.t) + '</td>'
-          + '<td class="v">' + fmt(nz ? Math.round(x.t / nz) : 0) + '</td></tr>';
-      }).join("");
-      h += '</tbody><tfoot><tr><td class="cn">المجموع</td>'
+          + '<td class="v tot">' + fmt(t) + '</td>'
+          + '<td class="v">' + fmt(nz ? Math.round(t / nz) : 0) + '</td></tr>';
+      };
+      /* بندٌ وفروعُه — يُفتح بالضغط على اسمه */
+      var catBlock = function(x){
+        var kids = yKids(x.c), open = kids.length && yOpen("y:" + x.c.k);
+        var r = yrow(x.c.e + ' ' + esc(x.c.n), x.v, x.t,
+                     kids.length ? ("y:" + x.c.k) : "", open, kids.length, "");
+        if(!open) return r;
+        return r + kids.map(function(kd){
+          var kv = kd.wal ? walYear(kd.wal, y) : subYear(x.c.k, kd.id, y);
+          return yrow(esc(kd.e + " " + kd.n), kv, sumOf(kv), "", false, 0, "ykid");
+        }).join("");
+      };
+      h += cats.map(catBlock).join("");
+      /* ثمّ الاستثمارُ في بابه، ثمّ الادخار */
+      if(invRow)
+        h += '<tr class="ygrp"><td class="cn" colspan="15">الاستثمار</td></tr>'
+           + catBlock(invRow);
+      if(goalRows.length){
+        var gT = 0, gV = yearMonths(y).map(function(){ return 0; });
+        goalRows.forEach(function(x){
+          gT += x.t; x.v.forEach(function(q, i){ gV[i] += q; });
+        });
+        h += '<tr class="ygrp"><td class="cn" colspan="15">الادخار — ما دخل أهدافك</td></tr>'
+          + goalRows.map(function(x){
+              return yrow(x.g.e + ' ' + esc(x.g.n), x.v, x.t, "", false, 0, "");
+            }).join("")
+          + (goalRows.length > 1
+              ? yrow('Σ مجموع الادخار', gV, gT, "", false, 0, "ykid") : "");
+      }
+      h += '</tbody><tfoot><tr><td class="cn">مجموع المصروف</td>'
         + Y.rows.map(function(r){
             var e2 = r.ahead ? 0 : r.exp;
             return '<td class="v' + (e2 ? "" : " z") + '">' + (e2 ? fmt(e2) : "·") + '</td>';
@@ -12076,6 +12208,21 @@ padding:10px 15px;border-top:1px solid var(--line)}
       ui.envPage = 0;                       /* بابٌ جديدٌ يبدأ من أوّله */
       ui.envFil = b.getAttribute("data-envfil");
       render();
+    });
+    on("[data-yfold]", function(b){
+      yToggle(b.getAttribute("data-yfold"));
+      render();
+    });
+    ch("[data-ledsub]", function(el){
+      var p = el.getAttribute("data-ledsub").split("|");
+      if(ledgerMode() === "plan") setP(p[2], lineKey(p[0], p[1]), money(el.value));
+      else setQuickSub(p[2], p[0], p[1], money(el.value));
+      save(); render();
+    });
+    ch("[data-ledwal]", function(el){
+      var p = el.getAttribute("data-ledwal").split("|");
+      setInvQuick(p[1], p[0], money(el.value));
+      save(); render();
     });
     on("[data-logpg]", function(b){
       ui.logPage = num(b.getAttribute("data-logpg"));
@@ -14597,7 +14744,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "0.2-beta+18";
+  var APP_VERSION = "0.2-beta+19";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
