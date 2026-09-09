@@ -1847,6 +1847,11 @@ white-space:nowrap}
 .f2grid.tight label{font-size:10.5px}
 .f2grid.tight .sel,.f2grid.tight .ni{padding:7px 10px;font-size:13.5px}
 .iedit .lab{margin:12px 0 5px}
+/* زرُّ السبب: صغيرٌ بجانب حقل المبلغ، لا يزاحمه */
+.qwhy{width:26px;height:26px;flex:0 0 auto;border:1px dashed var(--line-2);
+background:transparent;color:var(--ink-3);border-radius:8px;cursor:pointer;
+font-size:14px;line-height:1;align-self:center;margin-inline-start:4px}
+.qwhy:hover{border-color:var(--accent);color:var(--accent)}
 .ni.hp{width:88px;padding:5px 6px;font-size:13px;text-align:center}
 .ygrid .v.z{opacity:.65}
 .ygrid .gp{color:var(--ok)}
@@ -1902,6 +1907,11 @@ white-space:nowrap}
 .envhead .t{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:600;color:var(--ink)}
 
 /* ══ صفحة حسابات البنود ══ */
+/* شريطُ تقليب السجلّ */
+.lgpg{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+padding:10px 15px;border-top:1px solid var(--line)}
+.lgpg .lgn{font-size:12px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.lgpg .mini[disabled]{opacity:.35;cursor:default}
 /* سجلُّ الحركات: صفوفٌ كصفوف التطبيق، والمقبضُ في طرفها */
 .envlog .row .nm{font-size:14px}
 .envlog .row .rt .b{text-decoration:none}
@@ -2125,13 +2135,23 @@ white-space:nowrap}
              openBank: {}, openAcct: {}, showArch: false,
              acctQ: "", hideZero: false, showArchAcct: false, year: null, openEnv: {},
              spendMode: "quick", openQ: {}, openGoal: {}, sort: "manual", zopen: false, openLog: {},
-             openInv: {}, stripYear: null, jumpTo: null, ledger: "plan", setSec: 0, planLayer: null, showPrev: false, repN: 6, flash: null, invLog: {}, invMv: {}, invSet: {}, zakHide: false };
+             openInv: {}, stripYear: null, jumpTo: null, ledger: "plan", setSec: 0, planLayer: null, showPrev: false, repN: 6, flash: null, invLog: {}, invMv: {}, invSet: {}, zakHide: false, logPage: 0, logAll: false };
   var PALETTE = ["#E2703A","#3E8E7E","#4C3AE3","#2F80ED","#B4542B","#C2407A","#7A5AF8",
                  "#D9A227","#0F7355","#B4342B","#1F7A8C","#8E44AD","#16A085","#8A92A0"];
 
   /* ═══ أدوات ═══ */
   function pad(n){ return (n < 10 ? "0" : "") + n; }
   function todayKey(){ var d = new Date(); return d.getFullYear() + "-" + pad(d.getMonth() + 1); }
+  /* تاريخُ اليوم كاملاً. و`todayKey` مفتاحُ شهرٍ لا تاريخ — والخلطُ
+     بينهما يكتب في العمليّة يوماً ناقصاً فتقع خارج يومها في السجلّ. */
+  function todayDate(){
+    var d = new Date();
+    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  }
+  /* يومٌ افتراضيٌّ للشهر المعروض: اليومُ إن كان شهرَه، وإلّا أوّلُه */
+  function dayIn(mk){
+    return (mk === todayKey()) ? todayDate() : (mk + "-01");
+  }
   function shift(k, by){
     var y = +k.slice(0,4), m = +k.slice(5) + by;
     while(m < 1){ m += 12; y--; }
@@ -2852,7 +2872,7 @@ white-space:nowrap}
     var GG = envGroups(mk);
     if(!GG.length) return "";
     var nm = function(x){ var c = catOf(x.k); return c ? (c.e + " " + c.n) : x.k; };
-    return '<div class="sec"><h2>حركاتُ أظرفك</h2>'
+    return '<div class="sec"><h2>سجلُّ الأظرف</h2>'
       + '<span class="hint">' + esc(mName(mk)) + ' — من أين إلى أين</span></div>'
       + '<div class="card envlog">'
       + GG.map(function(g){
@@ -4268,6 +4288,22 @@ white-space:nowrap}
 
   function setQuick(mk, ck, total){
     return withLog(mk, ck, "", "q", function(){ return setQuickRaw(mk, ck, total); });
+  }
+  /* عمليّةٌ مفصّلةٌ بسببها ويومِها — تُضاف إلى إجماليّ بندها.
+     والإجماليُّ السريعُ يمتصّ الباقيَ من بعدها كما كان. */
+  function addSpendReason(mk, ck, amt, why, day){
+    var c = catOf(ck); if(!c) return null;
+    var a = money(Math.abs(num(amt)));
+    if(!a) return null;
+    var m = month(mk);
+    m.items = m.items || [];
+    var rec = { id: uid(), c: ck, a: a, t: String(why || "").trim(),
+                d: day || dayIn(mk), at: Date.now() };
+    var ca = c.acct;
+    if(trackSrc() && ca && acctOf(ca)) rec.acct = ca;
+    m.items.push(rec);
+    linkSpend(rec);
+    return rec;
   }
   function setQuickRaw(mk, ck, total){
     var det = detailSum(mk, ck), q = quickItem(mk, ck), m = month(mk);
@@ -9525,6 +9561,9 @@ white-space:nowrap}
         + '<input class="qin' + (sp ? " has" : "") + '" type="number" inputmode="decimal" step="any" '
         + 'data-quick="' + c.k + '" value="' + (sp || "") + '" placeholder="'
         + (pv ? fmt(pv) : "0") + '">'
+        /* عمليّةٌ بسببها: لمن يصرف يوماً بيوم ويريد أن يعرف على ماذا */
+        + '<button class="qwhy" data-spwhy="' + c.k + '" title="'
+        + esc("سجّل عمليّةً بسببها ويومِها") + '">+</button>'
         + '<span class="qv' + (left < 0 ? " neg" : (left ? "" : " dim")) + '">' + fmt(left) + '</span>'
         + '</div>'
         /* الفروع بالأعمدة نفسها: خطّة · صُرف · باقٍ. ومعها ما بقي من
@@ -9796,7 +9835,25 @@ white-space:nowrap}
     });
     var show = rows.filter(function(r){
       return !fil || (LOGFAM[r.kind] || "sp") === fil; });
-    show = show.slice(0, 60);
+
+    /* صفحاتٌ: عشرُ عمليّاتٍ أو يوما صرفٍ — أيُّهما أوّل. واليومُ الواحدُ
+       لا ينقسم بين صفحتين، فالقطعُ يقع عند رأس يومٍ ثالث. */
+    var PAGE_N = 10, PAGE_D = 2;
+    var pages = [], curP = [], seen = {}, dn = 0;
+    show.forEach(function(r){
+      var dl = dayLabel(r.t), fresh = !seen[dl];
+      if(curP.length && (curP.length >= PAGE_N || (fresh && dn >= PAGE_D))){
+        pages.push(curP); curP = []; seen = {}; dn = 0; fresh = true;
+      }
+      if(!seen[dl]){ seen[dl] = 1; dn++; }
+      curP.push(r);
+    });
+    if(curP.length) pages.push(curP);
+    if(!pages.length) pages = [[]];
+    var allOn = !!ui.logAll;
+    var pg = Math.max(0, Math.min(num(ui.logPage) || 0, pages.length - 1));
+    var total = show.length;
+    show = allOn ? show.slice(0, 300) : pages[pg];
 
     var h = '<div class="sec"><h2>سجلُّ المتابعة</h2>'
       + '<span class="hint">كلُّ ما جرى لمالك في ' + esc(mName(k)) + '</span></div>'
@@ -9830,6 +9887,22 @@ white-space:nowrap}
       h += (r.item ? logItemRow(r.item, r.t) : logEntryRow(r.e));
     });
 
+    /* شريطُ التقليب: لا يُعرض إن كانت صفحةً واحدة */
+    if(pages.length > 1 || allOn){
+      h += '<div class="lgpg">'
+        + (allOn
+            ? ('<span class="lgn">كلُّ عمليّات الشهر — ' + total + ' قيداً</span>'
+               + '<button class="mini" data-logall="0">أرِني صفحاتٍ</button>')
+            : ('<button class="mini" data-logpg="' + (pg - 1) + '"'
+               + (pg <= 0 ? " disabled" : "") + '>‹ السابق</button>'
+               + '<span class="lgn">صفحة ' + (pg + 1) + ' من ' + pages.length
+               + ' · ' + total + ' قيداً</span>'
+               + '<button class="mini" data-logpg="' + (pg + 1) + '"'
+               + (pg >= pages.length - 1 ? " disabled" : "") + '>التالي ›</button>'
+               + '<button class="mini" data-logall="1" style="margin-inline-start:auto">'
+               + 'أظهِر كلَّ عمليّات الشهر</button>'))
+        + '</div>';
+    }
     h += '<div class="wact"><button class="mini" data-logclr="1">'
       + 'امسح قيودَ الشهر</button>'
       + '<span class="lgnote">تُمسح القيودُ وحدَها — العملياتُ ومبالغُها لا تُمسّ.</span>'
@@ -10631,7 +10704,6 @@ white-space:nowrap}
       + fmt(tSpent) + '</span></div>'
       + '</div></div>';
 
-    h += envLogHTML(k);
     h += '<div class="sec"><h2>حسابات بنودك</h2>'
       + '<span class="hint">' + rows.length + ' حساباً مستقلاً</span>'
       + '<button class="mini" data-envbulk="1" style="margin-inline-start:auto">'
@@ -10736,6 +10808,9 @@ white-space:nowrap}
       + '<span class="eamt"><b class="' + (tBal >= 0 ? "pos" : "neg") + '">'
       + fmt(tBal) + '</b><s>الرصيد</s></span></div>';
     h += '</div>';
+
+    /* السجلُّ بعد البطاقات: يُرجَع إليه بعد النظر لا قبله */
+    h += envLogHTML(k);
 
     /* ── الأهداف والادخار ── */
     var AGE = activeGoals();
@@ -11834,7 +11909,19 @@ white-space:nowrap}
     var ch = function(sel, fn){ q(sel).forEach(function(el){ el.onchange = function(){
       diag("حقل", actName(sel, el)); fn(el); }; }); };
 
+    on("[data-logpg]", function(b){
+      ui.logPage = num(b.getAttribute("data-logpg"));
+      render();
+    });
+    on("[data-logall]", function(b){
+      ui.logAll = b.getAttribute("data-logall") === "1";
+      ui.logPage = 0;
+      render();
+    });
     on("[data-logfil]", function(b){
+      /* بابٌ جديدٌ يبدأ من أوّله — فالبقاءُ في صفحةٍ خامسةٍ لبابٍ
+         صفحاتُه ثلاثٌ يُري فراغاً */
+      ui.logPage = 0;
       ui.logFil = b.getAttribute("data-logfil");
       render();
     });
@@ -11998,6 +12085,29 @@ white-space:nowrap}
         toast((_a2 > _b2 ? "أُودع " : "نُقص ") + fmt(Math.abs(_a2 - _b2))
               + " · قيمةُ «" + _v2.n + "» الآن " + fmt(invVal(_v2)));
       flashRow("i:" + vid); save(); render();
+    });
+    on("[data-spwhy]", function(b, e){
+      if(e) e.stopPropagation();
+      var ck = b.getAttribute("data-spwhy"), c = catOf(ck);
+      if(!c) return;
+      ask({ title: "عمليّةٌ في «" + c.n + "»",
+        msg: "تُضاف إلى صرفِ البند، ويبقى سببُها في السجلّ — "
+           + "فتعرف بعد شهرٍ على ماذا ذهب.",
+        fields: [
+          { key: "amt", label: "المبلغ", type: "number", value: "" },
+          { key: "why", label: "السبب", value: "", guess: true,
+            ph: "مثال: قهوة · بنزين · دواء" },
+          { key: "day", label: "اليوم", type: "date", value: dayIn(ui.month) }],
+        ok: "سجّلها",
+        onOk: function(v, by){
+          var a = money(by.amt);
+          if(!a) return;
+          var mk = ui.month, before = catTotal(mk, ck);
+          addSpendReason(mk, ck, a, by.why, by.day);
+          logAmt(mk, ck, "", before, catTotal(mk, ck), "add");
+          toast("سُجّلت " + fmt(a) + (by.why ? (" — " + by.why) : ""));
+          flashRow(ck); save(); render();
+        } });
     });
     ch("[data-quick]", function(el){
       var ck = el.getAttribute("data-quick");
@@ -14319,7 +14429,7 @@ white-space:nowrap}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "0.2-beta+13";
+  var APP_VERSION = "0.2-beta+14";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }

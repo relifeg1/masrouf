@@ -1847,6 +1847,11 @@ white-space:nowrap}
 .f2grid.tight label{font-size:10.5px}
 .f2grid.tight .sel,.f2grid.tight .ni{padding:7px 10px;font-size:13.5px}
 .iedit .lab{margin:12px 0 5px}
+/* زرُّ السبب: صغيرٌ بجانب حقل المبلغ، لا يزاحمه */
+.qwhy{width:26px;height:26px;flex:0 0 auto;border:1px dashed var(--line-2);
+background:transparent;color:var(--ink-3);border-radius:8px;cursor:pointer;
+font-size:14px;line-height:1;align-self:center;margin-inline-start:4px}
+.qwhy:hover{border-color:var(--accent);color:var(--accent)}
 .ni.hp{width:88px;padding:5px 6px;font-size:13px;text-align:center}
 .ygrid .v.z{opacity:.65}
 .ygrid .gp{color:var(--ok)}
@@ -1902,6 +1907,11 @@ white-space:nowrap}
 .envhead .t{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:600;color:var(--ink)}
 
 /* ══ صفحة حسابات البنود ══ */
+/* شريطُ تقليب السجلّ */
+.lgpg{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+padding:10px 15px;border-top:1px solid var(--line)}
+.lgpg .lgn{font-size:12px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.lgpg .mini[disabled]{opacity:.35;cursor:default}
 /* سجلُّ الحركات: صفوفٌ كصفوف التطبيق، والمقبضُ في طرفها */
 .envlog .row .nm{font-size:14px}
 .envlog .row .rt .b{text-decoration:none}
@@ -2049,7 +2059,7 @@ white-space:nowrap}
 
 <div id="root"></div>
 
-<script id="app-state" type="application/json">{"v":15,"income":{"salary":18000,"extra":0},"months":{"2026-09":{"items":[{"id":"x1","c":"grocery","a":420,"t":"التموين","d":"2026-09-03"},{"id":"x2","c":"fuel","a":140,"t":"","d":"2026-09-05"},{"id":"x3","c":"food","a":86,"t":"قهوة","d":"2026-09-06"},{"id":"x4","c":"bills","a":310,"t":"الكهرباء","d":"2026-09-08"}],"dist":{},"distAt":1788868275680,"setup":true,"log":[]}},"cats":[{"k":"fuel","n":"بنزين","e":"⛽","c":"#E2703A","p":550,"t":"var","subs":[],"hidden":false},{"k":"grocery","n":"بقالة","e":"🛒","c":"#3E8E7E","p":1800,"t":"var","subs":[],"hidden":false},{"k":"bills","n":"فواتير","e":"🧾","c":"#4C3AE3","p":700,"t":"fix","subs":[],"hidden":false},{"k":"telecom","n":"جوال وإنترنت","e":"📶","c":"#2F80ED","p":260,"t":"fix","subs":[],"hidden":false},{"k":"food","n":"مطاعم وقهوة","e":"☕","c":"#B4542B","p":900,"t":"var","subs":[],"hidden":false},{"k":"health","n":"صحة","e":"💊","c":"#C2407A","p":200,"t":"var","subs":[],"hidden":false},{"k":"personal","n":"شخصي","e":"🎮","c":"#7A5AF8","p":400,"t":"var","subs":[],"hidden":false},{"k":"family","n":"عائلة وهدايا","e":"🎁","c":"#D9A227","p":500,"t":"var","subs":[],"hidden":false},{"k":"charity","n":"صدقات","e":"🤲","c":"#0F7355","p":300,"t":"fix","subs":[],"hidden":false},{"k":"install","n":"أقساط","e":"📆","c":"#B4342B","p":0,"t":"var","subs":[],"hidden":true},{"k":"subsc","n":"اشتراكات","e":"📺","c":"#1F7A8C","p":120,"t":"fix","subs":[],"hidden":false},{"k":"invest","n":"استثمار","e":"📈","c":"#4C3AE3","p":1600,"t":"fix","subs":[],"hidden":false},{"k":"other","n":"أخرى","e":"•","c":"#8A92A0","p":0,"t":"var","subs":[],"hidden":true}],"goals":[{"id":"g1","n":"سيّارة","e":"🚗","c":"#0F7355","mode":"target","mult":0,"target":60000,"saved":12000,"m":900,"date":"","arch":false}],"invest":[{"id":"v1","n":"محفظةُ الأسهم","e":"📈","kind":"self","mng":"self","type":"stock","risk":"high","track":"hold","m":700,"zak":true,"tgt":25000,"in":11500,"cash":1200,"hold":[{"id":"h1","n":"أرامكو","q":120,"p":27.4,"c":3120},{"id":"h2","n":"الراجحي","q":60,"p":94,"c":4710},{"id":"h3","n":"سابك","q":40,"p":61,"c":2800}],"hist":{"2026-04":10250,"2026-05":10600,"2026-06":11150,"2026-07":11480,"2026-08":12010,"2026-09":12568},"mv":[{"k":"in","a":700,"m":"2026-09","n":"من المصروف","t":1786621875680},{"k":"buy","a":1096,"m":"2026-09","n":"أرامكو × 40","t":1786794675680},{"k":"sell","a":940,"m":"2026-08","n":"سابك × 15","t":1785412275680},{"k":"buy","a":2800,"m":"2026-07","n":"سابك × 40","t":1782820275680},{"k":"in","a":700,"m":"2026-08","n":"من المصروف","t":1784029875680},{"k":"in","a":700,"m":"2026-07","n":"من المصروف","t":1781437875680}]},{"id":"v2","n":"أبيان","e":"🤖","kind":"auto","mng":"auto","type":"fund","risk":"low","track":"total","m":400,"zak":true,"val":9400,"in":8400,"hist":{"2026-04":6300,"2026-05":7000,"2026-06":7550,"2026-07":8200,"2026-08":8850,"2026-09":9400},"mv":[{"k":"in","a":400,"m":"2026-09","n":"من المصروف","t":1786621875680},{"k":"val","a":9400,"m":"2026-09","n":"","t":1788695475680},{"k":"in","a":400,"m":"2026-08","n":"من المصروف","t":1784029875680},{"k":"val","a":8850,"m":"2026-08","n":"","t":1786103475680}]},{"id":"v3","n":"بينانس","e":"🪙","kind":"self","mng":"self","type":"crypto","risk":"vhigh","track":"total","m":200,"zak":true,"val":5200,"in":6000,"hist":{"2026-04":4900,"2026-05":6800,"2026-06":7400,"2026-07":6100,"2026-08":5600,"2026-09":5200},"mv":[{"k":"in","a":200,"m":"2026-09","n":"من المصروف","t":1786621875680},{"k":"val","a":5200,"m":"2026-09","n":"","t":1788695475680},{"k":"out","a":800,"m":"2026-07","n":"سحبتُ للطوارئ","t":1781956275680},{"k":"inx","a":200,"m":"2026-06","n":"صحّحتُ الإيداع","t":1779364275680}]},{"id":"v4","n":"صندوق المرابحة","e":"🏦","kind":"self","mng":"self","type":"fund","risk":"low","track":"total","m":300,"zak":true,"val":0,"in":14000,"hist":{},"mv":[{"k":"in","a":300,"m":"2026-09","n":"من المصروف","t":1786621875680}]},{"id":"v5","n":"ذهبُ زينة","e":"🥇","kind":"self","mng":"self","type":"gold","risk":"mid","track":"total","m":0,"zak":false,"val":18000,"in":16500,"hist":{"2026-06":16800,"2026-08":17400,"2026-09":18000},"mv":[]}],"accts":[{"id":"ac1","n":"حساب الاستثمار","bank":"الراجحي","bal":15000,"open":14000,"kind":"bank","link":"i:v4","log":[]},{"id":"ac2","n":"الجاري","bank":"الأهلي","bal":6300,"open":6300,"kind":"bank","link":"ops","log":[]}],"rules":[],"seen":{},"onboard":true,"savedAt":1788868275680,"setAt":1788868275680,"planFrom":"2026-09","wish":[],"zak":{"start":"2025-08-04","nisab":26000}}</script>
+<script id="app-state" type="application/json">{"v":15,"income":{"salary":18000,"extra":0},"months":{"2026-09":{"items":[{"id":"x1","c":"grocery","a":420,"t":"التموين","d":"2026-09-03"},{"id":"x2","c":"fuel","a":140,"t":"","d":"2026-09-05"},{"id":"x3","c":"food","a":86,"t":"قهوة","d":"2026-09-06"},{"id":"x4","c":"bills","a":310,"t":"الكهرباء","d":"2026-09-08"}],"dist":{},"distAt":1788945018947,"setup":true,"log":[]}},"cats":[{"k":"fuel","n":"بنزين","e":"⛽","c":"#E2703A","p":550,"t":"var","subs":[],"hidden":false},{"k":"grocery","n":"بقالة","e":"🛒","c":"#3E8E7E","p":1800,"t":"var","subs":[],"hidden":false},{"k":"bills","n":"فواتير","e":"🧾","c":"#4C3AE3","p":700,"t":"fix","subs":[],"hidden":false},{"k":"telecom","n":"جوال وإنترنت","e":"📶","c":"#2F80ED","p":260,"t":"fix","subs":[],"hidden":false},{"k":"food","n":"مطاعم وقهوة","e":"☕","c":"#B4542B","p":900,"t":"var","subs":[],"hidden":false},{"k":"health","n":"صحة","e":"💊","c":"#C2407A","p":200,"t":"var","subs":[],"hidden":false},{"k":"personal","n":"شخصي","e":"🎮","c":"#7A5AF8","p":400,"t":"var","subs":[],"hidden":false},{"k":"family","n":"عائلة وهدايا","e":"🎁","c":"#D9A227","p":500,"t":"var","subs":[],"hidden":false},{"k":"charity","n":"صدقات","e":"🤲","c":"#0F7355","p":300,"t":"fix","subs":[],"hidden":false},{"k":"install","n":"أقساط","e":"📆","c":"#B4342B","p":0,"t":"var","subs":[],"hidden":true},{"k":"subsc","n":"اشتراكات","e":"📺","c":"#1F7A8C","p":120,"t":"fix","subs":[],"hidden":false},{"k":"invest","n":"استثمار","e":"📈","c":"#4C3AE3","p":1600,"t":"fix","subs":[],"hidden":false},{"k":"other","n":"أخرى","e":"•","c":"#8A92A0","p":0,"t":"var","subs":[],"hidden":true}],"goals":[{"id":"g1","n":"سيّارة","e":"🚗","c":"#0F7355","mode":"target","mult":0,"target":60000,"saved":12000,"m":900,"date":"","arch":false}],"invest":[{"id":"v1","n":"محفظةُ الأسهم","e":"📈","kind":"self","mng":"self","type":"stock","risk":"high","track":"hold","m":700,"zak":true,"tgt":25000,"in":11500,"cash":1200,"hold":[{"id":"h1","n":"أرامكو","q":120,"p":27.4,"c":3120},{"id":"h2","n":"الراجحي","q":60,"p":94,"c":4710},{"id":"h3","n":"سابك","q":40,"p":61,"c":2800}],"hist":{"2026-04":10250,"2026-05":10600,"2026-06":11150,"2026-07":11480,"2026-08":12010,"2026-09":12568},"mv":[{"k":"in","a":700,"m":"2026-09","n":"من المصروف","t":1786698618947},{"k":"buy","a":1096,"m":"2026-09","n":"أرامكو × 40","t":1786871418947},{"k":"sell","a":940,"m":"2026-08","n":"سابك × 15","t":1785489018947},{"k":"buy","a":2800,"m":"2026-07","n":"سابك × 40","t":1782897018947},{"k":"in","a":700,"m":"2026-08","n":"من المصروف","t":1784106618947},{"k":"in","a":700,"m":"2026-07","n":"من المصروف","t":1781514618947}]},{"id":"v2","n":"أبيان","e":"🤖","kind":"auto","mng":"auto","type":"fund","risk":"low","track":"total","m":400,"zak":true,"val":9400,"in":8400,"hist":{"2026-04":6300,"2026-05":7000,"2026-06":7550,"2026-07":8200,"2026-08":8850,"2026-09":9400},"mv":[{"k":"in","a":400,"m":"2026-09","n":"من المصروف","t":1786698618947},{"k":"val","a":9400,"m":"2026-09","n":"","t":1788772218947},{"k":"in","a":400,"m":"2026-08","n":"من المصروف","t":1784106618947},{"k":"val","a":8850,"m":"2026-08","n":"","t":1786180218947}]},{"id":"v3","n":"بينانس","e":"🪙","kind":"self","mng":"self","type":"crypto","risk":"vhigh","track":"total","m":200,"zak":true,"val":5200,"in":6000,"hist":{"2026-04":4900,"2026-05":6800,"2026-06":7400,"2026-07":6100,"2026-08":5600,"2026-09":5200},"mv":[{"k":"in","a":200,"m":"2026-09","n":"من المصروف","t":1786698618947},{"k":"val","a":5200,"m":"2026-09","n":"","t":1788772218947},{"k":"out","a":800,"m":"2026-07","n":"سحبتُ للطوارئ","t":1782033018947},{"k":"inx","a":200,"m":"2026-06","n":"صحّحتُ الإيداع","t":1779441018947}]},{"id":"v4","n":"صندوق المرابحة","e":"🏦","kind":"self","mng":"self","type":"fund","risk":"low","track":"total","m":300,"zak":true,"val":0,"in":14000,"hist":{},"mv":[{"k":"in","a":300,"m":"2026-09","n":"من المصروف","t":1786698618947}]},{"id":"v5","n":"ذهبُ زينة","e":"🥇","kind":"self","mng":"self","type":"gold","risk":"mid","track":"total","m":0,"zak":false,"val":18000,"in":16500,"hist":{"2026-06":16800,"2026-08":17400,"2026-09":18000},"mv":[]}],"accts":[{"id":"ac1","n":"حساب الاستثمار","bank":"الراجحي","bal":15000,"open":14000,"kind":"bank","link":"i:v4","log":[]},{"id":"ac2","n":"الجاري","bank":"الأهلي","bal":6300,"open":6300,"kind":"bank","link":"ops","log":[]}],"rules":[],"seen":{},"onboard":true,"savedAt":1788945018947,"setAt":1788945018947,"planFrom":"2026-09","wish":[],"zak":{"start":"2025-08-05","nisab":26000}}</script>
 
 <script id="app-script">
 (function(){
@@ -2125,13 +2135,23 @@ white-space:nowrap}
              openBank: {}, openAcct: {}, showArch: false,
              acctQ: "", hideZero: false, showArchAcct: false, year: null, openEnv: {},
              spendMode: "quick", openQ: {}, openGoal: {}, sort: "manual", zopen: false, openLog: {},
-             openInv: {}, stripYear: null, jumpTo: null, ledger: "plan", setSec: 0, planLayer: null, showPrev: false, repN: 6, flash: null, invLog: {}, invMv: {}, invSet: {}, zakHide: false };
+             openInv: {}, stripYear: null, jumpTo: null, ledger: "plan", setSec: 0, planLayer: null, showPrev: false, repN: 6, flash: null, invLog: {}, invMv: {}, invSet: {}, zakHide: false, logPage: 0, logAll: false };
   var PALETTE = ["#E2703A","#3E8E7E","#4C3AE3","#2F80ED","#B4542B","#C2407A","#7A5AF8",
                  "#D9A227","#0F7355","#B4342B","#1F7A8C","#8E44AD","#16A085","#8A92A0"];
 
   /* ═══ أدوات ═══ */
   function pad(n){ return (n < 10 ? "0" : "") + n; }
   function todayKey(){ var d = new Date(); return d.getFullYear() + "-" + pad(d.getMonth() + 1); }
+  /* تاريخُ اليوم كاملاً. و`todayKey` مفتاحُ شهرٍ لا تاريخ — والخلطُ
+     بينهما يكتب في العمليّة يوماً ناقصاً فتقع خارج يومها في السجلّ. */
+  function todayDate(){
+    var d = new Date();
+    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  }
+  /* يومٌ افتراضيٌّ للشهر المعروض: اليومُ إن كان شهرَه، وإلّا أوّلُه */
+  function dayIn(mk){
+    return (mk === todayKey()) ? todayDate() : (mk + "-01");
+  }
   function shift(k, by){
     var y = +k.slice(0,4), m = +k.slice(5) + by;
     while(m < 1){ m += 12; y--; }
@@ -2852,7 +2872,7 @@ white-space:nowrap}
     var GG = envGroups(mk);
     if(!GG.length) return "";
     var nm = function(x){ var c = catOf(x.k); return c ? (c.e + " " + c.n) : x.k; };
-    return '<div class="sec"><h2>حركاتُ أظرفك</h2>'
+    return '<div class="sec"><h2>سجلُّ الأظرف</h2>'
       + '<span class="hint">' + esc(mName(mk)) + ' — من أين إلى أين</span></div>'
       + '<div class="card envlog">'
       + GG.map(function(g){
@@ -4268,6 +4288,22 @@ white-space:nowrap}
 
   function setQuick(mk, ck, total){
     return withLog(mk, ck, "", "q", function(){ return setQuickRaw(mk, ck, total); });
+  }
+  /* عمليّةٌ مفصّلةٌ بسببها ويومِها — تُضاف إلى إجماليّ بندها.
+     والإجماليُّ السريعُ يمتصّ الباقيَ من بعدها كما كان. */
+  function addSpendReason(mk, ck, amt, why, day){
+    var c = catOf(ck); if(!c) return null;
+    var a = money(Math.abs(num(amt)));
+    if(!a) return null;
+    var m = month(mk);
+    m.items = m.items || [];
+    var rec = { id: uid(), c: ck, a: a, t: String(why || "").trim(),
+                d: day || dayIn(mk), at: Date.now() };
+    var ca = c.acct;
+    if(trackSrc() && ca && acctOf(ca)) rec.acct = ca;
+    m.items.push(rec);
+    linkSpend(rec);
+    return rec;
   }
   function setQuickRaw(mk, ck, total){
     var det = detailSum(mk, ck), q = quickItem(mk, ck), m = month(mk);
@@ -9525,6 +9561,9 @@ white-space:nowrap}
         + '<input class="qin' + (sp ? " has" : "") + '" type="number" inputmode="decimal" step="any" '
         + 'data-quick="' + c.k + '" value="' + (sp || "") + '" placeholder="'
         + (pv ? fmt(pv) : "0") + '">'
+        /* عمليّةٌ بسببها: لمن يصرف يوماً بيوم ويريد أن يعرف على ماذا */
+        + '<button class="qwhy" data-spwhy="' + c.k + '" title="'
+        + esc("سجّل عمليّةً بسببها ويومِها") + '">+</button>'
         + '<span class="qv' + (left < 0 ? " neg" : (left ? "" : " dim")) + '">' + fmt(left) + '</span>'
         + '</div>'
         /* الفروع بالأعمدة نفسها: خطّة · صُرف · باقٍ. ومعها ما بقي من
@@ -9796,7 +9835,25 @@ white-space:nowrap}
     });
     var show = rows.filter(function(r){
       return !fil || (LOGFAM[r.kind] || "sp") === fil; });
-    show = show.slice(0, 60);
+
+    /* صفحاتٌ: عشرُ عمليّاتٍ أو يوما صرفٍ — أيُّهما أوّل. واليومُ الواحدُ
+       لا ينقسم بين صفحتين، فالقطعُ يقع عند رأس يومٍ ثالث. */
+    var PAGE_N = 10, PAGE_D = 2;
+    var pages = [], curP = [], seen = {}, dn = 0;
+    show.forEach(function(r){
+      var dl = dayLabel(r.t), fresh = !seen[dl];
+      if(curP.length && (curP.length >= PAGE_N || (fresh && dn >= PAGE_D))){
+        pages.push(curP); curP = []; seen = {}; dn = 0; fresh = true;
+      }
+      if(!seen[dl]){ seen[dl] = 1; dn++; }
+      curP.push(r);
+    });
+    if(curP.length) pages.push(curP);
+    if(!pages.length) pages = [[]];
+    var allOn = !!ui.logAll;
+    var pg = Math.max(0, Math.min(num(ui.logPage) || 0, pages.length - 1));
+    var total = show.length;
+    show = allOn ? show.slice(0, 300) : pages[pg];
 
     var h = '<div class="sec"><h2>سجلُّ المتابعة</h2>'
       + '<span class="hint">كلُّ ما جرى لمالك في ' + esc(mName(k)) + '</span></div>'
@@ -9830,6 +9887,22 @@ white-space:nowrap}
       h += (r.item ? logItemRow(r.item, r.t) : logEntryRow(r.e));
     });
 
+    /* شريطُ التقليب: لا يُعرض إن كانت صفحةً واحدة */
+    if(pages.length > 1 || allOn){
+      h += '<div class="lgpg">'
+        + (allOn
+            ? ('<span class="lgn">كلُّ عمليّات الشهر — ' + total + ' قيداً</span>'
+               + '<button class="mini" data-logall="0">أرِني صفحاتٍ</button>')
+            : ('<button class="mini" data-logpg="' + (pg - 1) + '"'
+               + (pg <= 0 ? " disabled" : "") + '>‹ السابق</button>'
+               + '<span class="lgn">صفحة ' + (pg + 1) + ' من ' + pages.length
+               + ' · ' + total + ' قيداً</span>'
+               + '<button class="mini" data-logpg="' + (pg + 1) + '"'
+               + (pg >= pages.length - 1 ? " disabled" : "") + '>التالي ›</button>'
+               + '<button class="mini" data-logall="1" style="margin-inline-start:auto">'
+               + 'أظهِر كلَّ عمليّات الشهر</button>'))
+        + '</div>';
+    }
     h += '<div class="wact"><button class="mini" data-logclr="1">'
       + 'امسح قيودَ الشهر</button>'
       + '<span class="lgnote">تُمسح القيودُ وحدَها — العملياتُ ومبالغُها لا تُمسّ.</span>'
@@ -10631,7 +10704,6 @@ white-space:nowrap}
       + fmt(tSpent) + '</span></div>'
       + '</div></div>';
 
-    h += envLogHTML(k);
     h += '<div class="sec"><h2>حسابات بنودك</h2>'
       + '<span class="hint">' + rows.length + ' حساباً مستقلاً</span>'
       + '<button class="mini" data-envbulk="1" style="margin-inline-start:auto">'
@@ -10736,6 +10808,9 @@ white-space:nowrap}
       + '<span class="eamt"><b class="' + (tBal >= 0 ? "pos" : "neg") + '">'
       + fmt(tBal) + '</b><s>الرصيد</s></span></div>';
     h += '</div>';
+
+    /* السجلُّ بعد البطاقات: يُرجَع إليه بعد النظر لا قبله */
+    h += envLogHTML(k);
 
     /* ── الأهداف والادخار ── */
     var AGE = activeGoals();
@@ -11834,7 +11909,19 @@ white-space:nowrap}
     var ch = function(sel, fn){ q(sel).forEach(function(el){ el.onchange = function(){
       diag("حقل", actName(sel, el)); fn(el); }; }); };
 
+    on("[data-logpg]", function(b){
+      ui.logPage = num(b.getAttribute("data-logpg"));
+      render();
+    });
+    on("[data-logall]", function(b){
+      ui.logAll = b.getAttribute("data-logall") === "1";
+      ui.logPage = 0;
+      render();
+    });
     on("[data-logfil]", function(b){
+      /* بابٌ جديدٌ يبدأ من أوّله — فالبقاءُ في صفحةٍ خامسةٍ لبابٍ
+         صفحاتُه ثلاثٌ يُري فراغاً */
+      ui.logPage = 0;
       ui.logFil = b.getAttribute("data-logfil");
       render();
     });
@@ -11998,6 +12085,29 @@ white-space:nowrap}
         toast((_a2 > _b2 ? "أُودع " : "نُقص ") + fmt(Math.abs(_a2 - _b2))
               + " · قيمةُ «" + _v2.n + "» الآن " + fmt(invVal(_v2)));
       flashRow("i:" + vid); save(); render();
+    });
+    on("[data-spwhy]", function(b, e){
+      if(e) e.stopPropagation();
+      var ck = b.getAttribute("data-spwhy"), c = catOf(ck);
+      if(!c) return;
+      ask({ title: "عمليّةٌ في «" + c.n + "»",
+        msg: "تُضاف إلى صرفِ البند، ويبقى سببُها في السجلّ — "
+           + "فتعرف بعد شهرٍ على ماذا ذهب.",
+        fields: [
+          { key: "amt", label: "المبلغ", type: "number", value: "" },
+          { key: "why", label: "السبب", value: "", guess: true,
+            ph: "مثال: قهوة · بنزين · دواء" },
+          { key: "day", label: "اليوم", type: "date", value: dayIn(ui.month) }],
+        ok: "سجّلها",
+        onOk: function(v, by){
+          var a = money(by.amt);
+          if(!a) return;
+          var mk = ui.month, before = catTotal(mk, ck);
+          addSpendReason(mk, ck, a, by.why, by.day);
+          logAmt(mk, ck, "", before, catTotal(mk, ck), "add");
+          toast("سُجّلت " + fmt(a) + (by.why ? (" — " + by.why) : ""));
+          flashRow(ck); save(); render();
+        } });
     });
     ch("[data-quick]", function(el){
       var ck = el.getAttribute("data-quick");
@@ -14319,7 +14429,7 @@ white-space:nowrap}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "0.2-beta+13-demo";
+  var APP_VERSION = "0.2-beta+14-demo";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
