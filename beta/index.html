@@ -1913,6 +1913,10 @@ opacity:.45}
 .envhead .t{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:600;color:var(--ink)}
 
 /* ══ صفحة حسابات البنود ══ */
+/* ما تحرّره الأقساط المنتهية — خبرٌ مطمئنٌّ لا تحذير */
+.freefree{color:var(--ok)}
+/* الفرعُ بعد أبيه بلونٍ أخفّ — فيُقرأ الأبُ أوّلاً */
+.lgr .nm .subn{color:var(--ink-2);font-weight:400}
 /* سببُ العمليّة بجانب اسمها — يُقرأ معه لا بعده */
 .lgr .nm .why{color:var(--ink-2);font-weight:400}
 /* شراءُ أمنيةٍ: حدٌّ ذهبيٌّ ووسمٌ باسمها — يُميَّز من سطرٍ عابر */
@@ -1934,6 +1938,13 @@ tr.ykid .cn{padding-inline-start:22px;color:var(--ink-2);font-size:12px}
 tr.ykid .v{color:var(--ink-2)}
 tr.ygrp .cn{background:var(--card-2);color:var(--ink-3);font-size:10px;
 letter-spacing:.04em;padding:5px 10px;text-align:start}
+/* وضعُ التعديل: مربّعُ اختيارٍ يسبق الرمز، والسطرُ يُضاء بتحديده */
+.lgr.picking{grid-template-columns:26px 34px minmax(0,1fr) auto auto}
+.lgpick{display:flex;align-items:center;justify-content:center}
+.lgpick input{width:17px;height:17px;accent-color:var(--accent);cursor:pointer;margin:0}
+.lgpg.lgedit{background:var(--card-2);border-top:1px solid var(--line)}
+.lgpg .mini.bad[disabled]{opacity:.35}
+.lgpg .mini.bad:not([disabled]){color:var(--warn);border-color:var(--warn)}
 /* شريطُ تقليب السجلّ */
 .lgpg{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
 padding:10px 15px;border-top:1px solid var(--line)}
@@ -2158,6 +2169,72 @@ padding:10px 15px;border-top:1px solid var(--line)}
   var LSKEY = "khettati_v3_beta";
   var state = JSON.parse(document.getElementById("app-state").textContent);
   var pubApi = null, pending = null, dirty = false, focusSel = null;
+  /* ═══ حقلٌ يُكتب فيه الآن ═══
+     الرسمُ يستبدل شجرةَ الجذر كلَّها، فيُهدَم الحقلُ المركَّز وما فيه.
+     وقياسُه: نصٌّ لم يتمّ يُمحى، والتركيزُ يضيع. فيُلتقط قبل الهدم
+     ويُعاد بعده — نصّاً وموضعَ مؤشّر. */
+  var _typed = null;          /* {sel, val, a, b} */
+  var _bgWait = false;        /* رسمٌ خلفيٌّ يُنتظر خروجُه من الحقل */
+  var TYPESEL = ["data-quick", "data-plan", "data-gquick", "data-iquick",
+                 "data-minc", "data-led", "data-ledsub", "data-ledwal",
+                 "data-inv", "data-sub", "data-acctq"];
+  /* مقبضُ الحقل المركَّز — إن كان حقلاً يُكتب فيه رقمٌ يُحفظ */
+  function typedSel(el){
+    if(!el || (el.tagName !== "INPUT" && el.tagName !== "TEXTAREA")) return "";
+    if(el.id) return "#" + el.id;
+    for(var i = 0; i < TYPESEL.length; i++){
+      var v = el.getAttribute(TYPESEL[i]);
+      if(v !== null && v !== undefined)
+        return "[" + TYPESEL[i] + '="' + String(v).replace(/"/g, "") + '"]';
+    }
+    return "";
+  }
+  function grabTyped(){
+    _typed = null;
+    try{
+      var el = document.activeElement;
+      var sel = typedSel(el);
+      if(!sel) return;
+      var root = document.getElementById("root");
+      if(!root || !root.contains(el)) return;
+      _typed = { sel: sel, val: String(el.value == null ? "" : el.value),
+                 a: el.selectionStart, b: el.selectionEnd };
+    }catch(e){ _typed = null; }
+  }
+  function putTyped(){
+    var t = _typed; _typed = null;
+    if(!t || !t.sel) return;
+    try{
+      var el = document.querySelector(t.sel);
+      if(!el) return;
+      /* ما رُسم به يخالف ما كُتب ⇒ الكتابةُ لم تُعتمد بعد، فتُعاد.
+         وما وافقه فقد استقرّ، فلا يُكتب فوق حسابٍ جديد. */
+      if(String(el.value == null ? "" : el.value) === t.val) return;
+      el.value = t.val;
+      el.focus({ preventScroll: true });
+      if(t.a != null){ try{ el.setSelectionRange(t.a, t.b); }catch(e2){} }
+    }catch(e){}
+  }
+  /* هل يكتب الآن شيئاً لم يُعتمد؟ */
+  function isTyping(){
+    try{
+      var el = document.activeElement;
+      if(!typedSel(el)) return false;
+      var root = document.getElementById("root");
+      return !!(root && root.contains(el));
+    }catch(e){ return false; }
+  }
+  /* رسمٌ لم يطلبه أحد: نسخةٌ جديدة · مزامنة · مخزنُ الجهاز · تثبيت.
+     يُؤجَّل ما دام يكتب، ويُنفَّذ حين يخرج من الحقل. */
+  function renderBG(){
+    if(isTyping()){ _bgWait = true; return; }
+    render();
+  }
+  function flushBG(){
+    if(!_bgWait) return;
+    _bgWait = false;
+    render();
+  }
   var ui = { month: null, cat: null, sub: null, tab: "dash", open: {},
              openBank: {}, openAcct: {}, showArch: false,
              acctQ: "", hideZero: false, showArchAcct: false, year: null, openEnv: {},
@@ -4416,9 +4493,16 @@ padding:10px 15px;border-top:1px solid var(--line)}
     if(Math.abs(num(after) - num(before)) < 0.005) return;
     var m = month(mk);
     if(!Array.isArray(m.log)) m.log = [];
-    m.log.push({ t: Date.now(), c: ck, s: sid || "",
-                 f: money(before), o: money(after),
-                 k: kind || "" });
+    var rec = { t: Date.now(), c: ck, s: sid || "",
+                f: money(before), o: money(after),
+                k: kind || "" };
+    /* واسمُ الفرع يُحفظ في القيد ساعتَه: الفرعُ يُحذف أو يُنقل إلى
+       بندٍ آخر، فيبقى القيدُ يشير إلى معرّفٍ لا اسمَ له — وقد وقع. */
+    if(sid){
+      var sx0 = subOf(catOf(ck), sid);
+      if(sx0 && sx0.n) rec.sn = String(sx0.n);
+    }
+    m.log.push(rec);
     if(m.log.length > LOGCAP) m.log = m.log.slice(-LOGCAP);
   }
   /* يُلفّ تغييرٌ بقيدِه: يُقرأ المجموعُ قبلَه وبعده */
@@ -9979,7 +10063,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
                   + fmt(lf2) + '</span></div>';
               }).join("")
               + '<div class="qtab qsub rest"><span class="qn"><span class="qt">'
-              + '<b>الباقي بلا فرع</b><s>من سقف البند</s></span></span>'
+              + '<b>لم تُخصَّص لفرع</b><s>' + freeHint(c, k) + '</s></span></span>'
               + '<span class="qv">' + fmt(catFree(c, k)) + '</span>'
               + '<span class="qv"></span><span class="qv"></span></div>')
             : "");
@@ -10144,8 +10228,15 @@ padding:10px 15px;border-top:1px solid var(--line)}
     if(c.indexOf("inc:") === 0)
       return { e: "◈", n: c.slice(4) === "extra" ? "دخل إضافيّ" : "الراتب" };
     var ct = catOf(c), sb = e.s ? subOf(ct, e.s) : null;
+    /* الفرعُ: اسمُه الحيّ إن بقي · وإلا المحفوظُ في القيد · وإلا يُقال
+       إنّه محذوف. والسكوتُ عنه يُري البندَ الأبَ وحدَه فيُظنّ صرفاً
+       مباشراً عليه. */
+    var sn = sb ? sb.n : (e.s ? (e.sn || "فرعٌ محذوف") : "");
+    /* الاسمُ يخرج **مهرَّباً**: صار يحمل وسماً، واسمُ البند يكتبه صاحبُه
+       — فإدراجُه خاماً يجعل اسماً فيه وسمٌ شيفرةً تعمل في صفحته. */
     return { e: (ct && ct.e) || "•",
-             n: ((ct && ct.n) || "بندٌ محذوف") + (sb ? (" · " + sb.n) : "") };
+             n: esc((ct && ct.n) || "بندٌ محذوف")
+                + (sn ? ('<span class="subn"> · ' + esc(sn) + '</span>') : "") };
   }
   function clockAr(ts){
     var d = new Date(ts), hh = d.getHours(), mm = d.getMinutes();
@@ -10248,7 +10339,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
           + '</span></div>';
       }
       h += (r.item ? logItemRow(r.item, r.t, STEP[r.item.id])
-                   : logEntryRow(r.e));
+                   : logEntryRow(r.e, r));
     });
 
     /* شريطُ التقليب: لا يُعرض إن كانت صفحةً واحدة */
@@ -10267,18 +10358,68 @@ padding:10px 15px;border-top:1px solid var(--line)}
                + 'أظهِر كلَّ عمليّات الشهر</button>'))
         + '</div>';
     }
-    h += '<div class="wact"><button class="mini" data-logclr="1">'
-      + 'امسح قيودَ الشهر</button>'
-      + '<span class="lgnote">تُمسح القيودُ وحدَها — العملياتُ ومبالغُها لا تُمسّ.</span>'
-      + '</div></div>';
+    if(ui.logEdit){
+      var ST = logSelStat(show);
+      h += '<div class="lgpg lgedit">'
+        + '<button class="mini" data-logpickall="1">اختر ما يظهر</button>'
+        + '<button class="mini" data-logpickall="0">أزِل التحديد</button>'
+        + '<span class="lgn">' + (ST.n
+            ? (ST.n + (ST.n === 1 ? " سطر" : " سطراً")
+               + (ST.sum ? (" · مجموعُ عمليّاته " + fmt(ST.sum)) : ""))
+            : "لم تحدّد شيئاً بعد") + '</span>'
+        + '<button class="mini bad" data-logdel="1"'
+        + (ST.n ? "" : " disabled") + '>احذف المحدَّد</button>'
+        + '<button class="mini" data-logedit="0">انتهيت</button>'
+        + '</div>';
+    }
+    h += '<div class="wact">'
+      + '<button class="mini' + (ui.logEdit ? " on" : "") + '" data-logedit="'
+      + (ui.logEdit ? "0" : "1") + '">'
+      + (ui.logEdit ? "أنهِ التعديل" : "تعديل") + '</button>'
+      + '<button class="mini" data-logclr="1">امسح قيودَ الشهر</button>'
+      + '<span class="lgnote">'
+      + (ui.logEdit
+          ? 'حدّد ما دخل خطأً واحذفه جملةً — أو اضغط سطراً واحداً لتحديده.'
+          : 'تُمسح القيودُ وحدَها — العملياتُ ومبالغُها لا تُمسّ.')
+      + '</span></div></div>';
     return h;
   }
+  /* مفتاحُ السطر في وضع التعديل. والقيدُ لا معرّفَ له، فيُعرَّف
+     بوقته وبنده — وهما يكفيان لتمييزه في شهره. */
+  function logKeyOf(r){
+    if(r.item) return "i:" + r.item.id;
+    var e = r.e || {};
+    return "e:" + num(e.t) + ":" + String(e.c || "") + ":" + String(e.s || "");
+  }
+  function logSel(){ return ui.logSel || (ui.logSel = {}); }
+  function logSelN(){ var n = 0, S = logSel(); for(var k in S) if(S[k]) n++; return n; }
+  /* ما حُدّد من المعروض: عددُه ومجموعُه وما فيه من أمنيات */
+  function logSelStat(rows){
+    var S = logSel(), n = 0, sum = 0, wsh = [], it = 0, en = 0;
+    rows.forEach(function(r){
+      if(!S[logKeyOf(r)]) return;
+      n++;
+      if(r.item){
+        it++; sum += num(r.item.a);
+        var wh = itemWish(r.item);
+        if(wh && wsh.length < 3) wsh.push(wh.n);
+      } else { en++; }
+    });
+    return { n: n, sum: money(sum), wish: wsh, items: it, entries: en };
+  }
+  function logCheck(r){
+    if(!ui.logEdit) return "";
+    var k = logKeyOf(r);
+    return '<span class="lgpick"><input type="checkbox" data-logpick="' + esc(k) + '"'
+      + (logSel()[k] ? " checked" : "") + '></span>';
+  }
   /* قيدٌ: كم كان وكم صار */
-  function logEntryRow(e){
+  function logEntryRow(e, r){
     var sj = logSubject(e), dlt = num(e.o) - num(e.f);
-    return '<div class="row lgr">'
+    return '<div class="row lgr' + (ui.logEdit ? " picking" : "") + '">'
+      + logCheck(r)
       + '<span class="ic" style="background:var(--card-2)">' + esc(sj.e) + '</span>'
-      + '<span><b class="nm">' + esc(sj.n) + '</b>'
+      + '<span><b class="nm">' + sj.n + '</b>'
       + '<s class="sub"><em>' + esc(clockAr(e.t)) + '</em> · '
       + esc(LOGKIND[e.k] || "تعديل") + '</s></span>'
       /* الرقمان مسمَّيان: «كان» و«صار» — فلا يُخمَّن أيُّهما قبل */
@@ -10307,14 +10448,17 @@ padding:10px 15px;border-top:1px solid var(--line)}
     var c = catOf(it.c), sx = it.s ? subOf(c, it.s) : null;
     var wh = itemWish(it);
     var src = it.auto ? "تلقائيّ" : (wh ? "شراءُ أمنية" : "عمليّة");
-    return '<div class="row lgr itr tap' + (wh ? " wsh" : "")
-      + '" data-edit="' + esc(it.id) + '">'
+    return '<div class="row lgr itr' + (ui.logEdit ? " picking" : " tap")
+      + (wh ? " wsh" : "") + '"'
+      + (ui.logEdit ? "" : (' data-edit="' + esc(it.id) + '"')) + '>'
+      + logCheck({ item: it })
       + '<span class="ic" style="background:' + ((c && c.c) || "var(--card-2)") + '22;color:'
       + ((c && c.c) || "var(--ink-3)") + '">' + esc((c && c.e) || "•") + '</span>'
       /* السببُ بجانب الاسم لا في ذيل السطر: من يقرأ السجلَّ يريد أن
          يعرف **على ماذا صرف** قبل أن يعرف متى وبأيّ باب. */
       + '<span><b class="nm">' + esc((c && c.n) || "بندٌ محذوف")
-      + (sx ? (' · ' + esc(sx.n)) : "")
+      + (sx ? ('<span class="subn"> · ' + esc(sx.n) + '</span>')
+            : (it.s ? '<span class="subn"> · فرعٌ محذوف</span>' : ""))
       /* والأمنيةُ تُعلن نفسَها بوسمها: تحت أيِّ بندٍ وقعت، وأيَّ
          أمنيةٍ كانت — لا تختلط بعمليّةٍ عابرة. */
       + (wh ? ('<span class="wshtag">' + esc(wh.e || "🎁") + ' '
@@ -10338,8 +10482,10 @@ padding:10px 15px;border-top:1px solid var(--line)}
           : ('<span class="lgmv"><span class="lgn out"><s>صُرف</s><b>'
              + fmt(it.a) + '</b></span></span>'))
       + '<span class="rt"><b class="a wno">−' + fmt(it.a) + '</b>'
-      + '<s class="b"><button class="del" data-del="' + esc(it.id)
-      + '" title="احذفها">×</button></s></span></div>';
+      /* في وضع التعديل لا يُعرض زرُّ الحذف المفرد: المربّعُ يكفي */
+      + (ui.logEdit ? "" : ('<s class="b"><button class="del" data-del="' + esc(it.id)
+         + '" title="احذفها">×</button></s>'))
+      + '</span></div>';
   }
 
   /* ═══ مرشدُ الترقية: ما بُني بأدواتٍ أقدم يجد بيته ═══ */
@@ -11280,6 +11426,35 @@ padding:10px 15px;border-top:1px solid var(--line)}
     return h;
   }
 
+  /* ما بقي من سقف البند بلا فرع: خبرٌ لا مطالبة. وقد قرأه صاحبُها
+     أمراً بأن يقسمه، فصار يقول ما هو وما يُفعل به — وإن كان في فروعه
+     قسطٌ ينتهي قيل متى يتحرّر مالُه، فالخطةُ تنكمش وحدَها. */
+  function freeHint(c, mk){
+    var free = catFree(c, mk), subs = subsSum(c, mk);
+    if(free <= 0) return "فروعُه تستوفي سقفَه";
+    /* أقربُ قسطٍ ينتهي من فروعه */
+    var end = "", left = 0;
+    (c.subs || []).forEach(function(x){
+      if(typeOf(x) !== "inst" || !x.end) return;
+      var l = instLeft(x, mk);
+      if(l > 0 && (!end || x.end < end)){ end = x.end; left = l; }
+    });
+    return "تُصرف على البند مباشرةً — ولستَ مضطرّاً لتوزيعها"
+      + (subs > 0 ? (' <button class="mini" data-capfit="' + c.k + '">'
+                     + "اجعل السقف " + fmt(subs) + "</button>") : "")
+      + (end ? (' <span class="freefree">ويتحرّر ' + fmt(catInstEnding(c, mk))
+                + " في " + esc(end) + "</span>") : "");
+  }
+  /* ما تدفعه أقساطُ هذا البند شهرياً ممّا سينتهي */
+  function catInstEnding(c, mk){
+    var t = 0;
+    (c.subs || []).forEach(function(x){
+      if(typeOf(x) === "inst" && x.end && instLeft(x, mk) > 0)
+        t += linePlan(x, mk, lineKey(c.k, x.id));
+    });
+    return money(t);
+  }
+
   /* ═══ ٥ · السنة ═══ */
   /* ══ الدفتر ══
      طبقتان على نفس الشبكة: «الخطة» تكتب سقف البند في ذلك الشهر،
@@ -12119,6 +12294,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
              : ui.tab === "inv" ? viewInv()
              : ui.tab === "rep" ? viewRep() : viewDash();
     /* صنف الشاشة على .wrap — مقبض تخطيطها في الأنماط */
+    grabTyped();
     document.getElementById("root").innerHTML =
       '<div class="wrap v-' + (ui.tab || "dash") + '">'
       + topbar() + /* DEV:INLINE */ devBarHTML() + saveBar() + updateBar()
@@ -12128,6 +12304,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
       + navbar() + dlgHTML();
     applyNotes();
     wire(); if(!setNav()) colLayout(); wire(); dlgWire(); restoreFocus();
+    putTyped();
 
     /* الرسم يقع عشراتِ المرّات — فلا يُسجَّل إلا ما أبطأ منه، وإلا
        أغرق الأثرَ بما لا يدلّ. */
@@ -12485,6 +12662,101 @@ padding:10px 15px;border-top:1px solid var(--line)}
       setInvQuick(p[1], p[0], money(el.value));
       save(); render();
     });
+    on("[data-capfit]", function(b, e2){
+      if(e2) e2.stopPropagation();
+      var c = catOf(b.getAttribute("data-capfit"));
+      if(!c) return;
+      var sm = subsSum(c, ui.month);
+      confirmDlg("سقفُ «" + c.n + "» يصير " + fmt(sm),
+        "يُخفَض سقفُ البند إلى مجموع فروعه، فلا يبقى فيه ما لم يُخصَّص. "
+        + "<b>ويعود الفرقُ إلى الباقي من دخلك</b> تضعه حيث شئت. "
+        + "والتعديلُ يخصّ " + esc(mName(ui.month)) + " وحدَه.",
+        "اخفِضه", function(){
+          setP(ui.month, c.k, sm);
+          toast("صار السقفُ " + fmt(sm));
+          save(); render();
+        });
+    });
+    on("[data-logedit]", function(b){
+      ui.logEdit = b.getAttribute("data-logedit") === "1";
+      if(!ui.logEdit) ui.logSel = {};
+      render();
+    });
+    on("[data-logpick]", function(b){
+      var k = b.getAttribute("data-logpick"), S = logSel();
+      if(S[k]) delete S[k]; else S[k] = 1;
+      render();
+    });
+    on("[data-logpickall]", function(b){
+      var on2 = b.getAttribute("data-logpickall") === "1";
+      var S = ui.logSel = on2 ? (ui.logSel || {}) : {};
+      if(on2) q("[data-logpick]").forEach(function(el){
+        S[el.getAttribute("data-logpick")] = 1; });
+      render();
+    });
+    on("[data-logdel]", function(){
+      var m = month(ui.month), S = logSel();
+      /* يُحصى المحدَّدُ من بيانات الشهر لا من الشاشة — فالحذفُ يقع على
+         ما اختير لا على ما بقي معروضاً بعد تقليب صفحة. */
+      var its = (m.items || []).filter(function(it){ return S["i:" + it.id]; });
+      var sum = 0, wsh = [];
+      its.forEach(function(it){
+        sum += num(it.a);
+        var wh = itemWish(it);
+        if(wh && wsh.indexOf(wh.n) < 0) wsh.push(wh.n);
+      });
+      var ens = (m.log || []).filter(function(e){
+        return S["e:" + num(e.t) + ":" + String(e.c || "") + ":" + String(e.s || "")]; });
+      if(!its.length && !ens.length){ toast("لم تحدّد شيئاً"); return; }
+      ask({ title: "حذفُ " + (its.length + ens.length) + " سطراً",
+        msg: (its.length
+               ? ("<b>" + its.length + "</b> عمليّةً بمجموع <b>" + fmt(money(sum))
+                  + "</b> تُحذف، ويعود مالُها إلى حساباتها إن كانت مربوطة.")
+               : "")
+             + (ens.length
+                 ? ((its.length ? " و" : "") + "<b>" + ens.length
+                    + "</b> قيدَ تدقيقٍ يُمحى — والقيدُ أثرٌ لا مال.")
+                 : "")
+             + (wsh.length
+                 ? ("<br><br>وفيها شراءُ <b>" + esc(wsh.join(" · "))
+                    + "</b> — يُفكّ رباطُها وتعود إلى أمنياتك.")
+                 : ""),
+        ok: "احذفها", danger: true,
+        onOk: function(){
+          /* قيدٌ واحدٌ لكلّ بندٍ لا قيدٌ لكلّ عمليّة: من يحذف عشرين
+             سطراً يريد سجلّاً أنظف، لا عشرين سطرَ حذفٍ مكانها. */
+          var b0 = {};
+          its.forEach(function(it){
+            if(b0[it.c] === undefined) b0[it.c] = catTotal(ui.month, it.c);
+          });
+          its.forEach(function(it){
+            unlinkSpend(it);
+            /* أمنيّةٌ مربوطة: تعود إلى قائمتها ولا تبقى تشير إلى محذوف */
+            var wh = itemWish(it);
+            if(wh && wh.itm === it.id){
+              wh.bought = false;
+              delete wh.bm; delete wh.bat; delete wh.paid;
+              delete wh.itm; delete wh.link;
+            }
+            m.items = m.items.filter(function(x){ return x.id !== it.id; });
+          });
+          if(ens.length){
+            var kill = {};
+            ens.forEach(function(e){
+              kill["e:" + num(e.t) + ":" + String(e.c || "")
+                   + ":" + String(e.s || "")] = 1; });
+            m.log = (m.log || []).filter(function(e){
+              return !kill["e:" + num(e.t) + ":" + String(e.c || "")
+                           + ":" + String(e.s || "")]; });
+          }
+          /* والقيدُ يُكتب بعد محو القيود المحدَّدة، فلا يُمحى معها */
+          for(var ck0 in b0)
+            logAmt(ui.month, ck0, "", b0[ck0], catTotal(ui.month, ck0), "del");
+          ui.logSel = {};
+          toast("حُذف " + (its.length + ens.length) + " سطراً");
+          save();
+        } });
+    });
     on("[data-logpg]", function(b){
       ui.logPage = num(b.getAttribute("data-logpg"));
       render();
@@ -12724,6 +12996,8 @@ padding:10px 15px;border-top:1px solid var(--line)}
           el.value = v;
           if(typeof Event === "function") el.dispatchEvent(new Event("change", { bubbles: true }));
         }
+        /* خرج من الحقل: ما تأجّل من رسمٍ خلفيٍّ يمضي الآن */
+        setTimeout(flushBG, 0);
       };
     });
     /* ── التنقّل بلوحة المفاتيح داخل العمود ── */
@@ -15025,7 +15299,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "0.2-beta+23";
+  var APP_VERSION = "0.2-beta+24";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
@@ -15055,13 +15329,13 @@ padding:10px 15px;border-top:1px solid var(--line)}
           .then(function(reg){
           swReady = true;
           /* نسخة تنتظر: لا تُفرَض على المستخدم وهو يكتب، بل تُعرض عليه */
-          if(reg.waiting){ swWaiting = reg.waiting; render(); }
+          if(reg.waiting){ swWaiting = reg.waiting; renderBG(); }
           reg.addEventListener("updatefound", function(){
             var w = reg.installing;
             if(!w) return;
             w.addEventListener("statechange", function(){
               if(w.state === "installed" && navigator.serviceWorker.controller){
-                swWaiting = w; render();
+                swWaiting = w; renderBG();
               }
             });
           });
@@ -15088,12 +15362,12 @@ padding:10px 15px;border-top:1px solid var(--line)}
       window.addEventListener("beforeinstallprompt", function(e){
         e.preventDefault();
         installPrompt = e;
-        render();
+        renderBG();
       });
       window.addEventListener("appinstalled", function(){
         installPrompt = null;
         toast("ثُبِّت على جهازك");
-        render();
+        renderBG();
       });
     }catch(e){}
   }
@@ -16314,7 +16588,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
           syncSet(e2 ? "err" : "ok");
           if(!quiet) toast(e2 ? ("تعذّر الرفع: " + cloudErr(e2)) : "جُهّزت سحابتك");
           else if(!e2) toast("رُفعت تعديلاتك إلى درايف");
-          render(); if(then) then(e2 || null);
+          renderBG(); if(then) then(e2 || null);
         });
         return;
       }
@@ -16322,7 +16596,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
         syncBusy = false;
         syncSet("err");
         if(!quiet) toast(cloudErr(err));
-        render(); if(then) then(err);
+        renderBG(); if(then) then(err);
         return;
       }
       applyCloud(row, quiet);
@@ -16331,7 +16605,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
         syncSet(e3 ? "err" : "ok");
         if(e3){ if(!quiet) toast("دُمجت هنا · وتعذّر الرفع: " + cloudErr(e3)); }
         else toast("رُفعت تعديلاتك إلى درايف");
-        render(); if(then) then(e3 || null);
+        renderBG(); if(then) then(e3 || null);
       });
     });
   }
@@ -16969,7 +17243,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
     migrate();
     localWrite();
     toast("استُعيدت بياناتك من مخزن الجهاز");
-    render();
+    renderBG();
     maybeOnboard();       /* بعد الاستعادة: قد لا يحتاجه أصلاً */
   });
 
