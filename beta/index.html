@@ -1847,11 +1847,15 @@ white-space:nowrap}
 .f2grid.tight label{font-size:10.5px}
 .f2grid.tight .sel,.f2grid.tight .ni{padding:7px 10px;font-size:13.5px}
 .iedit .lab{margin:12px 0 5px}
-/* زرُّ السبب: صغيرٌ بجانب حقل المبلغ، لا يزاحمه */
-.qwhy{width:26px;height:26px;flex:0 0 auto;border:1px dashed var(--line-2);
-background:transparent;color:var(--ink-3);border-radius:8px;cursor:pointer;
-font-size:14px;line-height:1;align-self:center;margin-inline-start:4px}
-.qwhy:hover{border-color:var(--accent);color:var(--accent)}
+/* غلافُ حقل المبلغ: يحمله والزرَّ في خليّةٍ واحدةٍ من الشبكة */
+.qinw{position:relative;display:block;min-width:0}
+.qinw .qin{width:100%}
+/* والزرُّ على حافّة الحقل لا بجانبه — فلا يأخذ عموداً خامساً */
+.qwhy{position:absolute;inset-inline-start:2px;top:50%;transform:translateY(-50%);
+width:20px;height:20px;border:0;background:transparent;color:var(--ink-3);
+border-radius:6px;cursor:pointer;font-size:15px;line-height:1;padding:0;
+opacity:.45}
+.qwhy:hover{opacity:1;color:var(--accent);background:var(--accent-soft)}
 .ni.hp{width:88px;padding:5px 6px;font-size:13px;text-align:center}
 .ygrid .v.z{opacity:.65}
 .ygrid .gp{color:var(--ok)}
@@ -1907,6 +1911,8 @@ font-size:14px;line-height:1;align-self:center;margin-inline-start:4px}
 .envhead .t{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:600;color:var(--ink)}
 
 /* ══ صفحة حسابات البنود ══ */
+/* سببُ العمليّة بجانب اسمها — يُقرأ معه لا بعده */
+.lgr .nm .why{color:var(--ink-2);font-weight:400}
 /* شريطُ تقليب السجلّ */
 .lgpg{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
 padding:10px 15px;border-top:1px solid var(--line)}
@@ -9558,12 +9564,14 @@ padding:10px 15px;border-top:1px solid var(--line)}
                 + 'data-plan="' + c.k + '" value="' + rawP(c, k, c.k) + '"'
                 + (subs ? ' title="' + esc("سقف البند — مجموع فروعه " + fmt(subsSum(c, k))) + '"' : "")
                 + '>'))
+        /* الحقلُ والزرُّ في خليّةٍ واحدة — فالشبكةُ أربعةُ أعمدةٍ
+           لا خمسة، ولو زِيد عنصرٌ لَلفَّ العمودُ الأخير وارتفع الصفّ. */
+        + '<span class="qinw">'
         + '<input class="qin' + (sp ? " has" : "") + '" type="number" inputmode="decimal" step="any" '
         + 'data-quick="' + c.k + '" value="' + (sp || "") + '" placeholder="'
         + (pv ? fmt(pv) : "0") + '">'
-        /* عمليّةٌ بسببها: لمن يصرف يوماً بيوم ويريد أن يعرف على ماذا */
         + '<button class="qwhy" data-spwhy="' + c.k + '" title="'
-        + esc("سجّل عمليّةً بسببها ويومِها") + '">+</button>'
+        + esc("سجّل عمليّةً بسببها ويومِها") + '">+</button></span>'
         + '<span class="qv' + (left < 0 ? " neg" : (left ? "" : " dim")) + '">' + fmt(left) + '</span>'
         + '</div>'
         /* الفروع بالأعمدة نفسها: خطّة · صُرف · باقٍ. ومعها ما بقي من
@@ -9931,10 +9939,15 @@ padding:10px 15px;border-top:1px solid var(--line)}
     return '<div class="row lgr itr tap" data-edit="' + esc(it.id) + '">'
       + '<span class="ic" style="background:' + ((c && c.c) || "var(--card-2)") + '22;color:'
       + ((c && c.c) || "var(--ink-3)") + '">' + esc((c && c.e) || "•") + '</span>'
+      /* السببُ بجانب الاسم لا في ذيل السطر: من يقرأ السجلَّ يريد أن
+         يعرف **على ماذا صرف** قبل أن يعرف متى وبأيّ باب. */
       + '<span><b class="nm">' + esc((c && c.n) || "بندٌ محذوف")
-      + (sx ? (' · ' + esc(sx.n)) : "") + '</b>'
+      + (sx ? (' · ' + esc(sx.n)) : "")
+      + (it.t && !/^(إدخال سريع|سُجّل تلقائياً)$/.test(it.t)
+          ? ('<span class="why"> — ' + esc(it.t) + '</span>') : "")
+      + '</b>'
       + '<s class="sub"><em>' + esc(t ? clockAr(t) : (it.d || "")) + '</em> · '
-      + esc(src) + (it.t ? (' · ' + esc(it.t)) : "") + '</s></span>'
+      + esc(src) + '</s></span>'
       + '<span class="lgmv"><span class="lgn out"><s>صُرف</s><b>'
       + fmt(it.a) + '</b></span></span>'
       + '<span class="rt"><button class="del" data-del="' + esc(it.id)
@@ -12102,9 +12115,9 @@ padding:10px 15px;border-top:1px solid var(--line)}
         onOk: function(v, by){
           var a = money(by.amt);
           if(!a) return;
-          var mk = ui.month, before = catTotal(mk, ck);
-          addSpendReason(mk, ck, a, by.why, by.day);
-          logAmt(mk, ck, "", before, catTotal(mk, ck), "add");
+          /* ولا يُكتب لها قيدُ تدقيق: العمليّةُ نفسُها سطرٌ في السجلّ،
+             فالقيدُ يجعلها سطرين لشيءٍ واحد. */
+          addSpendReason(ui.month, ck, a, by.why, by.day);
           toast("سُجّلت " + fmt(a) + (by.why ? (" — " + by.why) : ""));
           flashRow(ck); save(); render();
         } });
@@ -14429,7 +14442,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "0.2-beta+14";
+  var APP_VERSION = "0.2-beta+15";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
