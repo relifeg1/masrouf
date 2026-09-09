@@ -12173,20 +12173,27 @@ padding:10px 15px;border-top:1px solid var(--line)}
   var WIDE_OF = ["ptab", "ecard", "mstrip", "own", "acct", "invpath", "yrow", "eled",
                  "instbox", "tl", "subrow", "distcard"];
   var NARROW_OF = ["alrt", "clsbar", "capline", "netrow", "esum"];
+  /* يُجمع الشاهدان من الوحدة كلِّها ثمّ يُحكم — لا يُرجَع أوّلُ ما
+     يُصادَف. فشريطُ «موزّع على الفروع» يظهر داخل قائمة البنود متى
+     فُرّع بندٌ واحد، وهو علامةُ ضيقٍ في مواضعَ أخرى؛ فكان ظهورُه يقلب
+     حكمَ أكبرِ قائمةٍ في الشاشة إلى «ملخّصٍ يكفيه الضيّق».
+     **ودليلُ العرض يعلو**: ما فيه شاهدُ عرضٍ عريضٌ وإن كان فيه شاهدُ
+     ضيق، ولا يُقال «ضيّق» إلّا حين لا عرضَ فيه أصلاً. */
   function wantsWide(els){
+    var wide = false, narrow = false;
     for(var i = 0; i < els.length; i++){
       var el = els[i];
       if(!el.querySelector) continue;
-      for(var j = 0; j < NARROW_OF.length; j++)
-        if(el.querySelector("." + NARROW_OF[j])) return false;
       for(var k = 0; k < WIDE_OF.length; k++)
-        if(el.querySelector("." + WIDE_OF[k])) return true;
+        if(el.querySelector("." + WIDE_OF[k])){ wide = true; break; }
+      for(var j = 0; j < NARROW_OF.length; j++)
+        if(el.querySelector("." + NARROW_OF[j])){ narrow = true; break; }
       /* قائمة من ستّة صفوف فأكثر تستفيد من العرض */
       var rows = el.querySelectorAll(".row, .grow, .cmp, .mrow, .item");
-      if(rows.length >= 6) return true;
-      if(rows.length && rows.length <= 3) return false;
+      if(rows.length >= 6) wide = true;
+      else if(rows.length && rows.length <= 3) narrow = true;
     }
-    return null;
+    return wide ? true : (narrow ? false : null);
   }
   /* خمس عائلات. والترتيب داخل كلٍّ هو ترتيب ورودها في الشاشة. */
   var SET_FAM = [
@@ -12355,16 +12362,20 @@ padding:10px 15px;border-top:1px solid var(--line)}
       wrap.appendChild(box);
     }
     /* كم وحدة متتالية غير عابرة؟ أقلّ من اثنتين لا تستحق عمودين */
-    /* بصمةُ الطقم: الشاشة · وأسماء الأقسام · وعرض النافذة. فإن لم
-       تتغيّر أُعيد كلُّ قسمٍ إلى عموده، وإلا وُزّع من جديد. */
+    /* بصمةُ الطقم: **الشاشةُ وعرضُ النافذة** لا غير. وكانت تحوي أسماءَ
+       الأقسام، فظهورُ قسمٍ واحدٍ جديد يُبطل المواضعَ كلَّها ويُعيد
+       توزيعَ الصفحة بالارتفاعات — فينتقل ما لم يُمسّ. والآن يُوضع
+       الجديدُ وحدَه ويثبت القديمُ حيث كان. */
     var _names = [];
     seq.forEach(function(u, i){ if(!u.span) _names.push(unitName(u, i)); });
-    var _sig = (ui.tab || "") + "|" + _names.join("§") + "|"
-             + (window.innerWidth < 1500 ? "s" : "w");
+    var _sig = (ui.tab || "") + "|" + (window.innerWidth < 1500 ? "s" : "w");
     var _tk = ui.tab || "dash";
     var _mem = _colMem[_tk];
-    var _keep = !!(_mem && _mem.sig === _sig);
-    if(!_keep){ _mem = _colMem[_tk] = { sig: _sig, side: {} }; }
+    if(!_mem || _mem.sig !== _sig) _mem = _colMem[_tk] = { sig: _sig, side: {} };
+    /* وما غاب من الأقسام يُنسى — فلا تنمو الذاكرةُ بلا حدّ */
+    var _live = {};
+    _names.forEach(function(n){ _live[n] = 1; });
+    for(var _old in _mem.side){ if(!_live[_old]) delete _mem.side[_old]; }
 
     seq.forEach(function(u, i){
       if(u.span){
@@ -12375,7 +12386,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
       if(!box) openBox();
 
       var _nm = unitName(u, i);
-      if(_keep && _mem.side[_nm]){
+      if(_mem.side[_nm]){
         var tt = (_mem.side[_nm] === "A") ? colA : colB;
         u.els.forEach(function(e){ tt.appendChild(e); });
         return;
@@ -15014,7 +15025,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "0.2-beta+22";
+  var APP_VERSION = "0.2-beta+23";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
