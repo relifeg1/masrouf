@@ -1915,6 +1915,9 @@ opacity:.45}
 /* ══ صفحة حسابات البنود ══ */
 /* ما تحرّره الأقساط المنتهية — خبرٌ مطمئنٌّ لا تحذير */
 .freefree{color:var(--ok)}
+/* وسمُ القيد: يُميَّز من العمليّة، فحذفُه لا يردّ مالاً */
+.lgmark{font-size:9px;color:var(--ink-3);background:var(--card-2);
+border-radius:99px;padding:1px 6px;margin-inline-start:6px}
 /* الفرعُ بعد أبيه بلونٍ أخفّ — فيُقرأ الأبُ أوّلاً */
 .lgr .nm .subn{color:var(--ink-2);font-weight:400}
 /* سببُ العمليّة بجانب اسمها — يُقرأ معه لا بعده */
@@ -10398,6 +10401,34 @@ padding:10px 15px;border-top:1px solid var(--line)}
     return "e:" + num(e.t) + ":" + String(e.c || "") + ":" + String(e.s || "");
   }
   function logSel(){ return ui.logSel || (ui.logSel = {}); }
+  /* قيدُ صرفٍ على بندٍ قائم — وحدَه يُرجَع. أمّا الخطّةُ والدخلُ
+     والهدفُ والمحفظةُ فأبوابُها غيرُ هذا، ولا يُدَّعى فيها ما ليس. */
+  function canRevert(e){
+    if(!e || LOGFAM[e.k] !== "sp") return false;
+    var c = String(e.c || "");
+    if(!c || c.indexOf(":") >= 0) return false;
+    if(!catOf(c)) return false;
+    if(e.s && !subOf(catOf(c), e.s)) return false;   /* فرعٌ حُذف */
+    return true;
+  }
+  /* المرجَعُ إليه لكلّ بندٍ أو فرع: قيمةُ **أقدمِ** قيدٍ محدَّد —
+     فالتراجعُ عن السلسلة كلِّها لا عن آخر حلقةٍ فيها. */
+  function revertTargets(ens){
+    var by = {};
+    ens.forEach(function(e){
+      if(!canRevert(e)) return;
+      var k = String(e.c) + "|" + String(e.s || "");
+      if(!by[k] || num(e.t) < num(by[k].t))
+        by[k] = { c: e.c, s: e.s || "", f: num(e.f), t: num(e.t) };
+    });
+    var out = [];
+    for(var k2 in by) out.push(by[k2]);
+    return out;
+  }
+  function revertName(r){
+    var c = catOf(r.c), sx = r.s ? subOf(c, r.s) : null;
+    return ((c && c.n) || r.c) + (sx ? (" · " + sx.n) : "");
+  }
   function logSelN(){ var n = 0, S = logSel(); for(var k in S) if(S[k]) n++; return n; }
   /* ما حُدّد من المعروض: عددُه ومجموعُه وما فيه من أمنيات */
   function logSelStat(rows){
@@ -10427,7 +10458,10 @@ padding:10px 15px;border-top:1px solid var(--line)}
       + '<span class="ic" style="background:var(--card-2)">' + esc(sj.e) + '</span>'
       + '<span><b class="nm">' + sj.n + '</b>'
       + '<s class="sub"><em>' + esc(clockAr(e.t)) + '</em> · '
-      + esc(LOGKIND[e.k] || "تعديل") + '</s></span>'
+      + esc(LOGKIND[e.k] || "تعديل")
+      + '<span class="lgmark" title="'
+      + esc("قيدٌ: أثرٌ يقول ما تغيّر — حذفُه يمحو السطر ويُبقي الرقم")
+      + '">أثر</span></s></span>'
       /* الرقمان مسمَّيان: «كان» و«صار» — فلا يُخمَّن أيُّهما قبل */
       + '<span class="lgmv"><span class="lgn"><s>كان</s><b>'
       + fmt(e.f) + '</b></span><i>←</i>'
@@ -12714,21 +12748,41 @@ padding:10px 15px;border-top:1px solid var(--line)}
       var ens = (m.log || []).filter(function(e){
         return S["e:" + num(e.t) + ":" + String(e.c || "") + ":" + String(e.s || "")]; });
       if(!its.length && !ens.length){ toast("لم تحدّد شيئاً"); return; }
+      var RT = revertTargets(ens);
+      var noRev = ens.length - ens.filter(canRevert).length;
+      var fB = [];
+      if(RT.length)
+        fB.push({ key: "back", label: "والأرقام؟", type: "select", value: "",
+          options: [{ v: "", n: "احذف القيودَ فقط — الأرقامُ تبقى كما هي" },
+                    { v: "1", n: "وأرجِعِ الأرقام — "
+                        + RT.slice(0, 2).map(function(r){
+                            return "«" + revertName(r) + "» إلى " + fmt(r.f);
+                          }).join(" · ")
+                        + (RT.length > 2 ? (" و" + (RT.length - 2) + " غيرها") : "") }] });
       ask({ title: "حذفُ " + (its.length + ens.length) + " سطراً",
+        fields: fB,
         msg: (its.length
                ? ("<b>" + its.length + "</b> عمليّةً بمجموع <b>" + fmt(money(sum))
                   + "</b> تُحذف، ويعود مالُها إلى حساباتها إن كانت مربوطة.")
                : "")
              + (ens.length
                  ? ((its.length ? " و" : "") + "<b>" + ens.length
-                    + "</b> قيدَ تدقيقٍ يُمحى — والقيدُ أثرٌ لا مال.")
+                    + "</b> قيدَ تدقيقٍ يُمحى. <b>والقيدُ أثرٌ لا مال</b>: "
+                    + "حذفُه يمحو السطرَ ويُبقي الرقمَ كما هو"
+                    + (RT.length
+                        ? " — فإن أردتَ التراجعَ عن الخطوة نفسِها فاختره أدناه."
+                        : ".")
+                    + (noRev
+                        ? (" و<b>" + noRev + "</b> منها لا يُرجَع "
+                           + "(خطّةٌ أو دخلٌ أو هدفٌ أو فرعٌ حُذف) — يُمحى أثرُه فقط.")
+                        : ""))
                  : "")
              + (wsh.length
                  ? ("<br><br>وفيها شراءُ <b>" + esc(wsh.join(" · "))
                     + "</b> — يُفكّ رباطُها وتعود إلى أمنياتك.")
                  : ""),
         ok: "احذفها", danger: true,
-        onOk: function(){
+        onOk: function(v, by){
           /* قيدٌ واحدٌ لكلّ بندٍ لا قيدٌ لكلّ عمليّة: من يحذف عشرين
              سطراً يريد سجلّاً أنظف، لا عشرين سطرَ حذفٍ مكانها. */
           var b0 = {};
@@ -12755,11 +12809,24 @@ padding:10px 15px;border-top:1px solid var(--line)}
               return !kill["e:" + num(e.t) + ":" + String(e.c || "")
                            + ":" + String(e.s || "")]; });
           }
-          /* والقيدُ يُكتب بعد محو القيود المحدَّدة، فلا يُمحى معها */
+          /* قيدُ الحذف يُكتب **قبل** الإرجاع وبعد محو القيود المحدَّدة:
+             فلا يُمحى مع ما مُحي، ولا يخلط أثرَ الحذف بأثر الإرجاع —
+             وكلٌّ منهما له قيدُه. */
           for(var ck0 in b0)
             logAmt(ui.month, ck0, "", b0[ck0], catTotal(ui.month, ck0), "del");
+          /* ثمّ الإرجاعُ إن طُلب — و`setQuick` يكتب قيدَه بنفسه */
+          var nBack = 0;
+          if(by && by.back === "1"){
+            RT.forEach(function(r){
+              if(!canRevert({ k: "q", c: r.c, s: r.s })) return;
+              if(r.s) setQuickSub(ui.month, r.c, r.s, r.f);
+              else setQuick(ui.month, r.c, r.f);
+              nBack++;
+            });
+          }
           ui.logSel = {};
-          toast("حُذف " + (its.length + ens.length) + " سطراً");
+          toast("حُذف " + (its.length + ens.length) + " سطراً"
+                + (nBack ? (" · ورجع " + nBack + (nBack === 1 ? " بند" : " بنود")) : ""));
           save();
         } });
     });
@@ -15305,7 +15372,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "0.2-beta+25";
+  var APP_VERSION = "0.2-beta+26";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
