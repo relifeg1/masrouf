@@ -117,7 +117,7 @@ h1,h2,h3{font-family:"Alexandria","IBM Plex Sans Arabic",sans-serif;margin:0;lin
 
 .card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);margin-bottom:14px}
 .card.p{padding:16px}
-.sec{display:flex;align-items:baseline;justify-content:space-between;margin:20px 2px 9px}
+.sec{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:20px 2px 9px}
 /* بطاقةٌ ذاتُ حدٍّ يليها عنوانُ قسم: عشرون بكسلاً تُقرأ التصاقاً */
 .card + .sec, .hintnote + .sec{margin-top:30px}
 .sec h2{font-size:15px;font-weight:600}
@@ -1942,7 +1942,8 @@ letter-spacing:.04em;padding:5px 10px;text-align:start}
 .lgr.picking{grid-template-columns:26px 34px minmax(0,1fr) auto auto}
 .lgpick{display:flex;align-items:center;justify-content:center}
 .lgpick input{width:17px;height:17px;accent-color:var(--accent);cursor:pointer;margin:0}
-.lgpg.lgedit{background:var(--card-2);border-top:1px solid var(--line)}
+.lgpg.lgedit{background:var(--card-2);border-top:0;border-bottom:1px solid var(--line);
+position:sticky;top:0;z-index:2}
 .lgpg .mini.bad[disabled]{opacity:.35}
 .lgpg .mini.bad:not([disabled]){color:var(--warn);border-color:var(--warn)}
 /* شريطُ تقليب السجلّ */
@@ -10309,8 +10310,14 @@ padding:10px 15px;border-top:1px solid var(--line)}
     var total = show.length;
     show = allOn ? show.slice(0, 300) : pages[pg];
 
+    /* زرُّ التعديل في العنوان لا في ذيل البطاقة: وضعتُه أسفلَ السجلّ
+       بجانب «امسح القيود» فلم يجده صاحبُه — وما يُبحَث عنه يُوضع حيث
+       يُنظَر أوّلاً. */
     var h = '<div class="sec"><h2>سجلُّ المتابعة</h2>'
-      + '<span class="hint">كلُّ ما جرى لمالك في ' + esc(mName(k)) + '</span></div>'
+      + '<span class="hint">كلُّ ما جرى لمالك في ' + esc(mName(k)) + '</span>'
+      + '<button class="mini' + (ui.logEdit ? " on" : "") + '" data-logedit="'
+      + (ui.logEdit ? "0" : "1") + '" style="margin-inline-start:auto">'
+      + (ui.logEdit ? "أنهِ التعديل" : "✎ تعديل") + '</button></div>'
       + '<div class="wfil lfil">'
       + LOGFAMS.map(function(f){
           var n = f.k ? (cnt[f.k] || 0) : rows.length;
@@ -10320,6 +10327,22 @@ padding:10px 15px;border-top:1px solid var(--line)}
             + '<i>' + n + '</i></button>';
         }).join("")
       + '</div><div class="card">';
+
+    /* شريطُ التحديد فوق الصفوف لا تحتها: من ضغط «تعديل» يرى فورَه ما
+       يستطيع فعله، ولا يُطالَب بأن ينزل إلى ذيل السجلّ ليجده. */
+    if(ui.logEdit){
+      var ST = logSelStat(show);
+      h += '<div class="lgpg lgedit">'
+        + '<button class="mini" data-logpickall="1">اختر ما يظهر</button>'
+        + '<button class="mini" data-logpickall="0">أزِل التحديد</button>'
+        + '<span class="lgn">' + (ST.n
+            ? (ST.n + (ST.n === 1 ? " سطر" : " سطراً")
+               + (ST.sum ? (" · مجموعُ عمليّاته " + fmt(ST.sum)) : ""))
+            : "حدّد ما تريد حذفه") + '</span>'
+        + '<button class="mini bad" data-logdel="1"'
+        + (ST.n ? "" : " disabled") + '>احذف المحدَّد</button>'
+        + '</div>';
+    }
 
     if(!show.length){
       h += '<div class="empty"><b>لا شيءَ في هذا الباب</b>'
@@ -10358,28 +10381,11 @@ padding:10px 15px;border-top:1px solid var(--line)}
                + 'أظهِر كلَّ عمليّات الشهر</button>'))
         + '</div>';
     }
-    if(ui.logEdit){
-      var ST = logSelStat(show);
-      h += '<div class="lgpg lgedit">'
-        + '<button class="mini" data-logpickall="1">اختر ما يظهر</button>'
-        + '<button class="mini" data-logpickall="0">أزِل التحديد</button>'
-        + '<span class="lgn">' + (ST.n
-            ? (ST.n + (ST.n === 1 ? " سطر" : " سطراً")
-               + (ST.sum ? (" · مجموعُ عمليّاته " + fmt(ST.sum)) : ""))
-            : "لم تحدّد شيئاً بعد") + '</span>'
-        + '<button class="mini bad" data-logdel="1"'
-        + (ST.n ? "" : " disabled") + '>احذف المحدَّد</button>'
-        + '<button class="mini" data-logedit="0">انتهيت</button>'
-        + '</div>';
-    }
     h += '<div class="wact">'
-      + '<button class="mini' + (ui.logEdit ? " on" : "") + '" data-logedit="'
-      + (ui.logEdit ? "0" : "1") + '">'
-      + (ui.logEdit ? "أنهِ التعديل" : "تعديل") + '</button>'
       + '<button class="mini" data-logclr="1">امسح قيودَ الشهر</button>'
       + '<span class="lgnote">'
       + (ui.logEdit
-          ? 'حدّد ما دخل خطأً واحذفه جملةً — أو اضغط سطراً واحداً لتحديده.'
+          ? 'حدّد ما دخل خطأً واحذفه جملةً من الشريط أعلاه.'
           : 'تُمسح القيودُ وحدَها — العملياتُ ومبالغُها لا تُمسّ.')
       + '</span></div></div>';
     return h;
@@ -15299,7 +15305,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "0.2-beta+24";
+  var APP_VERSION = "0.2-beta+25";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
