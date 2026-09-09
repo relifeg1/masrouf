@@ -10908,9 +10908,44 @@ padding:10px 15px;border-top:1px solid var(--line)}
       var need = subsSum(c, mk);
       if(v < need){ toast("لا يقل عن مجموع الفروع (" + fmt(need) + ")"); v = need; }
       setP(mk, c.k, v);                    /* دائماً خطة ذلك الشهر وحده */
-    } else {
-      setQuick(mk, c.k, v);
+      return;
     }
+    /* صرفُ الاستثمار إيداعٌ في محافظه لا عمليّةٌ في بنده — فيُصرَف ما
+       يُكتب هنا إلى مصدره الوحيد، ولا يُصنع له بابٌ ثانٍ يُعدّ مرّتين. */
+    if(isInvCat(c)){
+      var L = state.invest || [];
+      if(!L.length){ toast("لا محافظَ — أضِف محفظةً من شاشة الاستثمار"); return; }
+      if(L.length === 1){
+        setInvQuick(mk, L[0].id, v);
+        toast("أُودع " + fmt(v) + " في «" + L[0].n + "»");
+        return;
+      }
+      /* أكثرُ من محفظة: لا يُخمَّن عنك — يُقسَم بيدك */
+      askInvSplit(mk, v);
+      return;
+    }
+    setQuick(mk, c.k, v);
+  }
+  /* قسمةُ مبلغٍ على المحافظ — يُقترح ما هو قائمٌ ويُعدَّل */
+  function askInvSplit(mk, total){
+    var L = state.invest || [];
+    ask({ title: "أودعتَ " + fmt(total) + " — في أيِّ محفظة؟",
+      msg: "اكتب ما أودعتَه في كلٍّ منها. <b>وما تتركه فارغاً لا يُمسّ.</b>",
+      fields: L.map(function(v){
+        return { key: v.id, label: v.e + " " + v.n + " — أودعتَ "
+                   + fmt(invPut(v, mk)), type: "number",
+                 value: invPut(v, mk) || "" };
+      }),
+      ok: "احفظ",
+      onOk: function(vv, by){
+        var n = 0;
+        L.forEach(function(v){
+          var a = by[v.id];
+          if(a === "" || a === undefined) return;
+          setInvQuick(mk, v.id, money(a)); n++;
+        });
+        if(n){ toast("حُدّث إيداعُ " + arNum2(n)); save(); render(); }
+      } });
   }
   function ledgerGrid(y){
     var months = yearMonths(y), now = todayKey(), mode = ledgerMode();
@@ -10935,10 +10970,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
       var tot = 0;
       var tds = months.map(function(mk){
         var v = ledgerVal(c, mk); tot += v;
-        /* صرفُ الاستثمار يُكتب في محافظه لا في بنده — ولو فُتح هنا
-           حقلٌ لصار للرقم بابان ولعُدَّ مرّتين. */
-        var ro = isLocked(mk) || mk > now
-                 || (isInvCat(c) && ledgerMode() !== "plan");
+        var ro = isLocked(mk) || mk > now;
         return '<td class="' + (mk === now ? "now" : "") + '">'
           + (ro
               ? '<span class="lcell ro">' + (v ? fmt(v) : "·") + '</span>'
@@ -10953,8 +10985,8 @@ padding:10px 15px;border-top:1px solid var(--line)}
       + '<div class="lockbar">الأشهر القادمة والمُقفَلة للقراءة فقط. '
       + 'وتعديل شهر مضى يُكتب في خطته وحدها — لا يمسّ خطتك الأساسية.'
       + ((state.invest || []).length && ledgerMode() !== "plan"
-          ? ' وصرفُ <b>الاستثمار</b> يُكتب في محافظه من شاشة المصروف — '
-            + 'فلا يُعدّ مرّتين.' : "")
+          ? ' وما تكتبه في صفّ <b>الاستثمار</b> يصل محافظَك مباشرةً — '
+            + 'فهو إيداعٌ فيها لا عمليّةٌ في بندها، ولا يُعدّ مرّتين.' : "")
       + '</div>'
       + '</div>';
     return h;
@@ -14452,7 +14484,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "0.2-beta+16";
+  var APP_VERSION = "0.2-beta+17";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
