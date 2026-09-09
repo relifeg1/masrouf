@@ -5632,11 +5632,20 @@ padding:10px 15px;border-top:1px solid var(--line)}
       });
     };
     var fire = function(){
-      var v = vals(), fn = dlg.onOk;
+      var v = vals(), fn = dlg.onOk, cur = dlg;
       /* خريطةُ المفاتيح بجانب المصفوفة: حقلٌ يظهر ويغيب يزحزح ما بعده،
          فقراءةُ الموضع تصير قراءةَ غيره. */
       var by = {};
       (dlg.fields || []).forEach(function(x, i){ if(x.key) by[x.key] = v[i]; });
+      /* حارسٌ يردّ سبباً: تبقى النافذةُ مفتوحةً بما كُتب فيها، ويُقال
+         السبب. والإغلاقُ عند المنع يضيّع على صاحبه ما ملأ. */
+      if(typeof cur.guard === "function"){
+        var stop = cur.guard(v, by);
+        if(stop){
+          (cur.fields || []).forEach(function(x, i){ x.value = v[i]; });
+          toast(stop); render(); return;
+        }
+      }
       dlg = null;
       if(fn) fn(v, by);
       render();
@@ -6395,6 +6404,15 @@ padding:10px 15px;border-top:1px solid var(--line)}
   function wishOwn(x, mk){ var g = wishGoal(x); return g ? goalMonthly(g, mk) : 0; }
   /* الثمنُ المعتمَد: متوسّطُ المدى إن كان له مدى، وإلا فرقمُه.
      رقمٌ واحدٌ تُبنى عليه كلُّ الحسابات، فلا يختلف حسابان. */
+  /* ما يصلح للربط: عمليّاتُ الشهر التي لم تُوسَم بأمنيةٍ بعد.
+     والإدخالُ السريع منها: هو مصروفُ البند مجموعاً، وربطُ الأمنية به
+     لا يزيد ريالاً — إنّما يقول «هذه هي». */
+  function wishFreeItems(mk){
+    var m = state.months[mk];
+    if(!m || !m.items) return [];
+    return m.items.filter(function(it){ return it && !it.wish && num(it.a) > 0; })
+      .slice().sort(function(a, b){ return num(b.a) - num(a.a); }).slice(0, 40);
+  }
   function wishPrice(x){
     if(!x) return 0;
     var a = num(x.price || 0), b = num(x.price2 || 0);
@@ -12784,14 +12802,23 @@ padding:10px 15px;border-top:1px solid var(--line)}
       if(!w) return;
       ask({ title: "تراجعٌ عن شراء «" + w.n + "»",
         msg: "تُرفع عمليتُها من " + esc(mName(w.bm || ui.month))
+             + (w.link ? " — بل يُفكّ رباطُها بعمليّتك وتبقى العمليّةُ كما هي"
+                      : "")
              + (w.rs ? "، ويُرفع بندُها الشهريُّ الذي أُنشئ لها" : "")
              + (num(w.ug) > 0 ? ("، ويُردّ إلى خطّتها " + fmt(num(w.ug))) : "")
              + ". وتعود إلى قائمة أمنياتك.",
         ok: "تراجع", danger: true,
         onOk: function(){
           var m = state.months[w.bm];
-          if(m && m.items && w.itm)
-            m.items = m.items.filter(function(it){ return it.id !== w.itm; });
+          if(m && m.items && w.itm){
+            if(w.link){
+              /* عمليّتُه هو — يُفكّ الرباطُ ولا تُمحى */
+              (m.items || []).forEach(function(it){
+                if(it.id === w.itm) delete it.wish; });
+            } else {
+              m.items = m.items.filter(function(it){ return it.id !== w.itm; });
+            }
+          }
           if(w.rs){
             var pr2 = String(w.rs).split("|"), c2 = catOf(pr2[0]);
             if(c2 && c2.subs)
@@ -12801,7 +12828,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
           if(g2 && num(w.ug) > 0){ g2.saved = num(g2.saved) + num(w.ug); }
           if(g2){ g2.arch = false; if(num(w.ur) > 0) g2.m = num(w.ur); }
           w.bought = false; w.arch = false;
-          delete w.bm; delete w.bat; delete w.paid; delete w.itm;
+          delete w.bm; delete w.bat; delete w.paid; delete w.itm; delete w.link;
           delete w.rs; delete w.ug; delete w.ur; delete w.use; delete w.useAt;
           toast("رُجع عن الشراء");
           save();
@@ -12903,43 +12930,84 @@ padding:10px 15px;border-top:1px solid var(--line)}
       if(!w) return;
       /* تصير مصروفاً في بندها: فلا تُكتب مرّتين ولا تُنسى */
       var gB = wishGoal(w), gotB = wishGot(w);
-      var fB = [{ label: "البند", type: "select",
-                  value: w.cat || (state.cats[0] || {}).k || "",
-                  options: catOptions() },
-                { label: "المبلغ المدفوع", type: "number", value: wishPrice(w) },
-                { label: "كلفةٌ شهريّةٌ بعدها (اختياري)", type: "number",
-                  value: w.run || "" }];
+      var pxB = wishPrice(w);
+      /* عمليّاتُ الشهر المفتوح التي لا أمنيةَ لها — يُربط بإحداها بدل
+         أن يُكتب المبلغُ ثانيةً. وما وافق سعرَها يُقترح. */
+      var free = wishFreeItems(ui.month);
+      var hit = null;
+      free.forEach(function(it){ if(!hit && num(it.a) === pxB) hit = it; });
+      var srcOpts = [{ v: "", n: "عمليّةٌ جديدة بـ" + fmt(pxB) }].concat(
+        free.map(function(it){
+          var c0 = catOf(it.c);
+          return { v: it.id, n: fmt(it.a) + " · " + ((c0 && c0.n) || "بلا بند")
+                     + " · " + (it.d || "") + (it.t ? (" · " + it.t) : "") };
+        }));
+      var fB = [{ key: "cat", label: "البند", type: "select",
+                  value: w.cat || "",
+                  options: [{ v: "", n: "— اختر البند —" }].concat(catOptions()) },
+                { key: "amt", label: "المبلغ المدفوع", type: "number", value: pxB }];
+      if(free.length)
+        fB.push({ key: "src", label: "مصدرُ المبلغ", type: "select",
+                  value: hit ? hit.id : "", options: srcOpts });
+      fB.push({ key: "run", label: "كلفةٌ شهريّةٌ بعدها (اختياري)",
+                type: "number", value: w.run || "" });
       /* لها خطّة: أمن مالها تدفع أم من جيبك؟ */
       if(gB && gotB > 0)
-        fB.push({ label: "من أين تدفع؟", type: "select", value: "goal",
+        fB.push({ key: "pay", label: "من أين تدفع؟", type: "select", value: "goal",
                   options: [{ v: "goal", n: "من خطّتها · اجتمع فيها " + fmt(gotB) },
                             { v: "cash", n: "من جيبي — واترك مُدَّخرها" }] });
       ask({ title: "اشتريتَ «" + w.n + "»",
-        msg: "تُسجَّل مصروفاً في الشهر المفتوح. اختر بندها."
+        msg: "تُسجَّل مصروفاً في الشهر المفتوح. <b>اختر بندها</b>."
+             + (hit ? (' وفي شهرك عمليّةٌ بمبلغها — <b>اقتُرحت لك</b> '
+                       + 'فلا يُسجَّل المبلغُ مرّتين.')
+                    : (free.length ? ' وإن كنتَ سجّلتَ مصروفَها فاربِطها به '
+                                     + 'من «مصدر المبلغ».' : ""))
+             + ' و«الكلفةُ الشهريّةُ بعدها» ما تدفعه شهريّاً <b>بسبب</b> '
+             + 'هذا الشراء بعد تمامه — اشتراكٌ أو تأمينٌ أو صيانة؛ يصير '
+             + 'بنداً ثابتاً في خطّتك. واتركه فارغاً إن لم يكن لها كلفةٌ متكرّرة.'
              + (gB ? " وخطّتُها تُؤرشف بعدها فلا يُقتطع لها قسط." : ""),
         fields: fB,
         ok: "سجّلها مصروفاً",
-        onOk: function(v){
-          /* القائمةُ تعرض الفروعَ أيضاً بصيغة «بند|فرع» — فيُفصلان،
-             وإلا صارت العمليةُ بلا بندٍ يعرفه أحد. */
-          var pr = String(v[0]).split("|");
-          var m = month(ui.month);
-          var it = { id: uid(), c: pr[0], a: num(v[1]), t: w.n,
-                     d: defaultDate(), at: Date.now() };
-          if(pr[1]) it.s = pr[1];
-          var _b = catTotal(ui.month, pr[0]);
-          m.items.push(it);
-          logAmt(ui.month, pr[0], pr[1] || "", _b, catTotal(ui.month, pr[0]), "buy");
+        /* لا تُسجَّل بلا بند — إلّا أن تُربط بعمليّةٍ لها بندُها */
+        guard: function(v, by){
+          var lk = by.src ? byId((state.months[ui.month] || {}).items || [], by.src) : null;
+          if(!lk && !String(by.cat || "")) return "اختر البندَ أوّلاً";
+          if(!lk && !num(by.amt)) return "اكتب المبلغَ المدفوع";
+          return "";
+        },
+        onOk: function(v, by){
+          var m = month(ui.month), pr, it;
+          /* مربوطةٌ بعمليّةٍ قائمة: لا يُصنع لها مبلغٌ ثانٍ — تُوسَم
+             بالأمنية فحسب، وبندُها بندُ العمليّة. */
+          var lk = by.src ? byId(m.items || [], by.src) : null;
+          if(lk){
+            pr = [lk.c, lk.s || ""];
+            it = lk;
+            it.wish = w.id;
+            if(!it.t) it.t = w.n;
+            w.link = 1;                       /* لا تُحذف عند التراجع */
+          } else {
+            /* القائمةُ تعرض الفروعَ أيضاً بصيغة «بند|فرع» — فيُفصلان،
+               وإلا صارت العمليةُ بلا بندٍ يعرفه أحد. */
+            pr = String(by.cat).split("|");
+            it = { id: uid(), c: pr[0], a: num(by.amt), t: w.n,
+                   d: defaultDate(), at: Date.now(), wish: w.id };
+            if(pr[1]) it.s = pr[1];
+            var _b = catTotal(ui.month, pr[0]);
+            m.items.push(it);
+            logAmt(ui.month, pr[0], pr[1] || "", _b, catTotal(ui.month, pr[0]), "buy");
+            delete w.link;
+          }
           w.bought = true;
           w.bm = ui.month;                    /* ليُحسب في سقف كماليّات شهره */
           w.bat = Date.now();                 /* وليُسأل عنه بعد شهر */
-          w.paid = num(v[1]);
+          w.paid = num(it.a);
           w.itm = it.id;                      /* وليُتراجَع عنه */
-          w.run = Math.max(0, num(v[2]));
+          w.run = Math.max(0, num(by.run));
           /* تسويةُ خطّتها: تُؤرشف دائماً، ويُسحب منها إن اختار ذلك */
           if(gB){
             w.ug = 0;
-            if(v[3] === "goal"){
+            if(by.pay === "goal"){
               if(goalFromAccts(gB)){
                 toast("مالُ خطّتها في حساباتٍ مربوطة — انقله بنفسك");
               } else {
@@ -14744,7 +14812,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "0.2-beta+19";
+  var APP_VERSION = "0.2-beta+20";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
