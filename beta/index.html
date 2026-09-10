@@ -12565,8 +12565,8 @@ padding:10px 15px;border-top:1px solid var(--line)}
     /* ٢ · افصلهم عن الصفحة ثم أعِدهم بالترتيب نفسه */
     kids.forEach(function(el){ wrap.removeChild(el); });
 
-    var box = null, colA = null, colB = null;
-    function closeBox(){ box = colA = colB = null; }
+    var box = null, colA = null, colB = null, wideAt = null;
+    function closeBox(){ box = colA = colB = null; wideAt = null; }
     function openBox(){
       box = document.createElement("div"); box.className = "colwrap";
       colA = document.createElement("div"); colA.className = "colA";
@@ -12599,22 +12599,33 @@ padding:10px 15px;border-top:1px solid var(--line)}
       if(!box) openBox();
 
       var _nm = unitName(u, i);
+      /* الوجهة بالمعنى لا بالارتفاع:
+         ما فيه جدول أو قائمة أعمدة يحتاج عرضاً · وما هو ملخّص أو تنبيه
+         يكفيه الضيّق · وما لا يُعرف يذهب للعمود الأقصر. */
+      var pref = wantsWide(u.els);
+
+      /* ══ جسدُ الصفحة يُرسى ══
+         ما يحتاج العرضَ لا يُقرأ من ذاكرةٍ ولا يُزاحَم بميلان الأطوال:
+         يُحسب كلَّ رسمةٍ ويقع في العريض. فالذاكرةُ التي تمنع القفزَ
+         كانت تسجن قراراً اتُّخذ والقائمةُ قصيرة، والموازنةُ كانت تُخرجه
+         من حقّه متى طال جارُه. وأوّلُ عريضٍ أحقُّ، فإن جاء ثانٍ نزل
+         الضيّق. */
+      if(pref === true){
+        var tw = wideAt ? colB : colA;
+        if(!wideAt) wideAt = 1;
+        _mem.side[_nm] = (tw === colA) ? "A" : "B";
+        u.els.forEach(function(e){ tw.appendChild(e); });
+        return;
+      }
+
       if(_mem.side[_nm]){
         var tt = (_mem.side[_nm] === "A") ? colA : colB;
         u.els.forEach(function(e){ tt.appendChild(e); });
         return;
       }
 
-      /* الوجهة بالمعنى لا بالارتفاع:
-         ما فيه جدول أو قائمة أعمدة يحتاج عرضاً · وما هو ملخّص أو تنبيه
-         يكفيه الضيّق · وما لا يُعرف يذهب للعمود الأقصر. */
-      var pref = wantsWide(u.els);
       var ha = colA.offsetHeight, hb = colB.offsetHeight, t;
-      if(pref === true){
-        /* العرض حقّه — إلا أن يطول العمود العريض حتّى يترك جاره
-           فارغاً بمئات البكسلات. عندها الموازنة أولى من العرض. */
-        t = (ha > hb + 420) ? colB : colA;
-      } else if(pref === false){
+      if(pref === false){
         /* ملخّص أو تنبيه: الضيّق يكفيه — إلا أن يُفرِغ العريض */
         t = (hb > ha + 160) ? colA : colB;
       } else {
@@ -15347,7 +15358,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "0.2-beta+27";
+  var APP_VERSION = "0.2-beta+28";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
