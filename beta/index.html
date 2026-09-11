@@ -2264,10 +2264,6 @@ padding:10px 15px;border-top:1px solid var(--line)}
     return y + "-" + pad(m);
   }
   var AR_M = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
-  function mNameH(k){
-    var h = hijriMonthOf(k);
-    return mName(k) + (h ? " · " + h : "");
-  }
   function mName(k){ return AR_M[+k.slice(5) - 1] + " " + k.slice(0,4); }
   /* تمييز العدد بالعربية: شهر · شهران · ٣-١٠ أشهر · ما فوق شهراً */
   function arMonths(n){
@@ -2287,10 +2283,6 @@ padding:10px 15px;border-top:1px solid var(--line)}
   /* ── العملة والأرقام ──
      «ريال» كانت مكتوبة في خمسة وأربعين موضعاً؛ صارت رمزاً واحداً. */
   function cur(){ return state.cur === undefined ? "ريال" : String(state.cur); }
-  function curShort(){
-    var c = cur();
-    return c === "ريال" ? "ر.س" : c;
-  }
   var AR_DIGITS = "\u0660\u0661\u0662\u0663\u0664\u0665\u0666\u0667\u0668\u0669";
   function arNum(str){
     return String(str).replace(/[0-9]/g, function(d){ return AR_DIGITS.charAt(+d); });
@@ -2975,6 +2967,78 @@ padding:10px 15px;border-top:1px solid var(--line)}
     });
     return out;
   }
+  /* ═══ آلةُ السجلّات الثلاثة ═══
+     المتابعةُ والأظرفُ والأمنياتُ تُبنى بها جميعاً: أبوابٌ تُصفّي ·
+     رؤوسُ أيّام · صفحاتٌ عشرُ سطورٍ أو يوما عملٍ — أيّهما أوّل، واليومُ
+     الواحدُ لا ينقسم بين صفحتين · وبابُ «أظهِر الكلّ».
+     وكانت مكتوبةً ثلاثَ مرّاتٍ حرفاً بحرف، فمن أصلح واحدةً ترك اثنتين.
+     و`key` يجمع كلَّ شيء: حالتُه `ui[key+"Fil"]` ومقبضُه
+     `data-<key>fil` — فلا اسمَ يتغيّر بالجمع. */
+  function pagedLog(key, rows, at, fam){
+    var fil = ui[key + "Fil"] || "", cnt = {};
+    rows.forEach(function(r){ var f = fam(r); cnt[f] = (cnt[f] || 0) + 1; });
+    var show = rows.filter(function(r){ return !fil || fam(r) === fil; });
+    var PAGE_N = 10, PAGE_D = 2;
+    var pages = [], cur = [], seen = {}, dn = 0;
+    show.forEach(function(r){
+      var dl = dayLabel(at(r)), fresh = !seen[dl];
+      if(cur.length && (cur.length >= PAGE_N || (fresh && dn >= PAGE_D))){
+        pages.push(cur); cur = []; seen = {}; dn = 0; fresh = true;
+      }
+      if(!seen[dl]){ seen[dl] = 1; dn++; }
+      cur.push(r);
+    });
+    if(cur.length) pages.push(cur);
+    if(!pages.length) pages = [[]];
+    var allOn = !!ui[key + "All"];
+    var pg = Math.max(0, Math.min(num(ui[key + "Page"]) || 0, pages.length - 1));
+    var P = { key: key, fil: fil, cnt: cnt, pages: pages, allOn: allOn,
+              pg: pg, total: show.length, _day: "",
+              rows: allOn ? show.slice(0, 300) : pages[pg] };
+    P.chips = function(fams){
+      return '<div class="wfil lfil">' + fams.map(function(f){
+        var n = f.k ? (cnt[f.k] || 0) : rows.length;
+        if(f.k && !n) return "";
+        return '<button class="chip sm' + (fil === f.k ? " on" : "")
+          + '" data-' + key + 'fil="' + f.k + '">' + esc(f.n)
+          + '<i>' + n + '</i></button>';
+      }).join("") + '</div>';
+    };
+    /* يُطلب لكلّ سطر، ويُرجع فارغاً ما لم يتبدّل اليوم */
+    P.day = function(r){
+      var t = at(r), dl = dayLabel(t);
+      if(dl === P._day) return "";
+      P._day = dl;
+      var d = new Date(t);
+      return '<div class="mrow subh"><span class="mn">' + esc(dl) + '</span>'
+        + '<span class="ds">' + (t ? (d.getFullYear() + "-"
+           + pad(d.getMonth() + 1) + "-" + pad(d.getDate())) : "—")
+        + '</span></div>';
+    };
+    P.empty = function(txt, btn){
+      if(P.rows.length) return "";
+      return '<div class="empty"><b>لا شيءَ في هذا الباب</b>' + txt
+        + '<div class="acts"><button class="act" data-' + key + 'fil="">'
+        + btn + '</button></div></div>';
+    };
+    P.bar = function(unit, allNow, allBtn){
+      if(pages.length <= 1 && !allOn) return "";
+      return '<div class="lgpg">'
+        + (allOn
+            ? ('<span class="lgn">' + allNow + ' — ' + P.total + ' ' + unit + '</span>'
+               + '<button class="mini" data-' + key + 'all="0">أرِني صفحاتٍ</button>')
+            : ('<button class="mini" data-' + key + 'pg="' + (pg - 1) + '"'
+               + (pg <= 0 ? " disabled" : "") + '>‹ السابق</button>'
+               + '<span class="lgn">صفحة ' + (pg + 1) + ' من ' + pages.length
+               + ' · ' + P.total + ' ' + unit + '</span>'
+               + '<button class="mini" data-' + key + 'pg="' + (pg + 1) + '"'
+               + (pg >= pages.length - 1 ? " disabled" : "") + '>التالي ›</button>'
+               + '<button class="mini" data-' + key + 'all="1" style="margin-inline-start:auto">'
+               + allBtn + '</button>'))
+        + '</div>';
+    };
+    return P;
+  }
   /* بابُ الحركة: نقلٌ بين ظرفين، أو سحبٌ، أو إضافة */
   var ENVFAMS = [{ k: "", n: "الكلّ" }, { k: "mv", n: "نقل" },
                  { k: "out", n: "سحب" }, { k: "in", n: "إضافة" }];
@@ -2988,73 +3052,16 @@ padding:10px 15px;border-top:1px solid var(--line)}
     var ALL = envGroups(mk);
     if(!ALL.length) return "";
     var nm = function(x){ var c = catOf(x.k); return c ? (c.e + " " + c.n) : x.k; };
-    var fil = ui.envFil || "";
-    var cnt = {};
-    ALL.forEach(function(g){ var f = envFam(g); cnt[f] = (cnt[f] || 0) + 1; });
-    var show = ALL.filter(function(g){ return !fil || envFam(g) === fil; });
+    var P = pagedLog("env", ALL, function(g){ return g.t; }, envFam);
 
-    /* صفحاتٌ: عشرُ حركاتٍ أو يوما نقلٍ — كسجلِّ المتابعة سواءً بسواء */
-    var PAGE_N = 10, PAGE_D = 2;
-    var pages = [], curP = [], seen = {}, dn = 0;
-    show.forEach(function(g){
-      var dl = dayLabel(g.t), fresh = !seen[dl];
-      if(curP.length && (curP.length >= PAGE_N || (fresh && dn >= PAGE_D))){
-        pages.push(curP); curP = []; seen = {}; dn = 0; fresh = true;
-      }
-      if(!seen[dl]){ seen[dl] = 1; dn++; }
-      curP.push(g);
-    });
-    if(curP.length) pages.push(curP);
-    if(!pages.length) pages = [[]];
-    var allOn = !!ui.envAll;
-    var pg = Math.max(0, Math.min(num(ui.envPage) || 0, pages.length - 1));
-    var total = show.length;
-    var GG = allOn ? show.slice(0, 300) : pages[pg];
-
-    var day = "";
     return '<div class="sec"><h2>سجلُّ الأظرف</h2>'
       + '<span class="hint">' + esc(mName(mk)) + ' — من أين إلى أين</span></div>'
-      + '<div class="wfil lfil">'
-      + ENVFAMS.map(function(f){
-          var n = f.k ? (cnt[f.k] || 0) : ALL.length;
-          if(f.k && !n) return "";
-          return '<button class="chip sm' + (fil === f.k ? " on" : "")
-            + '" data-envfil="' + f.k + '">' + esc(f.n)
-            + '<i>' + n + '</i></button>';
-        }).join("")
-      + '</div>'
+      + P.chips(ENVFAMS)
       + '<div class="card envlog">'
-      + (GG.length ? "" :
-          ('<div class="empty"><b>لا شيءَ في هذا الباب</b>'
-           + 'لم تنقل في ' + esc(mName(mk)) + ' شيئاً من هذا النوع بعد.'
-           + '<div class="acts"><button class="act" data-envfil="">'
-           + 'أرِني كلَّ الحركات</button></div></div>'))
-      + GG.map(function(g){
-          var hd = "", dl = dayLabel(g.t);
-          if(dl !== day){
-            day = dl;
-            var _d = new Date(g.t);
-            hd = '<div class="mrow subh"><span class="mn">' + esc(dl) + '</span>'
-               + '<span class="ds">' + (g.t ? (_d.getFullYear() + "-"
-                  + pad(_d.getMonth() + 1) + "-" + pad(_d.getDate())) : "—")
-               + '</span></div>';
-          }
-          return hd + envLogRow(g, nm);
-        }).join("")
-      + (pages.length > 1 || allOn
-          ? ('<div class="lgpg">'
-             + (allOn
-                 ? ('<span class="lgn">كلُّ حركات الشهر — ' + total + ' حركة</span>'
-                    + '<button class="mini" data-envall="0">أرِني صفحاتٍ</button>')
-                 : ('<button class="mini" data-envpg="' + (pg - 1) + '"'
-                    + (pg <= 0 ? " disabled" : "") + '>‹ السابق</button>'
-                    + '<span class="lgn">صفحة ' + (pg + 1) + ' من ' + pages.length
-                    + ' · ' + total + ' حركة</span>'
-                    + '<button class="mini" data-envpg="' + (pg + 1) + '"'
-                    + (pg >= pages.length - 1 ? " disabled" : "") + '>التالي ›</button>'
-                    + '<button class="mini" data-envall="1" style="margin-inline-start:auto">'
-                    + 'أظهِر كلَّ حركات الشهر</button>'))
-             + '</div>') : "")
+      + P.empty('لم تنقل في ' + esc(mName(mk)) + ' شيئاً من هذا النوع بعد.',
+                'أرِني كلَّ الحركات')
+      + P.rows.map(function(g){ return P.day(g) + envLogRow(g, nm); }).join("")
+      + P.bar('حركة', 'كلُّ حركات الشهر', 'أظهِر كلَّ حركات الشهر')
       + '</div>'
       + '<div class="hintnote" data-note="n7c31ad0">هنا <b>نقلُ المال بين '
       + 'أظرفك</b> وما سحبتَه أو أضفتَه. وأمّا ما <b>صرفتَه</b> من ظرفٍ '
@@ -3121,11 +3128,6 @@ padding:10px 15px;border-top:1px solid var(--line)}
     });
     return money(Math.max(0, out - back));
   }
-  function envOwedAll(mk){
-    var t = 0;
-    catRows().forEach(function(c){ t += envOwed(c, mk); });
-    return money(t);
-  }
   /* أثرُ السحب في هدفٍ يدّخر له البند (س١٠) */
   function envGoalHit(c, amt){
     var g = catGoal(c);
@@ -3170,7 +3172,6 @@ padding:10px 15px;border-top:1px solid var(--line)}
     /* الترتيبُ مقصود: لا يطابق الصياغةَ القديمة، فلا يُبدَّل بنفسه */
     return money(carryOf(c, mk) + catPlan(c, mk) + envDelta(c, mk));
   }
-  function envAvail(c, mk){ return effPlan(c, mk); }
 
   /* ══ أمان الأثر الرجعي ══
      أيّ تعديل على شهر ماضٍ ينزلق إلى كل شهر بعده عبر الترحيل.
@@ -3340,17 +3341,6 @@ padding:10px 15px;border-top:1px solid var(--line)}
     if(!h.length) return 0;
     var s = 0; h.forEach(function(x){ s += x.v; });
     return Math.round(s / h.length);
-  }
-  function sparkline(ck){
-    var h = catHistory(ck, 6);
-    if(h.length < 2) return "";
-    var mx = 1; h.forEach(function(x){ if(x.v > mx) mx = x.v; });
-    var H = 46;
-    return '<div class="spark">' + h.map(function(x, i){
-      return '<span class="sb"><i class="' + (i === h.length - 1 ? "last" : "") + '" style="height:'
-        + Math.max(5, Math.round(x.v / mx * H)) + 'px" title="' + fmt(x.v) + '"></i>'
-        + '<em>' + x.k.slice(5) + '</em></span>';
-    }).join("") + '</div>';
   }
   function prevDataMonth(mk){
     var keys = monthsWithData(), out = null;
@@ -4089,7 +4079,6 @@ padding:10px 15px;border-top:1px solid var(--line)}
   /* صافي ما وضعتَ: الإيداعُ يزيده والسحبُ ينقصه — ويُسمح بالسلب،
      فمن استرجع أكثرَ ممّا وضع فذاك حالُه ولا يُخفى. */
   function invNet(v){ return money(num(v && v["in"])); }
-  function invProfit(v){ return money(invVal(v) - invNet(v)); }
   function invMove(v, kind, amt, mk, note){
     if(!v) return;
     var a = money(amt);
@@ -4153,11 +4142,6 @@ padding:10px 15px;border-top:1px solid var(--line)}
       if(x.k === "out" && x.m === mk) t += num(x.a); });
     return money(t);
   }
-  function invOutAll(v){
-    var t = 0;
-    invMoves(v).forEach(function(x){ if(x.k === "out") t += num(x.a); });
-    return money(t);
-  }
   /* السحبُ: القيمةُ تنقص وصافي ما وضعتَ ينقص — فالربحُ لا يتحرّك */
   function invWithdraw(v, amt, mk){
     var a = money(amt);
@@ -4203,15 +4187,6 @@ padding:10px 15px;border-top:1px solid var(--line)}
     var base = prev + invPut(v, mk);
     if(base <= 0) return null;
     return now / base;                      /* = 1 + r · لا يكون سالباً */
-  }
-  function invReturn(v){
-    var chain = 1, n = 0;
-    invMonthsOf(v).forEach(function(mk){
-      var f = monthFactor(v, mk);
-      if(f === null) return;
-      chain *= f; n++;
-    });
-    return { r: chain - 1, n: n };
   }
   function investReturn(){                    /* المحفظة كلها */
     var ms = {}, chain = 1, n = 0;
@@ -4271,7 +4246,6 @@ padding:10px 15px;border-top:1px solid var(--line)}
   /* ── الحسابات المصرفية ── */
   function accts(){ if(!state.accts) state.accts = []; return state.accts; }
   function acctOf(id){ var a = accts(); for(var i=0;i<a.length;i++) if(a[i].id === id) return a[i]; return null; }
-  function acctTotal(){ var s2 = 0; accts().forEach(function(a){ s2 += num(a.bal); }); return s2; }
   function linkedTo(link){
     return accts().filter(function(a){ return a.link === link; });
   }
@@ -4720,11 +4694,6 @@ padding:10px 15px;border-top:1px solid var(--line)}
     if(m) m.items.forEach(function(it){ if(it.acct === aid) t += num(it.a); });
     return t;
   }
-  function untracked(mk){
-    var m = state.months[mk || ui.month], t = 0;
-    if(m) m.items.forEach(function(it){ if(!it.acct) t += num(it.a); });
-    return t;
-  }
 
   /* ── المرحلة ٥: اللقطة الشهرية ── */
   function snapOf(a){ if(!a.snap) a.snap = {}; return a.snap; }
@@ -4936,7 +4905,6 @@ padding:10px 15px;border-top:1px solid var(--line)}
       if(!g.arch && g.inv === v.id) out = g; });
     return out;
   }
-  function goalHeld(g){ return goalFromAccts(g) || !!goalInv(g); }
   function invVal(v){
     var l = linkedTo("i:" + v.id);
     if(l.length) return linkedSum("i:" + v.id);
@@ -7205,12 +7173,6 @@ padding:10px 15px;border-top:1px solid var(--line)}
     return out;
   }
 
-  function typeFields(x){
-    var t = typeOf(x), f = [];
-    if(t === "seas") f.push({ label: "المبلغ السنوي (يُقسَّم على ١٢)", type: "number", value: num(x.yr) || num(x.p) * 12 });
-    else if(t === "inst") f.push({ label: "عدد الأشهر المتبقّية", type: "number", value: instLeft(x, ui.month) || "" });
-    return f;
-  }
   function applyType(x, t, extra){
     x.t = t;
     if(t === "seas"){
@@ -8520,11 +8482,6 @@ padding:10px 15px;border-top:1px solid var(--line)}
     if(t === "fix") return "need";
     return "want";
   }
-  function clsCount(){
-    var n = 0;
-    visibleCats().forEach(function(c){ if(!c.cls) n++; });
-    return n;
-  }
   var clsDraft = null;
   function classifyDlg(){
     var CS = visibleCats();
@@ -9298,72 +9255,16 @@ padding:10px 15px;border-top:1px solid var(--line)}
   function wishLogHTML(){
     var ALL = wishEvents();
     if(!ALL.length) return "";
-    var fil = ui.wlogFil || "";
-    var cnt = {};
-    ALL.forEach(function(e){ cnt[e.k] = (cnt[e.k] || 0) + 1; });
-    var show = ALL.filter(function(e){ return !fil || e.k === fil; });
+    var P = pagedLog("wlog", ALL, function(e){ return e.t; },
+                     function(e){ return e.k; });
 
-    /* صفحاتٌ: عشرةُ أحداثٍ أو يوما أمنياتٍ — كسجلّ المتابعة */
-    var PAGE_N = 10, PAGE_D = 2;
-    var pages = [], curP = [], seen = {}, dn = 0;
-    show.forEach(function(e){
-      var dl = dayLabel(e.t), fresh = !seen[dl];
-      if(curP.length && (curP.length >= PAGE_N || (fresh && dn >= PAGE_D))){
-        pages.push(curP); curP = []; seen = {}; dn = 0; fresh = true;
-      }
-      if(!seen[dl]){ seen[dl] = 1; dn++; }
-      curP.push(e);
-    });
-    if(curP.length) pages.push(curP);
-    if(!pages.length) pages = [[]];
-    var allOn = !!ui.wlogAll;
-    var pg = Math.max(0, Math.min(num(ui.wlogPage) || 0, pages.length - 1));
-    var total = show.length;
-    var GG = allOn ? show.slice(0, 300) : pages[pg];
-
-    var day = "";
     return '<div class="sec"><h2>سجلُّ أمنياتك</h2>'
       + '<span class="hint">ما أضفتَ وما اشتريتَ ومتى</span></div>'
-      + '<div class="wfil lfil">'
-      + WLOGF.map(function(f){
-          var n = f.k ? (cnt[f.k] || 0) : ALL.length;
-          if(f.k && !n) return "";
-          return '<button class="chip sm' + (fil === f.k ? " on" : "")
-            + '" data-wlogfil="' + f.k + '">' + esc(f.n)
-            + '<i>' + n + '</i></button>';
-        }).join("")
-      + '</div><div class="card">'
-      + (GG.length ? "" :
-          ('<div class="empty"><b>لا شيءَ في هذا الباب</b>'
-           + 'لم يجرِ لأمنياتك شيءٌ من هذا النوع بعد.'
-           + '<div class="acts"><button class="act" data-wlogfil="">'
-           + 'أرِني كلَّ ما جرى</button></div></div>'))
-      + GG.map(function(e){
-          var hd = "", dl = dayLabel(e.t);
-          if(dl !== day){
-            day = dl;
-            var _d = new Date(e.t);
-            hd = '<div class="mrow subh"><span class="mn">' + esc(dl) + '</span>'
-               + '<span class="ds">' + (e.t ? (_d.getFullYear() + "-"
-                  + pad(_d.getMonth() + 1) + "-" + pad(_d.getDate())) : "—")
-               + '</span></div>';
-          }
-          return hd + wishEvRow(e);
-        }).join("")
-      + (pages.length > 1 || allOn
-          ? ('<div class="lgpg">'
-             + (allOn
-                 ? ('<span class="lgn">كلُّ ما جرى — ' + total + ' حدثاً</span>'
-                    + '<button class="mini" data-wlogall="0">أرِني صفحاتٍ</button>')
-                 : ('<button class="mini" data-wlogpg="' + (pg - 1) + '"'
-                    + (pg <= 0 ? " disabled" : "") + '>‹ السابق</button>'
-                    + '<span class="lgn">صفحة ' + (pg + 1) + ' من ' + pages.length
-                    + ' · ' + total + ' حدثاً</span>'
-                    + '<button class="mini" data-wlogpg="' + (pg + 1) + '"'
-                    + (pg >= pages.length - 1 ? " disabled" : "") + '>التالي ›</button>'
-                    + '<button class="mini" data-wlogall="1" style="margin-inline-start:auto">'
-                    + 'أظهِر كلَّ ما جرى</button>'))
-             + '</div>') : "")
+      + P.chips(WLOGF)
+      + '<div class="card">'
+      + P.empty('لم يجرِ لأمنياتك شيءٌ من هذا النوع بعد.', 'أرِني كلَّ ما جرى')
+      + P.rows.map(function(e){ return P.day(e) + wishEvRow(e); }).join("")
+      + P.bar('حدثاً', 'كلُّ ما جرى', 'أظهِر كلَّ ما جرى')
       + '</div>'
       + '<div class="hintnote" data-note="n5b19e2c">هذا السجلُّ <b>يُشتقّ من '
       + 'أمنياتك</b> لا يُخزَّن دفتراً ثانياً — فما حذفتَه منها يخرج منه، '
@@ -10282,33 +10183,9 @@ padding:10px 15px;border-top:1px solid var(--line)}
     rows.sort(function(a2, b2){ return b2.t - a2.t; });
 
     var STEP = itemSteps(k);
-    var fil = ui.logFil || "";
-    var cnt = {};
-    rows.forEach(function(r){
-      var f = LOGFAM[r.kind] || "sp";
-      cnt[f] = (cnt[f] || 0) + 1;
-    });
-    var show = rows.filter(function(r){
-      return !fil || (LOGFAM[r.kind] || "sp") === fil; });
-
-    /* صفحاتٌ: عشرُ عمليّاتٍ أو يوما صرفٍ — أيُّهما أوّل. واليومُ الواحدُ
-       لا ينقسم بين صفحتين، فالقطعُ يقع عند رأس يومٍ ثالث. */
-    var PAGE_N = 10, PAGE_D = 2;
-    var pages = [], curP = [], seen = {}, dn = 0;
-    show.forEach(function(r){
-      var dl = dayLabel(r.t), fresh = !seen[dl];
-      if(curP.length && (curP.length >= PAGE_N || (fresh && dn >= PAGE_D))){
-        pages.push(curP); curP = []; seen = {}; dn = 0; fresh = true;
-      }
-      if(!seen[dl]){ seen[dl] = 1; dn++; }
-      curP.push(r);
-    });
-    if(curP.length) pages.push(curP);
-    if(!pages.length) pages = [[]];
-    var allOn = !!ui.logAll;
-    var pg = Math.max(0, Math.min(num(ui.logPage) || 0, pages.length - 1));
-    var total = show.length;
-    show = allOn ? show.slice(0, 300) : pages[pg];
+    var P = pagedLog("log", rows, function(r){ return r.t; },
+                     function(r){ return LOGFAM[r.kind] || "sp"; });
+    var show = P.rows;
 
     /* زرُّ التعديل في العنوان لا في ذيل البطاقة: وضعتُه أسفلَ السجلّ
        بجانب «امسح القيود» فلم يجده صاحبُه — وما يُبحَث عنه يُوضع حيث
@@ -10318,15 +10195,8 @@ padding:10px 15px;border-top:1px solid var(--line)}
       + '<button class="mini' + (ui.logEdit ? " on" : "") + '" data-logedit="'
       + (ui.logEdit ? "0" : "1") + '" style="margin-inline-start:auto">'
       + (ui.logEdit ? "أنهِ التعديل" : "✎ تعديل") + '</button></div>'
-      + '<div class="wfil lfil">'
-      + LOGFAMS.map(function(f){
-          var n = f.k ? (cnt[f.k] || 0) : rows.length;
-          if(f.k && !n) return "";
-          return '<button class="chip sm' + (fil === f.k ? " on" : "")
-            + '" data-logfil="' + f.k + '">' + esc(f.n)
-            + '<i>' + n + '</i></button>';
-        }).join("")
-      + '</div><div class="card">';
+      + P.chips(LOGFAMS)
+      + '<div class="card">';
 
     /* شريطُ التحديد فوق الصفوف لا تحتها: من ضغط «تعديل» يرى فورَه ما
        يستطيع فعله، ولا يُطالَب بأن ينزل إلى ذيل السجلّ ليجده. */
@@ -10344,43 +10214,15 @@ padding:10px 15px;border-top:1px solid var(--line)}
         + '</div>';
     }
 
-    if(!show.length){
-      h += '<div class="empty"><b>لا شيءَ في هذا الباب</b>'
-        + 'لم يجرِ في ' + esc(mName(k)) + ' شيءٌ من هذا النوع بعد.'
-        + '<div class="acts"><button class="act" data-logfil="">'
-        + 'أرِني كلَّ ما جرى</button></div></div>';
-    }
-    var day = "";
+    h += P.empty('لم يجرِ في ' + esc(mName(k)) + ' شيءٌ من هذا النوع بعد.',
+                 'أرِني كلَّ ما جرى');
     show.forEach(function(r){
-      var dl = dayLabel(r.t);
-      if(dl !== day){
-        day = dl;
-        var _d = new Date(r.t);
-        h += '<div class="mrow subh"><span class="mn">' + esc(dl) + '</span>'
-          + '<span class="ds">' + (r.t ? (_d.getFullYear() + "-"
-             + pad(_d.getMonth() + 1) + "-" + pad(_d.getDate())) : "—")
-          + '</span></div>';
-      }
-      h += (r.item ? logItemRow(r.item, r.t, STEP[r.item.id])
+      h += P.day(r)
+         + (r.item ? logItemRow(r.item, r.t, STEP[r.item.id])
                    : logEntryRow(r.e, r));
     });
 
-    /* شريطُ التقليب: لا يُعرض إن كانت صفحةً واحدة */
-    if(pages.length > 1 || allOn){
-      h += '<div class="lgpg">'
-        + (allOn
-            ? ('<span class="lgn">كلُّ عمليّات الشهر — ' + total + ' قيداً</span>'
-               + '<button class="mini" data-logall="0">أرِني صفحاتٍ</button>')
-            : ('<button class="mini" data-logpg="' + (pg - 1) + '"'
-               + (pg <= 0 ? " disabled" : "") + '>‹ السابق</button>'
-               + '<span class="lgn">صفحة ' + (pg + 1) + ' من ' + pages.length
-               + ' · ' + total + ' قيداً</span>'
-               + '<button class="mini" data-logpg="' + (pg + 1) + '"'
-               + (pg >= pages.length - 1 ? " disabled" : "") + '>التالي ›</button>'
-               + '<button class="mini" data-logall="1" style="margin-inline-start:auto">'
-               + 'أظهِر كلَّ عمليّات الشهر</button>'))
-        + '</div>';
-    }
+    h += P.bar('قيداً', 'كلُّ عمليّات الشهر', 'أظهِر كلَّ عمليّات الشهر');
     h += '<div class="wact">'
       + '<button class="mini" data-logclr="1">امسح قيودَ الشهر</button>'
       + '<span class="lgnote">'
@@ -10427,7 +10269,6 @@ padding:10px 15px;border-top:1px solid var(--line)}
     var c = catOf(r.c), sx = r.s ? subOf(c, r.s) : null;
     return ((c && c.n) || r.c) + (sx ? (" · " + sx.n) : "");
   }
-  function logSelN(){ var n = 0, S = logSel(); for(var k in S) if(S[k]) n++; return n; }
   /* ما حُدّد من المعروض: عددُه ومجموعُه وما فيه من أمنيات */
   function logSelStat(rows){
     var S = logSel(), n = 0, sum = 0, wsh = [], it = 0, en = 0;
@@ -12635,6 +12476,49 @@ padding:10px 15px;border-top:1px solid var(--line)}
       u.els.forEach(function(e){ t.appendChild(e); });
     });
   }
+  /* ═══ التقاطُ صورةٍ وتصغيرُها ═══
+     بياناتك تُرفع في ملفٍّ واحد، وصورةُ الجوّال ثلاثةُ ميغابايت —
+     فتُقصّ من الوسط إلى المقاس المطلوب، وتُخفَّض جودتُها على درجاتٍ
+     حتى تبلغ حصّتَها. فإن لم تبلغها قيل له ولم تُحشر في بياناته. */
+  function pickImage(inputId, W, H, cap, then){
+    var f = document.getElementById(inputId);
+    if(!f) return;
+    f.onchange = function(){
+      var file = f.files && f.files[0];
+      if(!file) return;
+      var rd = new FileReader();
+      rd.onload = function(){
+        var im = new Image();
+        im.onload = function(){
+          try{
+            /* القصُّ من الوسط: تُملأ المساحةُ ولا تُشوَّه النِّسَب */
+            var sc = Math.max(W / im.width, H / im.height);
+            var sw = W / sc, sh = H / sc;
+            var cv = document.createElement("canvas");
+            cv.width = W; cv.height = H;
+            cv.getContext("2d").drawImage(im,
+              (im.width - sw) / 2, (im.height - sh) / 2, sw, sh, 0, 0, W, H);
+            var url = "", Q = [0.8, 0.5, 0.3];
+            for(var i = 0; i < Q.length; i++){
+              url = cv.toDataURL("image/webp", Q[i]);
+              if(url.length <= cap) break;
+            }
+            if(url.length > cap * 1.5){
+              toast("الصورة كبيرةٌ جداً — جرّب أصغرَ منها");
+              return;
+            }
+            then(url);
+            toast("رُفعت الصورة · " + kb(url.length));
+          }catch(e){ toast("تعذّرت معالجة الصورة"); }
+        };
+        im.onerror = function(){ toast("الملفّ ليس صورةً صالحة"); };
+        im.src = rd.result;
+      };
+      rd.onerror = function(){ toast("تعذّرت قراءة الملفّ"); };
+      rd.readAsDataURL(file);
+    };
+    f.click();
+  }
   function restoreFocus(){
     if(!focusSel) return;
     var el = document.querySelector(focusSel);
@@ -12666,33 +12550,23 @@ padding:10px 15px;border-top:1px solid var(--line)}
     var ch = function(sel, fn){ q(sel).forEach(function(el){ el.onchange = function(){
       diag("حقل", actName(sel, el)); fn(el); }; }); };
 
-    on("[data-envpg]", function(b){
-      ui.envPage = num(b.getAttribute("data-envpg"));
-      render();
-    });
-    on("[data-envall]", function(b){
-      ui.envAll = b.getAttribute("data-envall") === "1";
-      ui.envPage = 0;
-      render();
-    });
-    on("[data-envfil]", function(b){
-      ui.envPage = 0;                       /* بابٌ جديدٌ يبدأ من أوّله */
-      ui.envFil = b.getAttribute("data-envfil");
-      render();
-    });
-    on("[data-wlogpg]", function(b){
-      ui.wlogPage = num(b.getAttribute("data-wlogpg"));
-      render();
-    });
-    on("[data-wlogall]", function(b){
-      ui.wlogAll = b.getAttribute("data-wlogall") === "1";
-      ui.wlogPage = 0;
-      render();
-    });
-    on("[data-wlogfil]", function(b){
-      ui.wlogPage = 0;                        /* بابٌ جديدٌ يبدأ من أوّله */
-      ui.wlogFil = b.getAttribute("data-wlogfil");
-      render();
+    /* مقابضُ السجلّات الثلاثة طقمٌ واحدٌ يتكرّر — فحلقةٌ على مفاتيحها.
+       وكانت تسعةَ مقابضَ مكتوبةً ثلاثَ مرّات. */
+    ["log", "env", "wlog"].forEach(function(K){
+      on("[data-" + K + "pg]", function(b){
+        ui[K + "Page"] = num(b.getAttribute("data-" + K + "pg"));
+        render();
+      });
+      on("[data-" + K + "all]", function(b){
+        ui[K + "All"] = b.getAttribute("data-" + K + "all") === "1";
+        ui[K + "Page"] = 0;
+        render();
+      });
+      on("[data-" + K + "fil]", function(b){
+        ui[K + "Page"] = 0;               /* بابٌ جديدٌ يبدأ من أوّله */
+        ui[K + "Fil"] = b.getAttribute("data-" + K + "fil");
+        render();
+      });
     });
     on("[data-yfold]", function(b){
       yToggle(b.getAttribute("data-yfold"));
@@ -12816,22 +12690,6 @@ padding:10px 15px;border-top:1px solid var(--line)}
                 + (nBack ? (" · ورجع " + nBack + (nBack === 1 ? " بند" : " بنود")) : ""));
           save();
         } });
-    });
-    on("[data-logpg]", function(b){
-      ui.logPage = num(b.getAttribute("data-logpg"));
-      render();
-    });
-    on("[data-logall]", function(b){
-      ui.logAll = b.getAttribute("data-logall") === "1";
-      ui.logPage = 0;
-      render();
-    });
-    on("[data-logfil]", function(b){
-      /* بابٌ جديدٌ يبدأ من أوّله — فالبقاءُ في صفحةٍ خامسةٍ لبابٍ
-         صفحاتُه ثلاثٌ يُري فراغاً */
-      ui.logPage = 0;
-      ui.logFil = b.getAttribute("data-logfil");
-      render();
     });
     on("[data-logclr]", function(){
       ask({ title: "مسحُ سجلّ " + mName(ui.month),
@@ -13655,80 +13513,24 @@ padding:10px 15px;border-top:1px solid var(--line)}
         }, true);
     });
 /* DEV:END */
+    /* الأيقونةُ والغلافُ يُلتقطان بالآلة نفسِها — والفرقُ المقاسُ
+       وحصّةُ الحجم وأين تُوضع النتيجة. وكانت سبعين سطراً مرّتين. */
     on("[data-imgpick]", function(){
-      var f = document.getElementById("emofile");
-      if(!f) return;
-      f.onchange = function(){
-        var file = f.files && f.files[0];
-        if(!file) return;
-        var rd = new FileReader();
-        rd.onload = function(){
-          var im = new Image();
-          im.onload = function(){
-            try{
-              /* ٦٤×٦٤ وwebp: بياناتك تُرفع في ملفٍّ واحد، وصورةُ الجوّال
-                 ثلاثةُ ميغابايت. وتُقصّ مربّعةً لأنّ الأيقونة دائرة. */
-              var side = Math.min(im.width, im.height);
-              var cv = document.createElement("canvas");
-              cv.width = cv.height = 64;
-              var g = cv.getContext("2d");
-              g.drawImage(im, (im.width - side) / 2, (im.height - side) / 2,
-                          side, side, 0, 0, 64, 64);
-              var url = cv.toDataURL("image/webp", 0.8);
-              if(url.length > 12000) url = cv.toDataURL("image/webp", 0.5);
-              var el = document.querySelector("[data-emofield]");
-              if(el) el.value = url;
-              var fc = document.querySelector(".emoface");
-              if(fc) fc.innerHTML = '<img class="icimg" src="' + esc(url) + '" alt="">';
-              toast("رُفعت الصورة · " + kb(url.length));
-            }catch(e){ toast("تعذّرت معالجة الصورة"); }
-          };
-          im.onerror = function(){ toast("الملفّ ليس صورةً صالحة"); };
-          im.src = rd.result;
-        };
-        rd.onerror = function(){ toast("تعذّرت قراءة الملفّ"); };
-        rd.readAsDataURL(file);
-      };
-      f.click();
+      pickImage("emofile", 64, 64, 12000, function(url){
+        var el = document.querySelector("[data-emofield]");
+        if(el) el.value = url;
+        var fc = document.querySelector(".emoface");
+        if(fc) fc.innerHTML = '<img class="icimg" src="' + esc(url) + '" alt="">';
+      });
     });
     on("[data-covpick]", function(){
-      var f = document.getElementById("covfile");
-      if(!f) return;
-      f.onchange = function(){
-        var file = f.files && f.files[0];
-        if(!file) return;
-        var rd = new FileReader();
-        rd.onload = function(){
-          var im = new Image();
-          im.onload = function(){
-            try{
-              /* ٤:٣ · ٢٨٠×٢١٠ · webp — وتُخفَّض الجودةُ حتى تصغر */
-              var W = 280, H = 210;
-              var sc = Math.max(W / im.width, H / im.height);
-              var sw = W / sc, sh = H / sc;
-              var cv = document.createElement("canvas");
-              cv.width = W; cv.height = H;
-              cv.getContext("2d").drawImage(im,
-                (im.width - sw) / 2, (im.height - sh) / 2, sw, sh, 0, 0, W, H);
-              var url = cv.toDataURL("image/webp", 0.75);
-              if(url.length > 40000) url = cv.toDataURL("image/webp", 0.5);
-              if(url.length > 40000) url = cv.toDataURL("image/webp", 0.3);
-              if(url.length > 60000){ toast("الصورة كبيرةٌ جداً — جرّب أصغرَ منها"); return; }
-              var el = document.querySelector("[data-coverfield]");
-              if(el) el.value = url;
-              var pv = document.getElementById("covprev");
-              if(pv){ pv.className = "covprev has";
-                      pv.innerHTML = '<img src="' + esc(url) + '" alt="">'; }
-              toast("رُفعت الصورة · " + kb(url.length));
-            }catch(e){ toast("تعذّرت معالجة الصورة"); }
-          };
-          im.onerror = function(){ toast("الملفّ ليس صورةً صالحة"); };
-          im.src = rd.result;
-        };
-        rd.onerror = function(){ toast("تعذّرت قراءة الملفّ"); };
-        rd.readAsDataURL(file);
-      };
-      f.click();
+      pickImage("covfile", 280, 210, 40000, function(url){
+        var el = document.querySelector("[data-coverfield]");
+        if(el) el.value = url;
+        var pv = document.getElementById("covprev");
+        if(pv){ pv.className = "covprev has";
+                pv.innerHTML = '<img src="' + esc(url) + '" alt="">'; }
+      });
     });
     on("[data-covclr]", function(){
       var el = document.querySelector("[data-coverfield]");
@@ -15358,7 +15160,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "0.2-beta+28";
+  var APP_VERSION = "0.2-beta+30";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
@@ -15530,11 +15332,6 @@ padding:10px 15px;border-top:1px solid var(--line)}
   /* ما جمعه المعالج حتى الآن. يعيش حتى يفرغ أو يُلغى. */
   var onb = null;
 
-  function onbLeft(){
-    var used = num(onb.goal) + num(onb.inv);
-    for(var k in onb.amt) used += num(onb.amt[k]);
-    return num(onb.salary) - used;
-  }
   function onbPicks(){
     var out = [];
     for(var k in (onbSel || {})){
@@ -16021,13 +15818,6 @@ padding:10px 15px;border-top:1px solid var(--line)}
       cancel: "إلغاء" });
   }
 
-  function storageDlg(){
-    ask({ title: "أين تُحفظ بياناتك؟",
-      msg: "اختر ما يناسبك — وغيّره متى شئت من الإعدادات. لا شيء يضيع بالتبديل.",
-      fields: [],
-      html: function(){ return '<div class="card">' + storageHTML(false) + '</div>'; },
-      ok: "اخترتُ — أغلِقه", cancel: false });
-  }
 
   /* ═══ جوجل درايف ═══ */
   var GD_ID = "218609276978-j09h44m13j4s3trqcjk5ckipt8ff1g9h.apps.googleusercontent.com";      /* يُحقن عند البناء */
@@ -16246,34 +16036,6 @@ padding:10px 15px;border-top:1px solid var(--line)}
     });
   }
 
-  function gdPopupLogin(then){
-    gdLoadGis(function(ok){
-      if(!ok) return then(false, "لم تُحمَّل مكتبة جوجل");
-      try{
-        var cl = google.accounts.oauth2.initTokenClient({
-          client_id: gdClient(),
-          scope: "https://www.googleapis.com/auth/drive.appdata",
-          callback: function(r){
-            if(r && r.access_token){
-              gdSet({ token: r.access_token,
-                      exp: Date.now() + ((+r.expires_in || 3600) * 1000) });
-              gdTok = null;           /* يُعاد بناؤه عند أوّل تجديد */
-              toast("دخلتَ درايف");
-              setTimeout(gdFirstPull, 200);
-              then(true, "");
-            } else then(false, "لم يصل رمز");
-          },
-          error_callback: function(e){
-            var t = (e && e.type) || "";
-            then(false, t === "popup_closed" ? "أُغلقت النافذة"
-                      : t === "popup_failed_to_open" ? "منع المتصفّح النافذة"
-                      : "تعذّر الدخول");
-          }
-        });
-        cl.requestAccessToken({ prompt: "consent" });
-      }catch(e){ then(false, String(e.message || e)); }
-    });
-  }
 
   function gdLogin(){
     var back = gdRedirect();
