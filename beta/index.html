@@ -1915,6 +1915,20 @@ opacity:.45}
 /* ══ صفحة حسابات البنود ══ */
 /* ما تحرّره الأقساط المنتهية — خبرٌ مطمئنٌّ لا تحذير */
 .freefree{color:var(--ok)}
+/* ══ شاشةُ التحليل ══ */
+.anhead{padding:18px 20px 16px;border-inline-start:3px solid var(--warn)}
+.anhead.ok{border-inline-start-color:var(--ok)}
+.anlab{display:block;text-decoration:none;font-size:11px;color:var(--ink-3);
+margin-bottom:4px}
+.anhead h3{font-size:20px;font-weight:600;margin-bottom:6px}
+.anhead p{font-size:13.5px;line-height:1.8;color:var(--ink-2)}
+.anwarn{text-decoration:none;color:var(--ink-3);font-size:12px}
+.anhead .acts{margin-top:12px}
+.vtag{font-size:9.5px;border-radius:99px;padding:1px 7px;margin-inline-start:6px;
+background:var(--card-2);color:var(--ink-3);font-weight:400}
+.vtag.warn{background:var(--warn-soft);color:var(--warn)}
+.vtag.ok{background:var(--ok-soft);color:var(--ok)}
+.vtag.gold{background:var(--gold-soft);color:var(--gold)}
 /* الفرعُ بعد أبيه بلونٍ أخفّ — فيُقرأ الأبُ أوّلاً */
 .lgr .nm .subn{color:var(--ink-2);font-weight:400}
 /* سببُ العمليّة بجانب اسمها — يُقرأ معه لا بعده */
@@ -8816,10 +8830,298 @@ padding:10px 15px;border-top:1px solid var(--line)}
     return n;
   }
 
+  /* ═══════════ محرّكُ التحليل ═══════════
+     لا يُفتي بنِسَبٍ عالميّة ولا يقارنك بغيرك — بياناتُك في جهازك ولا
+     تُرفع، ومعيارُك **أشهرُك الماضية**. والانحرافُ عن نفسك حقيقةٌ لا
+     رأي. */
+
+  /* كم مضى من الشهر الجاري؟ — فلا يُحاكَم نصفُ شهرٍ بشهرٍ كامل */
+  function monthProgress(mk){
+    if(mk !== todayKey()) return 1;
+    var d = new Date(), days = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    return Math.max(0.05, d.getDate() / days);
+  }
+  /* أشهرُ القياس: ما قبل الشهر المعروض — فالجاري يُقاس ولا يَقيس */
+  function statMonths(MS, mk){
+    return (MS || []).filter(function(x){ return x < mk; });
+  }
+  /* ── البابُ الأوّل: مِرْقَبُ البند ──
+     `MS` أشهرُ الفترة، و`mk` الشهرُ المحكومُ عليه. */
+  function catStat(c, MS, mk){
+    mk = mk || ui.month;
+    var past = statMonths(MS, mk), vals = [];
+    past.forEach(function(x){
+      var m = state.months[x];
+      if(!m || !m.items || !m.items.length) return;   /* شهرٌ بلا حركة لا يُعدّ */
+      vals.push(money(actuals(x).by[c.k] || 0));
+    });
+    var n = vals.length, sum = 0, i;
+    for(i = 0; i < n; i++) sum += vals[i];
+    var avg = n ? sum / n : 0, sd = 0;
+    for(i = 0; i < n; i++) sd += (vals[i] - avg) * (vals[i] - avg);
+    sd = n > 1 ? Math.sqrt(sd / (n - 1)) : 0;
+    /* التجاوز: كم شهراً صُرف فيه فوق خطّته */
+    var over = 0, planned = 0;
+    past.forEach(function(x){
+      var p = catPlan(c, x), v = money(actuals(x).by[c.k] || 0);
+      if(p > 0){ planned++; if(v > p + 0.5) over++; }
+    });
+    /* الاتّجاه: ثلاثةٌ متتاليةٌ صاعدةٌ أو هابطة */
+    var trend = 0;
+    if(n >= 3){
+      var up = true, dn = true;
+      for(i = n - 3; i < n - 1; i++){
+        if(!(vals[i + 1] > vals[i])) up = false;
+        if(!(vals[i + 1] < vals[i])) dn = false;
+      }
+      trend = up ? 1 : (dn ? -1 : 0);
+    }
+    var now = money(actuals(mk).by[c.k] || 0);
+    var prog = monthProgress(mk);
+    return { c: c, n: n, vals: vals, avg: money(avg), sd: money(sd),
+             sum: money(sum), over: over, planned: planned, trend: trend,
+             now: now, plan: catPlan(c, mk), prog: prog,
+             /* المتوقَّع لو مضى الشهرُ على هذا النسق */
+             pace: money(prog > 0 ? now / prog : now) };
+  }
+
+  /* ── البابُ الثاني: الحكم ──
+     خمسةٌ مرتَّبةٌ بالخطورة، ومع كلٍّ سببُه بالأرقام. */
+  var VERD = {
+    over:  { n: "متجاوز", i: "◉", c: "warn",  w: 4 },
+    spike: { n: "شاذّ",   i: "▲", c: "warn",  w: 3 },
+    rise:  { n: "صاعد",  i: "↗", c: "gold",  w: 2 },
+    ok:    { n: "طبيعيّ", i: "✓", c: "ok",    w: 1 },
+    young: { n: "يُقاس",  i: "·", c: "ink",   w: 0 }
+  };
+  function catVerdict(st){
+    /* لا حكمَ بلا ثلاثة أشهر: شهرٌ واحدٌ ليس نمطاً */
+    if(st.n < 3)
+      return { k: "young", why: "مضى " + arMonths(st.n) + " — الحكمُ بعد ثلاثة" };
+    var d = money(st.now - st.plan);
+    if(st.plan > 0 && d > 0.5)
+      return { k: "over", why: "تجاوزتَ خطّتَه بـ" + fmt(d)
+                 + (st.prog < 1 ? " وما زال الشهرُ ناقصاً" : "") };
+    /* بندٌ لم تصرف فيه شيئاً ثمّ صرفت: لا يُقال «داخلَ معدّلك (٠)» —
+       فذاك حكمٌ يُضحك. وهو جديدٌ يُعلَن لا شاذٌّ يُقاس. */
+    if(st.avg <= 0 && st.now > 0)
+      return { k: "spike", why: "لم تصرف فيه شيئاً في " + arMonths(st.n)
+                 + "، وصرفتَ فيه " + fmt(st.now) + " هذا الشهر" };
+    /* والانحرافُ صفرٌ يعني بنداً ثابتاً — فالقفزةُ فيه تُقاس بالنسبة */
+    var jump = st.sd > 0 ? (st.now > st.avg + 2 * st.sd)
+                         : (st.avg > 0 && st.now > st.avg * 1.5);
+    if(jump)
+      return { k: "spike", why: "صرفتَ " + fmt(st.now) + " ومتوسّطُك "
+                 + fmt(st.avg) + " — " + pctUp(st.avg, st.now) };
+    if(st.trend > 0)
+      return { k: "rise", why: "يعلو ثلاثةَ أشهرٍ متتالية — آخرُها "
+                 + fmt(st.vals[st.n - 1]) };
+    return { k: "ok", why: "داخلَ معدّلك (" + fmt(st.avg) + ")" };
+  }
+  function pctUp(base, now){
+    if(base <= 0) return "بلا متوسّطٍ يُقاس عليه";
+    var p = Math.round((now - base) / base * 100);
+    return (p >= 0 ? "زيادةٌ " : "نقصٌ ") + Math.abs(p) + "٪";
+  }
+
+  /* ── البابُ الثالث: الأمر ──
+     لكلّ أمرٍ رقمٌ وزرُّ تنفيذ. ولا يُؤمَر بخفضٍ دون الحدّ الأدنى:
+     بندٌ فيه أقساطٌ ثابتةٌ لا يُقترح خفضُه تحتها. */
+  function catFloor(c, mk){
+    var f = 0;
+    (c.subs || []).forEach(function(x){
+      var t = typeOf(x);
+      if(t === "inst" || t === "fix") f += linePlan(x, mk, lineKey(c.k, x.id));
+    });
+    return money(f);
+  }
+  function analysisOrders(MS, mk){
+    var out = [];
+    catRows().forEach(function(c){
+      if(muted(c.k)) return;
+      var st = catStat(c, MS, mk);
+      if(st.n < 3) return;                       /* لا أمرَ بلا عيّنة */
+      /* أ · ارفع خطّتَه: يُتجاوَز باستمرار */
+      if(st.planned >= 3 && st.over >= st.planned - 1 && st.avg > st.plan * 1.05){
+        var to = money(Math.ceil(st.avg / 10) * 10);
+        out.push({ k: "up", c: c, st: st, to: to,
+                   gain: money(to - st.plan),
+                   why: "تجاوزتَه " + st.over + " من " + st.planned
+                      + " أشهرٍ، ومتوسّطُ صرفك " + fmt(st.avg)
+                      + " وخطّتُك " + fmt(st.plan)
+                      + ". خطّتُك ليست خطأً في صرفك — هي خطأٌ في تقديرك." });
+      }
+      /* ب · اخفض خطّتَه: مالٌ محبوسٌ لا يُصرف */
+      /* الخفضُ يُقاس على متوسّطك **وعلى صرفِ شهرك** معاً: من يصرف
+         اليومَ ١٢٠ لا يُقال له «اخفضها إلى صفر» لأنّ متوسّطه صفر. */
+      var floor = catFloor(c, mk);
+      var base = Math.max(st.avg, st.pace);
+      if(st.plan > 0 && base < st.plan * 0.55 && st.plan - base >= 20){
+        var down = money(Math.max(floor, Math.ceil((base * 1.15) / 10) * 10));
+        if(down > 0 && down < st.plan - 5)
+          out.push({ k: "down", c: c, st: st, to: down,
+                     gain: money(st.plan - down),
+                     why: "خطّتُه " + fmt(st.plan) + " ومتوسّطُ صرفك "
+                        + fmt(st.avg) + " في " + arMonths(st.n)
+                        + (st.pace > st.avg ? (" ووتيرةُ شهرك " + fmt(st.pace)) : "")
+                        + ". و" + fmt(money(st.plan - base))
+                        + " محبوسةٌ كلَّ شهرٍ بلا سبب"
+                        + (floor > 0 ? (" — ولا يُخفَض تحت " + fmt(floor)
+                                        + " لأنّ فيه ثابتاً وأقساطاً") : "") + "." });
+      }
+    });
+    /* الأشدُّ أثراً أوّلاً — لا الأكبرُ رقماً */
+    out.sort(function(a, b){ return b.gain - a.gain; });
+    return out;
+  }
+
+  /* ── مشكلتُك: البندُ الذي يأكل أكثرَ الزيادة ── */
+  function topProblem(MS, mk){
+    var rows = [], tot = 0;
+    catRows().forEach(function(c){
+      if(muted(c.k)) return;
+      var st = catStat(c, MS, mk);
+      if(st.n < 3) return;
+      var ex = money(st.now - Math.max(st.plan, st.avg));
+      if(ex <= 0) return;
+      tot += ex;
+      rows.push({ c: c, st: st, ex: ex, v: catVerdict(st) });
+    });
+    if(!rows.length) return null;
+    rows.sort(function(a, b){ return b.ex - a.ex; });
+    var t = rows[0];
+    t.share = tot > 0 ? Math.round(t.ex / tot * 100) : 100;
+    t.total = money(tot);
+    t.n = rows.length;
+    return t;
+  }
+
+  /* بندٌ أُسكت: لا شأنَ لصاحبه به، فلا يُذكر شهرين */
+  function muted(ck){
+    var M = state.mute || {};
+    var till = M[ck];
+    return !!(till && till >= todayKey());
+  }
+  function muteCat(ck){
+    if(!state.mute) state.mute = {};
+    state.mute[ck] = shift(todayKey(), 2);
+  }
+  /* ═══ شاشةُ التحليل ═══
+     تُفتح على حكمٍ واحدٍ لا على لوح أرقام: ما مشكلتُك، وبكم، وما حصّتُها
+     من تجاوزك كلِّه. ثمّ الأوامرُ بأرقامها وأزرارها، ثمّ جدولُ البنود. */
+  function analysisHTML(MS){
+    var mk = ui.month, h = "";
+    var past = statMonths(MS, mk);
+    if(past.length < 3){
+      return '<div class="card"><div class="empty"><b>ما زال يُقاس</b>'
+        + 'التحليلُ يقيسك على <b>نفسك</b> لا على أحد: متوسّطك وانحرافك '
+        + 'واتّجاهك. وذلك يحتاج <b>ثلاثةَ أشهرٍ</b> مسجَّلةً على الأقلّ — '
+        + 'وعندك ' + arMonths(past.length) + '. سجّلْ شهرك وسيبدأ.'
+        + '</div></div>';
+    }
+    var P = topProblem(MS, mk), OR = analysisOrders(MS, mk);
+    var prog = monthProgress(mk);
+
+    /* ── الحكمُ الواحد ── */
+    if(P){
+      h += '<div class="card anhead"><s class="anlab">مشكلتُك في '
+        + esc(mName(mk)) + '</s>'
+        + '<h3>' + esc(P.c.e + " " + P.c.n) + '</h3>'
+        + '<p>صرفتَ فيه <b>' + fmt(P.st.now) + '</b> ومتوسّطُك <b>'
+        + fmt(P.st.avg) + '</b> — <b>' + esc(pctUp(P.st.avg, P.st.now)) + '</b>.'
+        + (P.n > 1 ? (' وهو وحدَه <b>' + P.share + '٪</b> من تجاوزك كلِّه ('
+                      + fmt(P.total) + ').') : "")
+        + (prog < 1 ? (' <s class="anwarn">ومضى ' + Math.round(prog * 100)
+                       + '٪ من الشهر — الحكمُ على ما مضى.</s>') : "")
+        + '</p>'
+        + '<div class="acts">'
+        + '<button class="act solid" data-goto="spend">أرِني صرفَه</button>'
+        + '<button class="act" data-anup="' + P.c.k + '|'
+        + money(Math.ceil(P.st.avg / 10) * 10) + '">ارفع خطّتَه</button>'
+        + '<button class="act" data-anmute="' + P.c.k + '">لا شأنَ لي به</button>'
+        + '</div></div>';
+    } else {
+      h += '<div class="card anhead ok"><s class="anlab">' + esc(mName(mk)) + '</s>'
+        + '<h3>لا بندَ خرج عن معدّله</h3>'
+        + '<p>كلُّ بندٍ داخلَ خطّته ومتوسّطه. وهذا حكمٌ على ما مضى من '
+        + 'الشهر لا على تمامه.</p></div>';
+    }
+
+    /* ── الأوامر ── */
+    h += '<div class="sec"><h2>ما تحتاج أن تغيّره</h2>'
+      + '<span class="hint">' + (OR.length ? (OR.length + " أمراً بأرقامها")
+                                           : "لا شيء — خطّتُك تطابق صرفَك") + '</span></div>';
+    if(OR.length){
+      h += '<div class="card">' + OR.map(function(o){
+        var up = o.k === "up";
+        return '<div class="row"><span class="ic" style="background:var(--'
+          + (up ? "warn" : "ok") + '-soft);color:var(--' + (up ? "warn" : "ok") + ')">'
+          + (up ? "↑" : "↓") + '</span>'
+          + '<span><b class="nm">' + (up ? "ارفع خطّةَ " : "اخفض خطّةَ ")
+          + esc(o.c.n) + ' إلى ' + fmt(o.to) + '</b>'
+          + '<s class="sub">' + esc(o.why) + '</s></span>'
+          + '<span class="rt"><b class="a ' + (up ? "wno" : "wok") + '">'
+          + (up ? "+" : "−") + fmt(o.gain) + '</b>'
+          + '<s class="b"><button class="mini" data-anfix="' + o.c.k + '|' + o.to
+          + '">نفّذه</button></s></span></div>';
+      }).join("") + '</div>';
+    } else {
+      h += '<div class="card"><div class="empty"><b>لا أمرَ لك</b>'
+        + 'لا بندَ تتجاوزه باستمرار، ولا بندَ خطّتُه محبوسةٌ بلا صرف. '
+        + 'خطّتُك تطابق واقعك.</div></div>';
+    }
+
+    /* ── جدولُ البنود بأحكامها ── */
+    var ROWS = catRows().map(function(c){
+      var st = catStat(c, MS, mk);
+      return { st: st, v: catVerdict(st) };
+    });
+    ROWS.sort(function(a, b){
+      var d = VERD[b.v.k].w - VERD[a.v.k].w;
+      return d || (b.st.now - a.st.now);
+    });
+    h += '<div class="sec"><h2>بنودك</h2>'
+      + '<span class="hint">القياسُ على ' + arMonths(past.length)
+      + ' من تاريخك — لا على غيرك</span></div><div class="card">';
+    h += ROWS.map(function(r){
+      var V = VERD[r.v.k], st = r.st, mt = muted(st.c.k);
+      return '<div class="row' + (mt ? " zero" : "") + '">'
+        + '<span class="ic" style="background:var(--' + V.c + '-soft);color:var(--'
+        + V.c + ')">' + V.i + '</span>'
+        + '<span><b class="nm">' + esc(st.c.e + " " + st.c.n)
+        + '<span class="vtag ' + V.c + '">' + V.n + '</span>'
+        + (mt ? '<span class="vtag">مُسكَت</span>' : "")
+        + '</b><s class="sub">' + esc(r.v.why) + '</s></span>'
+        + '<span class="lgmv"><span class="lgn"><s>معدّلك</s><b>'
+        + fmt(st.avg) + '</b></span><i>←</i>'
+        + '<span class="lgn to"><s>هذا الشهر</s><b>' + fmt(st.now) + '</b></span></span>'
+        + '<span class="rt"><b class="a">' + fmt(st.plan) + '</b>'
+        + '<s class="b">خطّته</s></span></div>';
+    }).join("");
+    h += '</div>'
+      + '<div class="hintnote" data-note="nan1c2d3">لا يقارنك هذا القسمُ '
+      + '<b>بأحد</b> — بياناتُك في جهازك ولا تُرفع. يقيسك على <b>أشهرك '
+      + 'الماضية</b>: متوسّطِك وانحرافك واتّجاهك. و«شاذّ» تعني خرج عن '
+      + 'معدّلك أنت، لا عن معدّل الناس.</div>';
+    return h;
+  }
   /* ═══ التقارير ═══ */
   /* الأشهر التي فيها حركة فعلاً، منتهيةً بالشهر المعروض */
   function repMonths(){
-    var out = [], k = ui.month, n = num(ui.repN) || 6;
+    var out = [], k = ui.month;
+    /* «سنة» مدًى تقويميٌّ يبدأ من يناير — وهو غيرُ «آخر اثني عشر شهراً»
+       التي تنتهي بشهرك وتبدأ حيث وقع. ولكلٍّ سؤالٌ يجيبه. */
+    if(ui.repN === "y"){
+      var y = k.slice(0, 4);
+      for(var j = 1; j <= 12; j++){
+        var yk = y + "-" + pad(j);
+        if(yk > k) break;
+        var mm = state.months[yk];
+        if(mm && mm.items && mm.items.length) out.push(yk);
+      }
+      return out;
+    }
+    var n = num(ui.repN) || 6;
     for(var i = 0; i < 36 && out.length < n; i++){
       var mk = shift(k, -i);
       var m = state.months[mk];
@@ -8881,11 +9183,20 @@ padding:10px 15px;border-top:1px solid var(--line)}
   function viewRep(){
     var MS = repMonths(), h = "";
     var PICKS = [3, 6, 12];
+    var isAn = (ui.repTab !== "show");
+    /* تبويبان: التحليلُ يحكم ويأمر · والعرضُ يُري ما جرى */
+    h += '<div class="wfil lfil nospan">'
+      + '<button class="chip sm' + (isAn ? " on" : "") + '" data-reptab="an">'
+      + '◈ تحليل</button>'
+      + '<button class="chip sm' + (isAn ? "" : " on") + '" data-reptab="show">'
+      + '▤ عرض</button></div>';
     h += '<div class="card repbar nospan"><span class="rl">الفترة</span>'
       + PICKS.map(function(n){
           return '<button class="chip sm' + (num(ui.repN) === n ? " on" : "")
             + '" data-repn="' + n + '">آخر ' + arMonths(n) + '</button>';
         }).join("")
+      + '<button class="chip sm' + (ui.repN === "y" ? " on" : "")
+      + '" data-repn="y">سنة ' + esc(ui.month.slice(0, 4)) + '</button>'
       + '<span class="rh">' + (MS.length
           ? esc(mName(MS[0])) + " ← " + esc(mName(MS[MS.length - 1])) + " · "
             + arMonths(MS.length) + " فيها حركة"
@@ -8899,6 +9210,8 @@ padding:10px 15px;border-top:1px solid var(--line)}
         + 'سجّل مصروفَ هذا الشهر</button></div></div></div>';
       return h;
     }
+
+    if(isAn) return h + analysisHTML(MS);
 
     var T = repTotals(MS), left = T.inc - T.spent;
     var per = function(v){ return T.inc > 0 ? Math.round(v / T.inc * 100) : 0; };
@@ -15194,7 +15507,36 @@ padding:10px 15px;border-top:1px solid var(--line)}
       toast(n ? "\u0623ُعِيد " + n + " \u0634\u0631\u062d\u0627\u064b" : "\u0644\u0627 \u0634\u0631\u062d \u0645\u062e\u0641\u064a\u0651");
       save(); render();
     });
-    on("[data-repn]", function(b){ ui.repN = +b.getAttribute("data-repn") || 6; render(); });
+    on("[data-repn]", function(b){
+      var v = b.getAttribute("data-repn");
+      ui.repN = (v === "y") ? "y" : (+v || 6);
+      render();
+    });
+    on("[data-reptab]", function(b){
+      ui.repTab = b.getAttribute("data-reptab");
+      render();
+    });
+    on("[data-anmute]", function(b){
+      var ck = b.getAttribute("data-anmute"), c = catOf(ck);
+      muteCat(ck);
+      toast("أُسكت «" + ((c && c.n) || ck) + "» شهرين");
+      save(); render();
+    });
+    /* رفعُ خطّةٍ أو خفضُها — بأمرِ التحليل وبرقمه، وفي هذا الشهر وحدَه */
+    on("[data-anfix],[data-anup]", function(b){
+      var raw = b.getAttribute("data-anfix") || b.getAttribute("data-anup");
+      var p = String(raw).split("|"), c = catOf(p[0]), to = money(p[1]);
+      if(!c || !(to > 0)) return;
+      var from = catPlan(c, ui.month);
+      confirmDlg("خطّةُ «" + c.n + "» تصير " + fmt(to),
+        "كانت <b>" + fmt(from) + "</b>. والتعديلُ يخصّ <b>"
+        + esc(mName(ui.month)) + "</b> وحدَه — لا يمسّ خطّتك الأساسيّة.",
+        "نفّذه", function(){
+          setP(ui.month, c.k, to);
+          toast("صارت " + fmt(to));
+          save(); render();
+        });
+    });
     on("[data-clsset]", function(b){
       var p = pair(b, "data-clsset");
       if(!clsDraft) return;
@@ -15337,7 +15679,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "0.2-beta+34";
+  var APP_VERSION = "0.2-beta+35";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
