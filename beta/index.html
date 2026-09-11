@@ -1851,7 +1851,7 @@ white-space:nowrap}
 .iedit .lab{margin:12px 0 5px}
 /* غلافُ حقل المبلغ: يحمله والزرَّ في خليّةٍ واحدةٍ من الشبكة */
 .qinw{position:relative;display:block;min-width:0}
-.qinw .qin{width:100%}
+.qinw .qin,.qinw .qi2,.qinw .ni{width:100%}
 /* والزرُّ على حافّة الحقل لا بجانبه — فلا يأخذ عموداً خامساً */
 .qwhy{position:absolute;inset-inline-start:2px;top:50%;transform:translateY(-50%);
 width:20px;height:20px;border:0;background:transparent;color:var(--ink-3);
@@ -4463,7 +4463,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
   var LOGCAP = 200;
   function catTotal(mk, ck){ return actuals(mk).by[ck] || 0; }
   function subTotal(mk, sid){ return actuals(mk).bySub[sid] || 0; }
-  function logAmt(mk, ck, sid, before, after, kind){
+  function logAmt(mk, ck, sid, before, after, kind, why){
     if(!mk || !ck) return;
     if(Math.abs(num(after) - num(before)) < 0.005) return;
     var m = month(mk);
@@ -4471,6 +4471,8 @@ padding:10px 15px;border-top:1px solid var(--line)}
     var rec = { t: Date.now(), c: ck, s: sid || "",
                 f: money(before), o: money(after),
                 k: kind || "" };
+    /* سببٌ إن كُتب — يُحفظ في القيد لا في دفترٍ ثالثٍ يُخترع له */
+    if(why) rec.n = String(why).trim().slice(0, 90);
     /* واسمُ الفرع يُحفظ في القيد ساعتَه: الفرعُ يُحذف أو يُنقل إلى
        بندٍ آخر، فيبقى القيدُ يشير إلى معرّفٍ لا اسمَ له — وقد وقع. */
     if(sid){
@@ -9351,8 +9353,12 @@ padding:10px 15px;border-top:1px solid var(--line)}
     /* الدخل — لهذا الشهر */
     h += '<div class="card incard"><div class="increr">'
       + '<span class="inclab">دخل ' + esc(mName(k)) + '</span>'
-      + '<span class="f"><label>الراتب</label><input class="ni w" type="number" inputmode="numeric" data-minc="salary" value="' + o.salary + '"></span>'
-      + '<span class="f"><label>دخل إضافي</label><input class="ni w" type="number" inputmode="numeric" data-minc="extra" value="' + o.extra + '"></span>'
+      + '<span class="f"><label>الراتب</label><span class="qinw">'
+      + '<input class="ni w" type="number" inputmode="numeric" data-minc="salary" value="'
+      + o.salary + '">' + incWhyBtn("salary") + '</span></span>'
+      + '<span class="f"><label>دخل إضافي</label><span class="qinw">'
+      + '<input class="ni w" type="number" inputmode="numeric" data-minc="extra" value="'
+      + o.extra + '">' + incWhyBtn("extra") + '</span></span>'
       + '<span class="incacts">'
       + (o.own
           ? '<button class="act" data-incdef="1">اجعله الافتراضي لكل شهر</button>'
@@ -9821,12 +9827,12 @@ padding:10px 15px;border-top:1px solid var(--line)}
     }
     var restAll = inc - spentAll - savedAll;
     h += '<div class="qinc nospan">'
-      + '<span class="f"><label>الراتب</label>'
+      + '<span class="f"><label>الراتب</label><span class="qinw">'
       + '<input class="qi2" type="text" inputmode="decimal" data-minc="salary" value="'
-      + IO.salary + '"></span>'
-      + '<span class="f"><label>دخل إضافي</label>'
+      + IO.salary + '">' + incWhyBtn("salary") + '</span></span>'
+      + '<span class="f"><label>دخل إضافي</label><span class="qinw">'
       + '<input class="qi2" type="text" inputmode="decimal" data-minc="extra" value="'
-      + IO.extra + '"></span>'
+      + IO.extra + '">' + incWhyBtn("extra") + '</span></span>'
       + '<span class="qsum">'
       + '<span class="qs"><s>صُرف</s><b>' + fmt(spentAll) + '</b></span>'
       + '<span class="qs"><s>ادخار</s><b class="ok">' + fmt(savedAll) + '</b></span>'
@@ -10295,7 +10301,8 @@ padding:10px 15px;border-top:1px solid var(--line)}
     return '<div class="row lgr' + (ui.logEdit ? " picking" : "") + '">'
       + logCheck(r)
       + '<span class="ic" style="background:var(--card-2)">' + esc(sj.e) + '</span>'
-      + '<span><b class="nm">' + sj.n + '</b>'
+      + '<span><b class="nm">' + sj.n
+      + (e.n ? ('<span class="why"> — ' + esc(e.n) + '</span>') : "") + '</b>'
       + '<s class="sub"><em>' + esc(clockAr(e.t)) + '</em> · '
       + esc(LOGKIND[e.k] || "تعديل")
       + '</s></span>'
@@ -11330,6 +11337,29 @@ padding:10px 15px;border-top:1px solid var(--line)}
         t += linePlan(x, mk, lineKey(c.k, x.id));
     });
     return money(t);
+  }
+
+  /* كتابةُ الدخل في موضعٍ واحد: يستعملها الحقلُ والزرُّ معاً — فلو
+     كُتبت مرّتين لاختلف حكمُ «خطّةٍ واحدة» بينهما. */
+  function setInc(f, v, why){
+    var o = incObj(ui.month);
+    if(onePlan() && !isPast(ui.month)){
+      /* خطة واحدة: الرقم يصير الافتراضي، ويُرفع تخصيص هذا الشهر */
+      state.income[f] = v;
+      var mm2 = state.months[ui.month];
+      if(mm2 && mm2.inc) delete mm2.inc;
+    } else {
+      var m = month(ui.month);
+      if(!m.inc) m.inc = { salary: o.salary, extra: o.extra };
+      m.inc[f] = v;
+    }
+    logAmt(ui.month, "inc:" + f, "", o[f], v, "inc", why);
+  }
+  /* زرُّ سببِ الدخل — نظيرُ زرِّ سببِ الصرف في حقول البنود */
+  function incWhyBtn(f){
+    return '<button class="qwhy" data-incwhy="' + f + '" title="'
+      + esc(f === "salary" ? "سجّل الراتبَ بسببه" : "أضِف دخلاً إضافيّاً بسببه")
+      + '">+</button>';
   }
 
   /* ═══ ٥ · السنة ═══ */
@@ -12583,6 +12613,37 @@ padding:10px 15px;border-top:1px solid var(--line)}
       setInvQuick(p[1], p[0], money(el.value));
       save(); render();
     });
+    on("[data-incwhy]", function(b, e2){
+      if(e2) e2.stopPropagation();
+      var f = b.getAttribute("data-incwhy"), isSal = (f === "salary");
+      var o = incObj(ui.month);
+      ask({ title: isSal ? ("راتبُ " + mName(ui.month))
+                         : "دخلٌ إضافيّ — من أين؟",
+        msg: isSal
+          ? ("يُستبدل الراتبُ بما تكتبه — فهو رقمٌ واحدٌ للشهر لا يتراكم. "
+             + "وحاليّاً <b>" + fmt(o.salary) + "</b>.")
+          : ("<b>يُضاف</b> إلى دخلك الإضافيّ ولا يحلّ محلَّه — فهو يأتي "
+             + "قطعاً. وحاليّاً <b>" + fmt(o.extra) + "</b>."),
+        fields: [{ key: "amt", label: isSal ? "الراتب" : "المبلغ المضاف",
+                   type: "number", value: isSal ? o.salary : "" },
+                 { key: "why", label: "السبب (اختياري)",
+                   ph: isSal ? "زيادةٌ سنويّة · بدلُ سكن"
+                             : "بيعُ جهاز · مكافأة · ردُّ مبلغ" }],
+        ok: "سجّله",
+        guard: function(v, by){
+          if(!isSal && !num(by.amt)) return "اكتب المبلغَ المضاف";
+          return "";
+        },
+        onOk: function(v, by){
+          var cur = incObj(ui.month);
+          var val = isSal ? money(by.amt) : money(cur.extra + num(by.amt));
+          setInc(f, val, by.why);
+          toast(isSal ? ("صار الراتبُ " + fmt(val))
+                      : ("أُضيف " + fmt(num(by.amt)) + " — صار "
+                         + fmt(val)));
+          save(); render();
+        } });
+    });
     on("[data-capfit]", function(b, e2){
       if(e2) e2.stopPropagation();
       var c = catOf(b.getAttribute("data-capfit"));
@@ -12753,18 +12814,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
       save(); render();
     });
     ch("[data-minc]", function(el){
-      var f = el.getAttribute("data-minc"), o = incObj(ui.month), v = money(el.value);
-      if(onePlan() && !isPast(ui.month)){
-        /* خطة واحدة: الرقم يصير الافتراضي، ويُرفع تخصيص هذا الشهر */
-        state.income[f] = v;
-        var mm2 = state.months[ui.month];
-        if(mm2 && mm2.inc) delete mm2.inc;
-      } else {
-        var m = month(ui.month);
-        if(!m.inc) m.inc = { salary: o.salary, extra: o.extra };
-        m.inc[f] = v;
-      }
-      logAmt(ui.month, "inc:" + f, "", o[f], v, "inc");
+      setInc(el.getAttribute("data-minc"), money(el.value), "");
       save(); render();
     });
     on("[data-incdef]", function(){
@@ -15160,7 +15210,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "0.2-beta+30";
+  var APP_VERSION = "0.2-beta+31";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
