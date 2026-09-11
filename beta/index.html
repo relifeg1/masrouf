@@ -1917,6 +1917,31 @@ opacity:.45}
 .freefree{color:var(--ok)}
 /* ══ شاشةُ التحليل ══ */
 .anhead{padding:18px 20px 16px;border-inline-start:3px solid var(--warn)}
+.anhead.sub2{padding-top:15px}
+.anhead.sub2 h3{font-size:17px}
+/* شريطُ الراتب: طبقاتُه بعرضِ حصصها — يُقرأ قبل أن يُحسب */
+.salbar{display:flex;height:10px;border-radius:99px;overflow:hidden;margin-top:14px;
+background:var(--card-2);gap:2px}
+.salbar i{display:block;min-width:3px}
+.salbar i.duty{background:var(--warn)}
+.salbar i.flex{background:var(--accent)}
+.salbar i.save{background:var(--ok)}
+.salbar i.rest{background:var(--ink-3);opacity:.35}
+.sallg{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:10px}
+.sallg span{display:flex;flex-direction:column;gap:1px;position:relative;
+padding-inline-start:11px}
+.sallg span::before{content:"";position:absolute;inset-inline-start:0;top:5px;
+width:6px;height:6px;border-radius:2px}
+.sallg span.duty::before{background:var(--warn)}
+.sallg span.flex::before{background:var(--accent)}
+.sallg span.save::before{background:var(--ok)}
+.sallg span.rest::before{background:var(--ink-3);opacity:.45}
+.sallg b{font-size:13.5px;font-weight:600;font-variant-numeric:tabular-nums}
+.sallg s{text-decoration:none;font-size:10.5px;color:var(--ink-3)}
+.salheld{margin-top:12px;padding-top:11px;border-top:1px solid var(--line)}
+/* صفُّ الحكم: أربعةُ أبناءٍ فأربعةُ أعمدة. وفي الضيّق تتولّاه قاعدةُ
+   `.lgmv` القائمة فتُنزل الرقمين إلى سطرٍ ممتدّ. */
+@media(min-width:621px){ .anrow{grid-template-columns:34px minmax(0,1fr) auto auto} }
 .anhead.ok{border-inline-start-color:var(--ok)}
 .anlab{display:block;text-decoration:none;font-size:11px;color:var(--ink-3);
 margin-bottom:4px}
@@ -8975,6 +9000,58 @@ padding:10px 15px;border-top:1px solid var(--line)}
     return out;
   }
 
+  /* ── البابُ الرابع: الصورةُ الكبرى ──
+     سؤالٌ واحدٌ قبل البنود كلِّها: هل يكفيك راتبُك؟ */
+  function salaryStat(MS, mk){
+    mk = mk || ui.month;
+    var past = statMonths(MS, mk), inc = [], sp = [], def = 0, si = 0, ss = 0;
+    past.forEach(function(x){
+      var m = state.months[x];
+      if(!m || !m.items || !m.items.length) return;
+      var i = money(income(x)), v = money(actuals(x).sum);
+      inc.push(i); sp.push(v); si += i; ss += v;
+      if(v > i + 0.5) def++;                 /* شهرٌ أُغلق على عجز */
+    });
+    var n = inc.length;
+    /* البنيةُ: خطّةُ الشهر المعروض مقسومةً على طبقاتها */
+    var duty = 0, flex = 0, save = 0;
+    catRows().forEach(function(c){
+      var p = catPlan(c, mk), L = layerOf(c, mk);
+      if(L === "save") save += p; else if(L === "duty") duty += p; else flex += p;
+    });
+    save += planGoals() + (invCat() ? 0 : planInv());
+    var now = money(income(mk));
+    var pl = money(duty + flex + save);
+    return { n: n, def: def, inc: inc, sp: sp,
+             avgInc: money(n ? si / n : 0), avgSp: money(n ? ss / n : 0),
+             keep: money(n ? (si - ss) / n : 0),
+             duty: money(duty), flex: money(flex), save: money(save),
+             plan: pl, incNow: now, rest: money(now - pl),
+             /* حصّةُ المرهون من الدخل — مساحةُ المناورة عكسُها */
+             held: now > 0 ? Math.round(duty / now * 100) : 0 };
+  }
+  function salaryVerdict(S){
+    if(S.n < 3) return { k: "young", h: "ما زال يُقاس" };
+    if(S.rest < -0.5)
+      return { k: "plan", h: "خطّتُك أكبرُ من دخلك",
+               p: "مجموعُ خطّتك " + fmt(S.plan) + " ودخلُك " + fmt(S.incNow)
+                  + " — أي " + fmt(money(-S.rest)) + " فوق ما يدخل. "
+                  + "ولا يُلام بندٌ قبل أن يُعدَّل هذا." };
+    if(S.def >= Math.ceil(S.n / 2))
+      return { k: "short", h: "تصرف أكثرَ ممّا يدخل",
+               p: "أغلقتَ " + S.def + " من " + arMonths(S.n) + " على عجز. "
+                  + "متوسّطُ دخلك " + fmt(S.avgInc) + " ومتوسّطُ صرفك "
+                  + fmt(S.avgSp) + "." };
+    if(S.keep <= 0.5)
+      return { k: "tight", h: "تنجو بالكاد",
+               p: "لا يفضل من راتبك شيءٌ يُذكر: متوسّطُ دخلك "
+                  + fmt(S.avgInc) + " وصرفك " + fmt(S.avgSp) + "." };
+    return { k: "ok", h: "راتبُك يكفيك",
+             p: "يفضل منك " + fmt(S.keep) + " في الشهر وسطيّاً — "
+                + fmt(S.avgInc) + " يدخل و" + fmt(S.avgSp) + " يخرج."
+                + (S.def ? (" وشهرٌ واحدٌ من " + arMonths(S.n)
+                            + " أُغلق على عجز.") : "") };
+  }
   /* ── مشكلتُك: البندُ الذي يأكل أكثرَ الزيادة ── */
   function topProblem(MS, mk){
     var rows = [], tot = 0;
@@ -9022,9 +9099,32 @@ padding:10px 15px;border-top:1px solid var(--line)}
     var P = topProblem(MS, mk), OR = analysisOrders(MS, mk);
     var prog = monthProgress(mk);
 
-    /* ── الحكمُ الواحد ── */
+    /* ── الصورةُ الكبرى: حكمٌ على الراتب قبل الحكم على بنودِه ── */
+    var S = salaryStat(MS, mk), SV = salaryVerdict(S);
+    var SEG = [{ k: "duty", n: "مرهون",  v: S.duty, c: "warn" },
+               { k: "flex", n: "مرن",    v: S.flex, c: "accent" },
+               { k: "save", n: "ادّخار", v: S.save, c: "ok" },
+               { k: "rest", n: "خارجَ الخطّة", v: Math.max(0, S.rest), c: "ink-3" }];
+    var tot = S.incNow > 0 ? Math.max(S.incNow, S.plan) : S.plan;
+    h += '<div class="card anhead ' + (SV.k === "ok" ? "ok" : "")
+      + '"><s class="anlab">راتبُك · ' + esc(mName(mk)) + '</s>'
+      + '<h3>' + esc(SV.h) + '</h3><p>' + esc(SV.p || "") + '</p>'
+      + (tot > 0 ? ('<div class="salbar">' + SEG.map(function(g){
+            return g.v > 0 ? ('<i class="' + g.k + '" style="width:'
+              + (g.v / tot * 100).toFixed(2) + '%"></i>') : "";
+          }).join("") + '</div><div class="sallg">' + SEG.map(function(g){
+            return g.v > 0 ? ('<span class="' + g.k + '"><b>' + fmt(g.v)
+              + '</b><s>' + g.n + '</s></span>') : "";
+          }).join("") + '</div>') : "")
+      + (S.incNow > 0 && S.duty > 0
+          ? ('<p class="salheld">من كلِّ مئة ريالٍ تدخل، <b>' + S.held
+             + '</b> مرهونةٌ قبل أن يبدأ شهرُك — ومساحةُ مناورتك ما بقي.</p>')
+          : "")
+      + '</div>';
+
+    /* ── البندُ المشكلة ── */
     if(P){
-      h += '<div class="card anhead"><s class="anlab">مشكلتُك في '
+      h += '<div class="card anhead sub2"><s class="anlab">مشكلتُك في '
         + esc(mName(mk)) + '</s>'
         + '<h3>' + esc(P.c.e + " " + P.c.n) + '</h3>'
         + '<p>صرفتَ فيه <b>' + fmt(P.st.now) + '</b> ومتوسّطُك <b>'
@@ -9041,7 +9141,8 @@ padding:10px 15px;border-top:1px solid var(--line)}
         + '<button class="act" data-anmute="' + P.c.k + '">لا شأنَ لي به</button>'
         + '</div></div>';
     } else {
-      h += '<div class="card anhead ok"><s class="anlab">' + esc(mName(mk)) + '</s>'
+      h += '<div class="card anhead ok sub2"><s class="anlab">'
+        + esc(mName(mk)) + '</s>'
         + '<h3>لا بندَ خرج عن معدّله</h3>'
         + '<p>كلُّ بندٍ داخلَ خطّته ومتوسّطه. وهذا حكمٌ على ما مضى من '
         + 'الشهر لا على تمامه.</p></div>';
@@ -9085,7 +9186,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
       + ' من تاريخك — لا على غيرك</span></div><div class="card">';
     h += ROWS.map(function(r){
       var V = VERD[r.v.k], st = r.st, mt = muted(st.c.k);
-      return '<div class="row' + (mt ? " zero" : "") + '">'
+      return '<div class="row anrow' + (mt ? " zero" : "") + '">'
         + '<span class="ic" style="background:var(--' + V.c + '-soft);color:var(--'
         + V.c + ')">' + V.i + '</span>'
         + '<span><b class="nm">' + esc(st.c.e + " " + st.c.n)
@@ -15679,7 +15780,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "0.2-beta+35";
+  var APP_VERSION = "0.2-beta+36";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
