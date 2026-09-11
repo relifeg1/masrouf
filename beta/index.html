@@ -4900,11 +4900,15 @@ padding:10px 15px;border-top:1px solid var(--line)}
     var which = (by && by.which !== undefined) ? String(by.which)
               : (pk === cur.pk ? cur.which : "");
     if(which && !pickHas(pk, which)) which = "";
-    var f = [{ key: "bank", label: "الجهة (البنك أو المحفظة)",
+    /* العروضُ تُعلَن: الشبكةُ تُعطي أوّلَ حقلٍ وآخرَه العرضَ كلَّه
+       وتُزاوج ما بينهما عمياءَ — فوقع «الغرض» بجانب «اسم الحساب» وهما
+       لا يجتمعان. فالهُويّةُ سطرٌ، والغرضُ سطرٌ له وحدَه. */
+    var f = [{ key: "bank", label: "الجهة (البنك أو المحفظة)", w: "half",
                value: (by && by.bank !== undefined) ? by.bank : a.bank },
-             { key: "name", label: "اسم الحساب",
+             { key: "name", label: "اسم الحساب", w: "half",
                value: (by && by.name !== undefined) ? by.name : a.n },
              { key: "pk", label: "الغرض", type: "select", value: pk, rerender: true,
+               w: "wide",
                options: APK.map(function(x){ return { v: x.k, n: x.n }; }) }];
     if(pk !== "ops"){
       var opts = [{ v: "", n: "— اختر —" }];
@@ -4920,7 +4924,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
       f.push({ key: "which", label: pk === "cat" ? "أيُّ بند"
                  : (pk === "goal" ? "أيُّ هدف" : "أيُّ محفظة"),
                type: "select", value: which, rerender: (pk === "cat"),
-               options: opts });
+               w: (pk === "cat" ? "half" : "wide"), options: opts });
       /* وفروعُ البند تحته: الحسابُ قد يخصّ فرعاً بعينه لا البندَ كلَّه */
       if(pk === "cat" && which){
         var c2 = catOf(which), subs = (c2 && c2.subs) || [];
@@ -4929,6 +4933,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
                   : ((pk === cur.pk && which === cur.which) ? cur.sub : "");
           if(sub && !subOf(c2, sub)) sub = "";
           f.push({ key: "sub", label: "الفرع", type: "select", value: sub,
+                   w: "half",
                    options: [{ v: "", n: "البندُ كلُّه" }].concat(
                      subs.map(function(x){
                        return { v: x.id, n: (iconOf(x) || "•") + " " + x.n
@@ -4937,7 +4942,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
         }
       }
     }
-    f.push({ key: "kind", label: "النوع", type: "select",
+    f.push({ key: "kind", label: "النوع", type: "select", w: "wide",
              value: (by && by.kind !== undefined) ? by.kind : kindOf(a),
              options: KINDS.map(function(K){ return { v: K.k, n: K.n }; }) });
     return f;
@@ -12751,11 +12756,9 @@ padding:10px 15px;border-top:1px solid var(--line)}
       var a = acctOf(b.getAttribute("data-acctedit"));
       if(!a) return;
       ask({ title: "تعديلُ «" + a.n + "»",
-        msg: "<b>تشغيليّ</b> مالٌ حرٌّ بلا تخصيص. و<b>البند</b> يجعل هذا "
-           + "الحساب وعاءه: يُموَّل بخطّته أوّلَ الشهر ويُخصم منه صرفُه، "
-           + "والمالُ يبقى تشغيليّاً. أمّا <b>الهدف</b> و<b>المحفظة</b> "
-           + "فيغيّران مِلكيّةَ المال: يصير رصيدُ هذا الحساب مُدَّخرَ ذلك "
-           + "الهدف أو قيمةَ تلك المحفظة.",
+        msg: "<b>البند</b> وعاءٌ فقط — المالُ يبقى تشغيليّاً. أمّا "
+           + "<b>الهدف</b> و<b>المحفظة</b> فيأخذان المالَ من تشغيليّك: "
+           + "يصير رصيدُ هذا الحساب مُدَّخرَ الهدف أو قيمةَ المحفظة.",
         fields: acctDlgFields(a, null),
         rebuild: function(by){ return acctDlgFields(a, by); },
         ok: "احفظ",
@@ -15326,7 +15329,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "0.2-beta+32";
+  var APP_VERSION = "0.2-beta+33";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
