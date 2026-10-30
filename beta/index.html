@@ -2407,26 +2407,12 @@ padding:10px 15px;border-top:1px solid var(--line)}
 }
 
 /* ══ القائمةُ الجانبيّة ══ */
-.navsec,.navmon{display:none}
+.navmon{display:none}
 .msrow .ms .msb{display:none}
+.nav .navhid{display:none !important}
+.nav .navplus{display:none}
 @media (min-width:820px){
-  .nav-in > .navbrand{order:0}
-  .nav-in > .navmon{order:0}
-  .navsec{display:block;font-size:11px;letter-spacing:.04em;color:var(--ink-3);padding:14px 11px 4px}
-  .navsec.ns1{order:1}
-  .nav-in > [data-tab="dash"]{order:2}
-  .nav-in > [data-tab="spend"]{order:3}
-  .nav-in > [data-tab="plan"]{order:4}
-  .navsec.ns2{order:5}
-  .nav-in > [data-tab="rep"]{order:6}
-  .nav-in > [data-tab="year"]{order:7}
-  .navsec.ns3{order:8}
-  .nav-in > [data-tab="accts"]{order:9}
-  .nav-in > [data-tab="env"]{order:10}
-  .nav-in > [data-tab="inv"]{order:11}
-  .nav-in > [data-tab="wish"]{order:12}
-  .nav-in > .navupd{order:20;margin-top:auto}
-  .nav-in > .kbhint{order:21}
+  .nav-in > .navupd{margin-top:auto}
   .navmon{display:block;margin:2px 0 4px;padding:12px;border-radius:12px;background:var(--card-2);
     border:1px solid var(--line)}
   .navmon .nmt{display:flex;align-items:baseline;justify-content:space-between;gap:8px;font-size:12px;color:var(--ink-2)}
@@ -2537,6 +2523,38 @@ padding:10px 15px;border-top:1px solid var(--line)}
 .qadlg #df0{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:30px;font-weight:600;
   text-align:center;min-height:60px;direction:ltr}
 .qadlg .f2grid{margin-bottom:6px}
+
+/* ══ الشريطُ الخماسيّ ══ */
+@media (max-width:819px){
+  .nav .navplus{display:flex;align-items:center;justify-content:center;padding:0}
+  .nav .navplus span{width:46px;height:46px;border-radius:50%;background:var(--accent);color:#fff;
+    font-size:26px;line-height:46px;text-align:center;box-shadow:0 6px 16px -6px var(--accent);margin-top:-14px}
+  .nav button{font-size:11px}
+  .nav button .g{font-size:18px}
+  .nav .navupd,.nav .kbhint{display:none}
+}
+.subtabs{display:flex;gap:4px;padding:4px;margin:0 0 14px;border-radius:12px;background:var(--card-2);
+  border:1px solid var(--line);width:max-content;max-width:100%;overflow-x:auto;scrollbar-width:none}
+.subtabs::-webkit-scrollbar{display:none}
+.subtabs button{border:0;background:transparent;color:var(--ink-2);font:inherit;font-size:14px;font-weight:500;
+  padding:8px 18px;border-radius:9px;cursor:pointer;white-space:nowrap;min-height:38px;position:relative}
+.subtabs button:hover{color:var(--ink)}
+.subtabs button.on{background:var(--card);color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.subtabs .ndot{margin-inline-start:6px}
+.dlinks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:16px 0 4px}
+@media (min-width:760px){ .dlinks{grid-template-columns:repeat(4,minmax(0,1fr))} }
+.dlinks .dl{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:right;
+  padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);
+  font:inherit;cursor:pointer;min-height:56px}
+.dlinks .dl:hover{border-color:var(--accent)}
+.dlinks .dl b{font-size:14px;font-weight:600}
+.dlinks .dl s{text-decoration:none;font-size:12px;color:var(--ink-3)}
+.row.tap{cursor:pointer}
+.row.tap:hover{background:var(--card-2)}
+@media (max-width:819px){
+  /* «+» في الشريط دائماً — فزرُّ الترويسة تكرار */
+  .tact .btnpri[data-qadd]{display:none}
+}
 </style>
 
 <div id="root"></div>
@@ -8257,7 +8275,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
   function headInfo(){
     var k = ui.month, t = ui.tab || "dash";
     var inc = income(k), sp = actuals(k).sum, left = inc - sp;
-    var N = { dash:"اللوحة", rep:"التقارير", year:"السنة", plan:"الخطة", env:"أرصدة البنود",
+    var N = { dash:"اليوم", rep:"التقارير", year:"السنة", plan:"الخطة", env:"أرصدة البنود",
               spend:"المصروف", accts:"الحسابات", inv:"الاستثمار", set:"الإعدادات" };
     var sub = "";
     if(t === "year"){
@@ -8280,8 +8298,8 @@ padding:10px 15px;border-top:1px solid var(--line)}
     else if(t === "spend")
       act = '<button class="btnpri" data-tab="plan">راجع الخطة</button>';
     else if(t === "accts" || t === "inv")
-      act = '<button class="btnpri" data-tab="dash">اللوحة</button>';
-    return { t: N[t] || "اللوحة", s: sub, a: act };
+      act = '<button class="btnpri" data-qadd="1">+ أضف مصروفاً</button>';
+    return { t: N[t] || "اليوم", s: sub, a: act };
   }
   function topbar(){
     var H = headInfo();
@@ -8316,12 +8334,57 @@ padding:10px 15px;border-top:1px solid var(--line)}
      بيدين مختلفتين لتفرّقا عند أوّل تعديل. */
   var BETA_TABS = { inv: 1 };
   function tabBeta(k){ return !!BETA_TABS[k]; }
+  /* ══ خمسُ شاشات ══
+     كانت عشراً، كلٌّ منها مرآةٌ لجزءٍ من البيانات. صارت خمساً بما يأتي
+     صاحبُها ليفعله، وما سواها تبويبٌ داخل أختها. والأزرارُ الأخرى تبقى
+     في الشريط مخفيّةً — فما ينقل إلى «الأمنيات» من أيّ مكانٍ يجدها. */
+  var NAV_G = [
+    { k: "dash",  n: "اليوم",    g: "🏠", kids: ["dash"] },
+    { k: "spend", n: "المصروف",  g: "🧾", kids: ["spend", "env"] },
+    { k: "plan",  n: "الخطة",    g: "🧭", kids: ["plan", "wish"] },
+    { k: "money", n: "مالي",     g: "🏦", kids: ["accts", "inv"] },
+    { k: "rep",   n: "التقارير", g: "📊", kids: ["rep", "year"] }
+  ];
+  var SUB_N = { spend: "العمليّات", env: "أرصدة البنود", plan: "البنود والأهداف", wish: "الأمنيات",
+                accts: "الحسابات", inv: "الاستثمار", rep: "التحليل", year: "السنة" };
+  function navGroupOf(t){
+    for(var i = 0; i < NAV_G.length; i++) if(NAV_G[i].kids.indexOf(t) >= 0) return NAV_G[i];
+    return null;
+  }
+  function navKids(g){ return g.kids.filter(function(k){ return tabShown(k); }); }
+  function subTabs(){
+    var g = navGroupOf(ui.tab || "dash");
+    if(!g) return "";
+    var kids = navKids(g);
+    if(kids.length < 2) return "";
+    return '<div class="subtabs" role="tablist" aria-label="' + esc(g.n) + '">'
+      + kids.map(function(k){
+          var nd = (k === "wish") ? wishReady(ui.month).length : 0;
+          return '<button role="tab" aria-selected="' + (ui.tab === k ? "true" : "false") + '" data-tab="' + k + '"'
+            + ' class="' + (ui.tab === k ? "on" : "") + '">' + SUB_N[k]
+            + (nd ? '<i class="ndot">' + nd + '</i>' : "") + '</button>';
+        }).join("")
+      + '</div>';
+  }
   function navbar(){
-    var tabs = [["dash","🏠","اللوحة"],["rep","📊","التقارير"],["year","📅","السنة"],
-                ["plan","🧭","الخطة"],["wish","🎁","أمنياتك"],
-                ["env","🧧","الأرصدة"],["spend","🧾","المصروف"],
-                ["accts","🏦","الحسابات"],["inv","📈","الاستثمار"]]
-                .filter(function(t){ return tabShown(t[0]); });
+    var cur = navGroupOf(ui.tab || "dash");
+    if(!ui.navLast) ui.navLast = {};
+    if(cur) ui.navLast[cur.k] = ui.tab || "dash";
+    var shown = NAV_G.filter(function(g){ return navKids(g).length; });
+    var btn = function(g){
+      var kids = navKids(g), last = ui.navLast[g.k];
+      var to = (last && kids.indexOf(last) >= 0) ? last : kids[0];
+      var nd = (g.k === "plan" && kids.indexOf("wish") >= 0) ? wishReady(ui.month).length : 0;
+      return '<button data-tab="' + to + '" class="ng' + (cur === g ? " on" : "") + '"'
+        + (cur === g ? ' aria-current="page"' : "") + '>'
+        + '<span class="g">' + g.g + '</span>' + g.n
+        + (nd ? '<i class="ndot">' + nd + '</i>' : "") + '</button>';
+    };
+    /* «+» بعد «المصروف» — الفعلُ بجوار شاشته */
+    var half = Math.min(2, shown.length);
+    /* والأبناءُ الأخرى مخفيّة: «اذهب إلى الأمنيات» من أيّ مكانٍ يجد زرّها */
+    var hid = [];
+    shown.forEach(function(g){ navKids(g).forEach(function(k){ hid.push(k); }); });
     return '<div class="nav"><div class="nav-in">'
       + '<div class="navbrand"><span class="nbm">◈</span>'
       + '<span class="nbt"><b>مصروف</b>'
@@ -8330,22 +8393,16 @@ padding:10px 15px;border-top:1px solid var(--line)}
       + ' · ' + esc(verLabel()) + '</s>'
       + syncChipHTML(false) + '</span></div>'
       + navMonth()
-      + '<div class="navsec ns1">يومُك</div><div class="navsec ns2">قراءاتُك</div><div class="navsec ns3">مالُك</div>'
-      + tabs.map(function(t){
-          /* نقطةٌ حين تبلغ أمنيةٌ متناولَه — يُقال ولا يُنتظر أن يسأل */
-          var nd = (t[0] === "wish") ? wishReady(ui.month).length : 0;
-          return '<button data-tab="' + t[0] + '" class="' + (ui.tab === t[0] ? "on" : "") + '"'
-            + (tabBeta(t[0]) ? ' title="شاشةٌ تجريبيّة — ما زالت تتغيّر"' : "") + '>'
-            + '<span class="g">' + t[1] + '</span>' + t[2]
-            + (tabBeta(t[0]) ? '<i class="bdot" aria-hidden="true"></i>' : "")
-            + (nd ? ('<i class="ndot">' + nd + '</i>') : "") + '</button>';
+      + shown.slice(0, half).map(btn).join("")
+      + '<button class="navplus" data-qadd="1" aria-label="أضف مصروفاً"><span>+</span></button>'
+      + shown.slice(half).map(btn).join("")
+      + hid.map(function(k){
+          return '<button data-tab="' + k + '" class="navhid" tabindex="-1" aria-hidden="true">' + (SUB_N[k] || k) + '</button>';
         }).join("")
       + navUpdate()
       + '<button class="kbhint" data-kbhelp="1" title="اختصارات لوحة المفاتيح">⌨ اختصارات <s>/</s></button>'
       + '</div></div>';
   }
-  /* صفٌّ ثابت آخر القائمة: رقم النسخة دائماً، وحالُ التحديث إن وُجد.
-     الشريط وحده لا يكفي — يظهر مرّةً ثم يُنسى، ولا يُسأل عنه. */
   /* ملخّصُ الشهر في القائمة الجانبيّة — يُرى من كلّ شاشة، وزرُّ المصروف
      تحته: أكثرُ فعلٍ في التطبيق لا يحتاج أن يُبحث عنه */
   function navMonth(){
@@ -8968,13 +9025,48 @@ padding:10px 15px;border-top:1px solid var(--line)}
     h += viewTrends(k);
     cut("trend");
 
+    /* ── آخرُ ما سجّلت ── تراه فتتذكّر ما لم تسجّله */
+    (function(){
+      var its = ((state.months[k] && state.months[k].items) || []).slice()
+        .sort(function(p, q){ return itemAt(q) - itemAt(p); }).slice(0, 5);
+      h += '<div class="sec"><h2>آخرُ ما سجّلت</h2>'
+        + '<button class="mini" data-qadd="1">+ أضف</button></div>';
+      if(!its.length){
+        h += '<div class="card"><div class="empty" style="padding:16px"><b>لا شيء في '
+          + esc(mName(k)) + ' بعد</b>اضغط «+ أضف» أو N — المبلغُ والبندُ وانتهى.</div></div>';
+        return;
+      }
+      h += '<div class="card">' + its.map(function(it){
+        var c = catOf(it.c) || { n: "—", c: "#888", e: "•" };
+        var dl = dayLabel(itemAt(it));
+        /* والتاريخُ يوماً واسمَ شهر — الأرقامُ المفصولة بشرطاتٍ تنقلب في السطر العربيّ */
+        if(/^\d{4}-\d{2}-\d{2}$/.test(dl)) dl = (+dl.slice(8)) + " " + AR_M[+dl.slice(5, 7) - 1];
+        var sub = [it.t || "", it.auto ? "سُجّل تلقائياً" : "", dl]
+          .filter(Boolean).join(" · ");
+        return '<div class="row tap" data-edit="' + it.id + '">'
+          + '<span class="ic" style="background:' + c.c + '22;color:' + c.c + '">' + iconOf(c) + '</span>'
+          + '<span><span class="nm">' + esc(c.n) + '</span><span class="sub">' + esc(sub) + '</span></span>'
+          + '<span class="rt"><span class="a">' + fmt(it.a) + '</span></span></div>';
+      }).join("") + '</div>';
+    })();
+    cut("recent");
+
+    /* ── ما انتقل من هنا إلى شاشته ── يُقال أين صار، فلا يُظنّ أنّه ذهب */
+    h += '<div class="dlinks">'
+      + '<button class="dl" data-tab="plan"><b>أهدافك</b><s>في الخطة</s></button>'
+      + '<button class="dl" data-tab="env"><b>أرصدة البنود</b><s>في المصروف</s></button>'
+      + '<button class="dl" data-tab="accts"><b>ثروتك وحساباتك</b><s>في مالي</s></button>'
+      + '<button class="dl" data-tab="year"><b>نتائجُ أشهرك</b><s>في التقارير</s></button>'
+      + '</div>';
+    cut("links");
+
     /* ══ الترتيب بالأهمية ══
        ما يُطلب منك فعله · أرقامك · ما يحتاج انتباهك · أين ذهب المال ·
        ثم هل أنت على خطتك · ثم أرصدتك وأهدافك · ثم الصورة الأوسع ·
        والأرشيف أخيراً. */
     PART.mig = migCard();
-    return ["mig","act","kpi","spend","recon","alert","plan","env",
-            "goals","net","own","inv","months","trend","arch"]
+    /* «اليوم»: ما يُنظر إليه كلَّ يوم — وما سواه في شاشته */
+    return ["mig","act","spend","recon","alert","recent","plan","links"]
       .map(function(nm){ return PART[nm] || ""; }).join("");
   }
 
@@ -9470,7 +9562,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
      يُفعل فيها. والمتنُ في مكانٍ واحد: تُقرأ منه البطاقةُ في الشاشة
      والقسمُ في الإعدادات معاً، فلا يفترقان. */
   var GUIDE = [
-    { k: "dash", i: "🏠", n: "اللوحة",
+    { k: "dash", i: "🏠", n: "اليوم",
       w: "خلاصةُ شهرك في نظرة: دخلُك وما صُرف وما بقي، وما يحتاج انتباهك.",
       h: ["الأرقام الأربعة أعلاها: دخلُ الشهر · ما صُرف · المتبقّي · صافي ثروتك.",
           "«يحتاج انتباهك» يجمع ما تجاوز خطّته وما قارب، فلا تبحث عنه.",
@@ -13558,7 +13650,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
     grabTyped();
     document.getElementById("root").innerHTML =
       '<div class="wrap v-' + (ui.tab || "dash") + '">'
-      + topbar() + /* DEV:INLINE */ devBarHTML() + saveBar() + updateBar()
+      + topbar() + subTabs() + /* DEV:INLINE */ devBarHTML() + saveBar() + updateBar()
       + guideCard() + body
       + '<footer>' + (saveBlocked ? 'الحفظ متعذّر — اقرأ التنبيه أعلاه' : saveProof())
       + ' <span class="vtag">مصروف ' + esc(verLabel()) + '</span></footer></div>'
@@ -13601,7 +13693,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
     if(/\b(invcard|addbtn|spanall)\b/.test(c)) return true;
     /* wiz تمتدّ في اللوحة: تحتها صفُّ المؤشّرات الممتدّ، وضيقُها عنه
        يكسر الحافّة. وشاشةُ الخطة تستثنيها في السطر الأعلى. */
-    if(/\b(topbar|mstrip2|kpis|spendbar|autobar|grid|dcols|modesw|wiz|hero)\b/.test(c)) return true;
+    if(/\b(topbar|mstrip2|kpis|spendbar|autobar|grid|dcols|modesw|wiz|hero|subtabs|dlinks)\b/.test(c)) return true;
     if(el.tagName === "FOOTER") return true;
     if(el.classList.contains("card") &&
        (el.querySelector(".ygrid") || el.querySelector(".yrow") || el.querySelector(".qtab"))) return true;
@@ -16609,7 +16701,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "0.2-beta+42";
+  var APP_VERSION = "0.2-beta+43";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
@@ -18343,7 +18435,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
   }
 
   /* ── التحكّم اليوميّ ── */
-  var TABS_ALL = [["dash","اللوحة"],["rep","التقارير"],["year","السنة"],["plan","الخطة"],
+  var TABS_ALL = [["dash","اليوم"],["rep","التقارير"],["year","السنة"],["plan","الخطة"],
                   ["env","الأرصدة"],["spend","المصروف"],["accts","الحسابات"],["inv","الاستثمار"]];
   function theme(){
     var t = state.theme;
@@ -18541,7 +18633,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
      الحاسبُ أكثرُ ما يُفتح عليه التطبيق، ولم يكن فيه مفتاحٌ واحد: لا Esc
      يُغلق حواراً، ولا سهمٌ يقلّب شهراً. يُقرأ e.code لا e.key — فالحرفُ
      في التخطيط العربيّ غيرُه في الإنجليزيّ، والمفتاحُ واحد. */
-  var KB_TABS = ["dash", "spend", "plan", "rep", "year", "accts", "env", "inv", "wish"];
+  var KB_TABS = ["dash", "spend", "plan", "accts", "rep", "env", "wish", "inv", "year"];
   function kbTyping(t){
     if(!t) return false;
     var tag = t.tagName;
@@ -18554,7 +18646,8 @@ padding:10px 15px;border-top:1px solid var(--line)}
         + row("N", "أضف مصروفاً — من أيّ شاشة")
         + row("→ ←", "الشهر السابق · التالي")
         + row("T", "عُد إلى شهرك الجاري")
-        + row("1 – 9", "انتقل بين الشاشات بترتيب القائمة")
+        + row("1 – 5", "اليوم · المصروف · الخطة · مالي · التقارير")
+        + row("6 – 9", "أرصدة البنود · الأمنيات · الاستثمار · السنة")
         + row("Enter", "احفظ الحوار · انزل إلى الخانة التالية في الجداول")
         + row("Esc", "أغلق الحوار — أو اخرج من الخانة")
         + row("/", "هذه القائمة")
