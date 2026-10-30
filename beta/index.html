@@ -357,7 +357,9 @@ input,select,button,textarea{font-family:inherit;font-size:16px;min-width:0;max-
   border-inline-start:2px solid var(--line-2);padding-inline-start:12px}
 .hintnote b{color:var(--ink-2);font-weight:600}
 .flag b{font-weight:700}
-.vtag{opacity:.55;font-size:11px;font-family:var(--mono, monospace);
+/* رقمُ النسخة في الذيل وحدَه — وكانت القاعدةُ عامّةً فتُلبس شاراتِ
+   الحكم في التقارير خطَّ النظام الأحاديّ وشفافيّةً تبهتها */
+footer .vtag{opacity:.55;font-size:11px;font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;
       letter-spacing:.2px;white-space:nowrap}
 .savebar{margin:12px 0}
 .wadd .emoface.ro{display:inline-flex;align-items:center;justify-content:center}
@@ -1963,7 +1965,7 @@ margin-bottom:4px}
 .anhead p{font-size:13.5px;line-height:1.8;color:var(--ink-2)}
 .anwarn{text-decoration:none;color:var(--ink-3);font-size:12px}
 .anhead .acts{margin-top:12px}
-.vtag{font-size:9.5px;border-radius:99px;padding:1px 7px;margin-inline-start:6px;
+.vtag{font-size:9.5px;border-radius:99px;padding:1px 7px;margin-inline-start:6px;white-space:nowrap;
 background:var(--card-2);color:var(--ink-3);font-weight:400}
 .vtag.warn{background:var(--warn-soft);color:var(--warn)}
 .vtag.ok{background:var(--ok-soft);color:var(--ok)}
@@ -2352,6 +2354,145 @@ padding:10px 15px;border-top:1px solid var(--line)}
 .trail li{grid-template-columns:minmax(0,1.3fr) repeat(3,minmax(0,1fr))}
 .trail.mv li{grid-template-columns:minmax(0,1.3fr) repeat(4,minmax(0,1fr))}
 .trail .bal.neg{color:var(--warn)}
+
+/* ══ بطاقةُ البطل ══ */
+.hero{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;padding:20px 20px 16px;min-width:0}
+.hero .hlab{font-size:13px;color:var(--ink-2)}
+.hero .hbig{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:44px;font-weight:600;
+  letter-spacing:-.03em;line-height:1.1;margin-top:6px;direction:ltr;text-align:right;font-variant-numeric:tabular-nums}
+.hero .hbig small{font-family:"IBM Plex Sans Arabic",sans-serif;font-size:14px;font-weight:500;color:var(--ink-3);
+  margin-inline-start:8px;letter-spacing:0}
+.hero .hbig.neg{color:var(--warn)}
+.hero .hsub{font-size:14px;color:var(--ink-2);margin-top:6px;line-height:1.6}
+.hero .hsub b{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;color:var(--ink);font-weight:600}
+.hero .hbar{position:relative;height:10px;border-radius:99px;background:var(--card-2);margin-top:16px;overflow:visible}
+.hero .hfill{position:absolute;inset-block:0;inset-inline-start:0;border-radius:99px;background:var(--accent)}
+.hero .hmark{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink);border-radius:2px;
+  box-shadow:0 0 0 2px var(--card)}
+.hero .hbarl{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--ink-3);margin-top:7px}
+.hero .hchart{min-width:0;display:flex;flex-direction:column}
+.hero .hct{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;color:var(--ink-2)}
+.hpace{font-size:12px;font-weight:600;padding:2px 10px;border-radius:99px}
+.hpace.ok{background:var(--ok-soft);color:var(--ok)}
+.hpace.warn{background:var(--warn-soft);color:var(--warn)}
+.hsvg{width:100%;height:132px;display:block;margin-top:8px}
+.hsvg .hg{stroke:var(--line);stroke-width:1}
+.hsvg .hp{stroke:var(--ink-3);stroke-width:1.5;stroke-dasharray:4 4;vector-effect:non-scaling-stroke}
+.hsvg .hl{fill:none;stroke:var(--accent);stroke-width:2;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.hsvg .hl.over{stroke:var(--warn)}
+.hsvg .ha{fill:var(--accent);opacity:.12}
+.hsvg .ha.over{fill:var(--warn)}
+.hsvg .ht{stroke:var(--ink-3);stroke-width:1;opacity:.5;vector-effect:non-scaling-stroke}
+.hsvg .hd{fill:var(--accent);stroke:var(--card);stroke-width:2;vector-effect:non-scaling-stroke}
+.hsvg .hd.over{fill:var(--warn)}
+.hleg{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--ink-3);margin-top:6px}
+.hleg i{display:inline-block;width:16px;height:0;border-top:2px solid var(--accent);vertical-align:middle;margin-inline-end:6px}
+.hleg i.l2{border-top:2px dashed var(--ink-3)}
+.hero .hstats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--line);
+  border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.hero .hs{background:var(--card);padding:11px 14px;min-width:0}
+.hero .hs span{display:block;font-size:12px;color:var(--ink-3)}
+.hero .hs b{display:block;font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:19px;font-weight:600;
+  margin-top:3px;direction:ltr;text-align:right;font-variant-numeric:tabular-nums}
+.hero .hs b.neg{color:var(--warn)}
+.hero .hs s{display:block;text-decoration:none;font-size:12px;color:var(--ink-3);margin-top:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hero .hseg .bar{display:flex;height:8px;border-radius:99px;overflow:hidden;gap:2px;background:var(--card-2)}
+.hero .hseg .bar i{display:block;height:100%}
+.hero .hseg span{display:block;font-size:12px;color:var(--ink-3);margin-top:7px}
+@media (min-width:760px){
+  .hero{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);column-gap:28px}
+  .hero .hstats,.hero .hseg{grid-column:1 / -1}
+  .hero .hstats{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+
+/* ══ القائمةُ الجانبيّة ══ */
+.navsec,.navmon{display:none}
+.msrow .ms .msb{display:none}
+@media (min-width:820px){
+  .nav-in > .navbrand{order:0}
+  .nav-in > .navmon{order:0}
+  .navsec{display:block;font-size:11px;letter-spacing:.04em;color:var(--ink-3);padding:14px 11px 4px}
+  .navsec.ns1{order:1}
+  .nav-in > [data-tab="dash"]{order:2}
+  .nav-in > [data-tab="spend"]{order:3}
+  .nav-in > [data-tab="plan"]{order:4}
+  .navsec.ns2{order:5}
+  .nav-in > [data-tab="rep"]{order:6}
+  .nav-in > [data-tab="year"]{order:7}
+  .navsec.ns3{order:8}
+  .nav-in > [data-tab="accts"]{order:9}
+  .nav-in > [data-tab="env"]{order:10}
+  .nav-in > [data-tab="inv"]{order:11}
+  .nav-in > [data-tab="wish"]{order:12}
+  .nav-in > .navupd{order:20;margin-top:auto}
+  .nav-in > .kbhint{order:21}
+  .navmon{display:block;margin:2px 0 4px;padding:12px;border-radius:12px;background:var(--card-2);
+    border:1px solid var(--line)}
+  .navmon .nmt{display:flex;align-items:baseline;justify-content:space-between;gap:8px;font-size:12px;color:var(--ink-2)}
+  .navmon .nmt b{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:16px;color:var(--ink);font-weight:600}
+  .navmon .nmt b.neg{color:var(--warn)}
+  .navmon .nmb{height:5px;border-radius:99px;background:var(--line);margin-top:8px;overflow:hidden}
+  .navmon .nmb i{display:block;height:100%;background:var(--accent);border-radius:99px}
+  .navmon .nms{font-size:12px;color:var(--ink-3);margin-top:6px}
+  .nav .navmon .navadd{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px;
+    width:100%;padding:9px 10px;border-radius:10px;background:var(--accent);color:#fff;font-weight:600;font-size:13px}
+  .nav .navmon .navadd:hover{background:var(--accent);color:#fff;filter:brightness(1.08)}
+  .nav .navmon .navadd s{text-decoration:none;font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:11px;
+    border:1px solid rgba(255,255,255,.45);border-radius:5px;padding:0 5px;opacity:.9}
+  .nav-in{min-height:100%}
+
+  /* شريطُ الشهور: خطٌّ رفيعٌ يقول كم صُرف من دخل كلّ شهر */
+  .msrow .ms{position:relative;padding-bottom:9px}
+  .msrow .ms .msb{display:block;position:absolute;inset-inline:8px;bottom:4px;height:3px;border-radius:99px;
+    background:var(--line);overflow:hidden}
+  .msrow .ms .msb em{display:block;height:100%;background:var(--ok);border-radius:99px}
+  .msrow .ms .msb.over em{background:var(--warn)}
+}
+
+/* ══ تشطيبُ الحاسب ══ */
+@media (min-width:1180px){
+  .topbar{padding:20px 0 14px}
+  .brand{font-size:26px}
+  .hsub{font-size:13.5px;color:var(--ink-2)}
+  .card{border-radius:14px;box-shadow:none}
+  .kpi{border-radius:14px;box-shadow:none;padding:16px 18px}
+  .kv{font-size:26px}
+  .sec{margin:26px 2px 11px}
+  .sec h2{font-size:17px}
+  .sec .hint{font-size:12.5px}
+  .row{padding:13px 18px}
+  .hero{padding:24px 26px 20px;column-gap:40px}
+  .hero .hbig{font-size:52px}
+  .hsvg{height:150px}
+  .nav button{font-size:13.5px;padding:9px 12px}
+  .nav button.on{font-weight:600}
+}
+.hero > *{min-width:0}
+.hero .hbarl,.hero .hct{flex-wrap:wrap}
+
+/* شريطُ الصفّ في جدول المصروف — للحاسب وحدَه */
+.qtab .qpg{display:none}
+@media (min-width:1180px){
+  .qtab .qpg{display:block;flex:1 1 auto;max-width:280px;min-width:60px;height:6px;border-radius:99px;
+    background:var(--card-2);overflow:hidden;margin-inline-start:auto;margin-inline-end:12px}
+  .qtab .qpg i{display:block;height:100%;background:var(--ok);border-radius:99px}
+  .qtab .qpg.near i{background:var(--gold)}
+  .qtab .qpg.over i{background:var(--warn)}
+  .qtab .qpg.done i{background:var(--ok);opacity:.55}
+  .qtab.head{font-size:12px}
+}
+
+@media (min-width:1180px){
+  /* سنةُ الشريط وأزرارُها في سطر الشهور نفسِه — كانت سطراً وحدها */
+  .mstrip2{flex-wrap:nowrap}
+  .msrow{order:2;flex:1 1 auto}
+  .msy,.msl,.mstoday{order:1}
+  /* «يبقى من دخلك» في رأس المصروف: الرقمُ الذي جاء من أجله */
+  .qinc .qs b{font-size:18px}
+  .qinc .qs s{font-size:12px}
+  .qinc .qs.big b{font-size:30px}
+}
 </style>
 
 <div id="root"></div>
@@ -4087,7 +4228,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
       return '<span class="sb"><i class="' + (i === ms.length - 1 ? "last" : "")
         + '" style="height:' + Math.max(3, Math.round(vals[i] / mx * H)) + 'px" title="'
         + esc(mName(mk)) + ' · ' + fmt(vals[i]) + '"></i>'
-        + '<em>' + mk.slice(5) + '</em></span>';
+        + '<em>' + AR_M3[+mk.slice(5) - 1] + '</em></span>';
     }).join("") + '</div>';
   }
   /* ربحُك شهراً بشهر — بمقياسه هو لا بمقياس رأس المال.
@@ -4124,7 +4265,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
             + '</b>'
             + '<i class="gap ' + (g >= 0 ? "up" : "dn") + '" style="height:'
             + hh + 'px"></i>'
-            + '<em>' + r.mk.slice(5) + '</em></span>';
+            + '<em>' + AR_M3[+r.mk.slice(5) - 1] + '</em></span>';
         }).join("")
       + '</div>'
       + '<div class="vslg"><span>آخرَ شهر: وضعتَ <b>' + fmt(last.net)
@@ -4288,7 +4429,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
       return '<span class="sb"><i class="' + (last ? "last" : "") + '" style="height:'
         + Math.max(3, Math.round(val / mx * H)) + 'px" title="'
         + esc(mName(mk)) + ' · ' + fmt(val) + '"></i>'
-        + '<em>' + mk.slice(5) + '</em></span>';
+        + '<em>' + AR_M3[+mk.slice(5) - 1] + '</em></span>';
     }).join("") + '</div>';
   }
   /* أشهرُ السجلّ — يحتاجها الزرُّ لعدِّها واللوحُ لعرضها */
@@ -8046,7 +8187,16 @@ padding:10px 15px;border-top:1px solid var(--line)}
            + (monthHasData(mk) ? " has" : "")
            + (mk > now ? " future" : "")
            + '" data-gomonth="' + mk + '" title="' + esc(mName(mk)) + '">'
-           + '<i>' + i + '</i><u>' + AR_M[i - 1] + '</u><q>' + AR_M3[i - 1] + '</q></button>';
+           + '<i>' + i + '</i><u>' + AR_M[i - 1] + '</u><q>' + AR_M3[i - 1] + '</q>'
+           + (function(){
+               if(!monthHasData(mk)) return "";
+               var inc2 = income(mk), sp2 = actuals(mk).sum;
+               if(!(inc2 > 0)) return "";
+               var r = sp2 / inc2;
+               return '<b class="msb' + (r > 1 ? " over" : "") + '"><em style="width:'
+                 + Math.min(100, r * 100).toFixed(0) + '%"></em></b>';
+             })()
+           + '</button>';
     }
     return '<div class="mstrip2">'
       + '<button class="msy" data-stripy="-1" title="السنة السابقة">‹</button>'
@@ -8133,6 +8283,8 @@ padding:10px 15px;border-top:1px solid var(--line)}
       + (channel() ? 'قناة التجربة' : 'إصدار تجريبي')
       + ' · ' + esc(verLabel()) + '</s>'
       + syncChipHTML(false) + '</span></div>'
+      + navMonth()
+      + '<div class="navsec ns1">يومُك</div><div class="navsec ns2">قراءاتُك</div><div class="navsec ns3">مالُك</div>'
       + tabs.map(function(t){
           /* نقطةٌ حين تبلغ أمنيةٌ متناولَه — يُقال ولا يُنتظر أن يسأل */
           var nd = (t[0] === "wish") ? wishReady(ui.month).length : 0;
@@ -8148,6 +8300,19 @@ padding:10px 15px;border-top:1px solid var(--line)}
   }
   /* صفٌّ ثابت آخر القائمة: رقم النسخة دائماً، وحالُ التحديث إن وُجد.
      الشريط وحده لا يكفي — يظهر مرّةً ثم يُنسى، ولا يُسأل عنه. */
+  /* ملخّصُ الشهر في القائمة الجانبيّة — يُرى من كلّ شاشة، وزرُّ المصروف
+     تحته: أكثرُ فعلٍ في التطبيق لا يحتاج أن يُبحث عنه */
+  function navMonth(){
+    var k = ui.month, inc = income(k), sp = actuals(k).sum, left = inc - sp;
+    var p = inc > 0 ? Math.min(100, sp / inc * 100) : 0;
+    return '<div class="navmon">'
+      + '<div class="nmt"><span>' + esc(mName(k)) + '</span><b class="' + (left < 0 ? "neg" : "") + '">'
+      + fmt(left) + '</b></div>'
+      + '<div class="nmb"><i style="width:' + p.toFixed(1) + '%"></i></div>'
+      + '<div class="nms">' + (left < 0 ? "تجاوزتَ دخلك" : "يبقى من " + fmt(inc)) + '</div>'
+      + '<button class="navadd" data-tab="spend" title="أضف مصروفاً · N">+ أضف مصروفاً<s>N</s></button>'
+      + '</div>';
+  }
   function navUpdate(){
     if(window.claude && window.claude.use) return "";   /* لا تحديث داخل أرتفاكت */
     var waiting = !!swWaiting;
@@ -8272,6 +8437,120 @@ padding:10px 15px;border-top:1px solid var(--line)}
       return k <= now && monthLive(k);
     }).slice(-(n || 6));
   }
+
+  /* ══ بطاقةُ البطل ══
+     أوّلُ ما يُسأل عنه في شهرٍ جارٍ: كم بقي، وكم لي في اليوم حتى الراتب،
+     وهل أنا أسرع من خطّتي أم أبطأ. فتُقال الثلاثةُ في بطاقةٍ واحدة —
+     ورسمُ المسار يُريها: صرفُك التراكميّ يوماً بيوم مقابل خطٍّ مستقيمٍ
+     من صفرٍ إلى خطّة الصرف. والزمنُ يجري من اليمين كما يُقرأ. */
+  function dayWindow(mk){
+    var a = new Date(mkFirst(mk) + "T12:00:00"), b = new Date(mkFirst(shift(mk, 1)) + "T12:00:00");
+    var days = Math.max(1, Math.round((b - a) / 86400000)), now = todayKey();
+    var t = new Date(todayDate() + "T12:00:00");
+    var gone = mk === now ? Math.min(days, Math.max(1, Math.round((t - a) / 86400000) + 1))
+             : (mk < now ? days : 0);
+    return { a: a, days: days, gone: gone, cur: mk === now, past: mk < now };
+  }
+  function heroCard(k){
+    var inc = income(k), A = actuals(k), sp = A.sum, left = inc - sp, W = dayWindow(k);
+    var plan = 0;
+    state.cats.forEach(function(c){ if(!c.hidden && !isInvCat(c)) plan += catPlan(c, k); });
+    var by = {}, m = state.months[k];
+    ((m && m.items) || []).forEach(function(it){
+      var d = new Date(String(it.d || "").slice(0, 10) + "T12:00:00");
+      var i = isNaN(d.getTime()) ? 0 : Math.round((d - W.a) / 86400000);
+      i = Math.max(0, Math.min(W.days - 1, i));
+      by[i] = (by[i] || 0) + num(it.a);
+    });
+    var cum = [], run = 0;
+    for(var i = 0; i < W.days; i++){ run += by[i] || 0; cum.push(run); }
+    var upto = W.cur ? W.gone : (W.past ? W.days : 0);
+    var exp = plan * (upto / W.days), soFar = upto ? cum[upto - 1] : 0, diff = money(soFar - exp);
+
+    /* ── الرسم ── */
+    var VW = 420, VH = 132, PX = 8, PY = 12;
+    var mx = Math.max(plan, cum[W.days - 1] || 0, 1) * 1.08;
+    var X = function(i){ return VW - PX - (W.days > 1 ? i / (W.days - 1) : 0) * (VW - 2 * PX); };
+    var Y = function(v){ return VH - PY - v / mx * (VH - 2 * PY); };
+    var pts = [];
+    for(var j = 0; j < upto; j++) pts.push(X(j).toFixed(1) + "," + Y(cum[j]).toFixed(1));
+    var over = upto && soFar > exp + 0.5;
+    var line = pts.length ? pts.join(" ") : "";
+    var area = pts.length ? (X(0).toFixed(1) + "," + Y(0).toFixed(1) + " " + line + " "
+               + X(upto - 1).toFixed(1) + "," + Y(0).toFixed(1)) : "";
+    var svg = '<svg class="hsvg" viewBox="0 0 ' + VW + ' ' + VH + '" preserveAspectRatio="none" role="img" aria-label="'
+      + esc("مسارُ الصرف: صرفتَ " + fmt(soFar) + " والمتوقَّع حتى اليوم " + fmt(exp)) + '">'
+      + '<line class="hg" x1="' + PX + '" x2="' + (VW - PX) + '" y1="' + Y(0) + '" y2="' + Y(0) + '"/>'
+      + (plan > 0 ? '<line class="hp" x1="' + X(0) + '" y1="' + Y(0) + '" x2="' + X(W.days - 1) + '" y2="' + Y(plan) + '"/>' : "")
+      + (area ? '<polygon class="ha' + (over ? " over" : "") + '" points="' + area + '"/>' : "")
+      + (line ? '<polyline class="hl' + (over ? " over" : "") + '" points="' + line + '"/>' : "")
+      + (W.cur ? '<line class="ht" x1="' + X(upto - 1) + '" x2="' + X(upto - 1) + '" y1="' + PY + '" y2="' + Y(0) + '"/>' : "")
+      + (upto ? '<circle class="hd' + (over ? " over" : "") + '" cx="' + X(upto - 1) + '" cy="' + Y(soFar) + '" r="4"/>' : "")
+      + '</svg>';
+
+    /* ── الكلام ── */
+    var dLeft = W.cur ? (W.days - W.gone + 1) : 0;
+    var sub;
+    if(W.cur){
+      sub = left > 0
+        ? 'نحو <b>' + fmt(Math.floor(left / Math.max(1, dLeft))) + '</b> في اليوم لـ' + arDays(dLeft) + ' حتى راتبك'
+        : 'تجاوزتَ دخلَ الشهر و' + arDays(dLeft) + ' باقية حتى راتبك';
+    } else if(W.past){
+      sub = left >= 0 ? 'انتهى الشهر وفضل لك هذا' : 'انتهى الشهر على عجز';
+    } else {
+      sub = 'شهرٌ لم يبدأ — هذا دخلُه كاملاً';
+    }
+    var pace = "";
+    if(upto && plan > 0){
+      pace = Math.abs(diff) < 1
+        ? '<span class="hpace ok">على خطّتك تماماً</span>'
+        : (diff > 0
+            ? '<span class="hpace warn">أسرعُ من خطّتك بـ' + fmt(diff) + '</span>'
+            : '<span class="hpace ok">أبطأُ من خطّتك بـ' + fmt(-diff) + '</span>');
+    }
+    var pct = inc > 0 ? Math.min(100, sp / inc * 100) : 0;
+    var mark = W.cur ? (W.gone / W.days * 100) : null;
+    var segs = state.cats.map(function(c){
+      var v = A.by[c.k] || 0;
+      if(!v || isInvCat(c)) return "";
+      return '<i style="width:' + (sp ? v / sp * 100 : 0) + '%;background:' + c.c + '" title="'
+        + esc(c.n + " " + fmt(v)) + '"></i>';
+    }).join("");
+    var pk = shift(k, -1), pSp = actuals(pk).sum;
+    var nw = assetTotal() - liabTotal(k);
+    var cell = function(lab, val, note, cls){
+      return '<div class="hs"><span>' + lab + '</span><b' + (cls ? ' class="' + cls + '"' : "") + '>' + val + '</b>'
+        + (note ? '<s>' + note + '</s>' : "") + '</div>';
+    };
+    return '<div class="card hero">'
+      + '<div class="hmain">'
+      +   '<div class="hlab">' + (left < 0 ? "تجاوزتَ دخلك بـ" : "يبقى من دخلك") + ' · ' + esc(mName(k)) + '</div>'
+      +   '<div class="hbig' + (left < 0 ? " neg" : "") + '">' + fmt(Math.abs(left)) + '<small>' + esc(cur()) + '</small></div>'
+      +   '<div class="hsub">' + sub + '</div>'
+      +   '<div class="hbar"><span class="hfill" style="width:' + pct.toFixed(1) + '%"></span>'
+      +     (mark !== null ? '<span class="hmark" style="inset-inline-start:' + mark.toFixed(1) + '%" title="'
+               + esc("مضى " + Math.round(mark) + "٪ من الشهر") + '"></span>' : "")
+      +   '</div>'
+      +   '<div class="hbarl"><span>صُرف ' + Math.round(pct) + '٪ من دخلك</span>'
+      +     (mark !== null ? '<span>مضى ' + Math.round(mark) + '٪ من الشهر</span>' : "") + '</div>'
+      + '</div>'
+      + '<div class="hchart">'
+      +   '<div class="hct"><span>مسارُ صرفك</span>' + pace + '</div>'
+      +   svg
+      +   '<div class="hleg"><span><i class="l1"></i>صرفُك تراكمياً</span>'
+      +     (plan > 0 ? '<span><i class="l2"></i>خطّةُ الصرف ' + fmt(plan) + '</span>' : "") + '</div>'
+      + '</div>'
+      + '<div class="hstats">'
+      +   cell("دخل الشهر", fmt(inc), incObj(k).own ? "مخصّص لهذا الشهر" : "من الافتراضي")
+      +   cell("صُرف", fmt(sp), pSp ? (Math.abs(sp - pSp) < 1 ? "مثل " + esc(mName(pk).split(" ")[0])
+            : (sp > pSp ? "أكثر من " : "أقلّ من ") + esc(mName(pk).split(" ")[0]) + " بـ" + fmt(Math.abs(sp - pSp))) : "")
+      +   cell("خطّةُ الصرف", fmt(plan), plan > inc ? "أكبرُ من دخلك" : "")
+      +   cell("صافي ثروتك", fmt(nw), "أصول " + fmt(assetTotal()) + " − التزامات " + fmt(liabTotal(k)), nw < 0 ? "neg" : "")
+      + '</div>'
+      + (segs ? '<div class="hseg"><div class="bar">' + segs + '</div><span>أين ذهب ما صرفت — أعرضُها <b>'
+          + esc(topCat(k)) + '</b></span></div>' : "")
+      + '</div>';
+  }
   function viewDash(){
     /* تُقطَّع الأقسام إلى أجزاء مسمّاة، وتُجمَع في الترتيب المطلوب عند
        الإرجاع — فالترتيب قرارٌ في سطر واحد لا في مواضع الشيفرة. */
@@ -8288,8 +8567,9 @@ padding:10px 15px;border-top:1px solid var(--line)}
       return v ? '<i style="width:' + (a.sum ? v / a.sum * pct * 100 : 0) + '%;background:' + c.c + '"></i>' : "";
     }).join("");
 
-    /* شريط الصرف: يبقى لأنه يُظهر نصيب كل بند — بلا الرقم الضخم */
-    h += '<div class="card spendbar"><div class="bar">' + segs + '</div>'
+    /* شريط الصرف ومؤشّراتُه صارا بطاقةَ البطل */
+    h += heroCard(k);
+    if(false) h += '<div class="card spendbar"><div class="bar">' + segs + '</div>'
       + '<div class="foot"><span>' + (inc > 0 ? Math.round(spent / inc * 100) + '٪ من دخلك صُرف' : "—")
       + '</span><span>كل لون بند — أعرضها <b>' + esc(topCat(k)) + '</b></span></div></div>';
 
@@ -8303,7 +8583,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
     /* ── المؤشرات: كل رقم ومقارنته ── */
     var pk = shift(k, -1), pInc = income(pk), pSpent = actuals(pk).sum;
     var nw = assetTotal() - liabTotal(k);
-    h += '<div class="kpis">'
+    if(false) h += '<div class="kpis">'
       + kpi("◈", "accent", "دخل الشهر", fmt(inc),
             deltaTxt(inc, pInc, false),
             incObj(k).own ? "مخصص لهذا الشهر" : "من الافتراضي")
@@ -8326,7 +8606,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
         var tg0 = goalTarget(g), p = tg0 ? Math.min(1, goalSaved(g) / tg0) : 0;
         var e = goalEta(g);
         var sub = e.done ? "✓ مكتمل — بانتظار قرارك" :
-          (e.months == null ? "لم تخصّص مبلغاً شهرياً" : "يكتمل تقريباً " + e.when + " · " + fmt(g.m) + " شهرياً");
+          (e.months == null ? "لم تخصّص مبلغاً شهرياً" : "يكتمل تقريباً في " + mName(e.when) + " · " + fmt(goalMonthly(g)) + " شهرياً");
         return '<div class="row"><span class="ic" style="background:' + g.c + '22;color:' + g.c + '">' + g.e + '</span>'
           + '<span><span class="nm">' + esc(g.n) + '</span><span class="sub">' + esc(sub) + '</span>'
           + '<span class="track"><i style="width:' + (p*100) + '%;background:'
@@ -10831,7 +11111,17 @@ padding:10px 15px;border-top:1px solid var(--line)}
                        + ' · المتاح ' + fmt(avail)
                  : (avail ? 'بلا رصيد مُرحَّل' : 'بلا خطة')))
           + (catGoal(c) ? (' · يدّخر لـ«' + esc(catGoal(c).n) + '»') : "")
-          + '</s></span></span>'
+          + '</s></span>'
+        /* على الحاسب: شريطُ ما صُرف من المتاح يملأ المسافةَ بين الاسم
+           وأرقامه — فتُقرأ حالُ البند قبل أن تصل العينُ إلى الرقم */
+        + (avail > 0 || sp > 0
+            ? '<span class="qpg' + (sp > avail + 0.5 ? " over"
+                : (avail > 0 && sp >= avail - 0.5 ? " done"
+                : (avail > 0 && sp / avail >= nearRatio() ? " near" : ""))) + '" title="'
+              + esc((avail > 0 ? Math.round(sp / avail * 100) + "٪ من المتاح" : "بلا خطة")) + '">'
+              + '<i style="width:' + (avail > 0 ? Math.min(100, sp / avail * 100) : 100).toFixed(0) + '%"></i></span>'
+            : "")
+          + '</span>'
         /* الأنواع المحسوبة لا تُكتب: رقمُها يُشتقّ من دورةٍ أو نسبةٍ أو
            سقف. فلو عُرض حقلاً يُكتب فيه لظنّ صاحبُه أنّ ما يكتبه يُؤخذ. */
         + (roCalc ? ('<span class="qin plan ro" title="' + esc(roWhy) + '">'
@@ -13172,7 +13462,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
     if(/\b(invcard|addbtn|spanall)\b/.test(c)) return true;
     /* wiz تمتدّ في اللوحة: تحتها صفُّ المؤشّرات الممتدّ، وضيقُها عنه
        يكسر الحافّة. وشاشةُ الخطة تستثنيها في السطر الأعلى. */
-    if(/\b(topbar|mstrip2|kpis|spendbar|autobar|grid|dcols|modesw|wiz)\b/.test(c)) return true;
+    if(/\b(topbar|mstrip2|kpis|spendbar|autobar|grid|dcols|modesw|wiz|hero)\b/.test(c)) return true;
     if(el.tagName === "FOOTER") return true;
     if(el.classList.contains("card") &&
        (el.querySelector(".ygrid") || el.querySelector(".yrow") || el.querySelector(".qtab"))) return true;
@@ -16155,7 +16445,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "0.2-beta+39";
+  var APP_VERSION = "0.2-beta+40";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
@@ -18087,7 +18377,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
      الحاسبُ أكثرُ ما يُفتح عليه التطبيق، ولم يكن فيه مفتاحٌ واحد: لا Esc
      يُغلق حواراً، ولا سهمٌ يقلّب شهراً. يُقرأ e.code لا e.key — فالحرفُ
      في التخطيط العربيّ غيرُه في الإنجليزيّ، والمفتاحُ واحد. */
-  var KB_TABS = ["dash", "spend", "plan", "rep", "year", "env", "accts", "inv", "wish"];
+  var KB_TABS = ["dash", "spend", "plan", "rep", "year", "accts", "env", "inv", "wish"];
   function kbTyping(t){
     if(!t) return false;
     var tag = t.tagName;
