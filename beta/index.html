@@ -2563,6 +2563,19 @@ padding:10px 15px;border-top:1px solid var(--line)}
 .ritsteps span.d{background:var(--ok-soft);color:var(--ok);border-color:transparent}
 .ritsteps span.on{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
 .wiz.rit .dv.neg{color:var(--warn)}
+
+.onbprop li.sv{border-top:1px dashed var(--line)}
+.onbprop li.sv .dv{color:var(--ok)}
+.onbprop li.fr{color:var(--ink-3)}
+
+.setfam{font-family:"Alexandria","IBM Plex Sans Arabic",sans-serif;font-size:19px;font-weight:700;
+  margin:28px 2px 2px;padding-top:14px;border-top:1px solid var(--line);scroll-margin-top:64px}
+
+/* رموزُ التنقّل خطّيّةٌ من عائلةٍ واحدة — كانت رموزاً تعبيريّةً لكلٍّ ألوانُه وأسلوبُه */
+.nav button.ng .g{display:inline-flex;width:22px;height:22px;font-size:0}
+.nav button.ng .g svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.7;
+  stroke-linecap:round;stroke-linejoin:round}
+@media (min-width:820px){ .nav button.ng .g{width:19px;height:19px} }
 </style>
 
 <div id="root"></div>
@@ -8442,11 +8455,11 @@ padding:10px 15px;border-top:1px solid var(--line)}
      صاحبُها ليفعله، وما سواها تبويبٌ داخل أختها. والأزرارُ الأخرى تبقى
      في الشريط مخفيّةً — فما ينقل إلى «الأمنيات» من أيّ مكانٍ يجدها. */
   var NAV_G = [
-    { k: "dash",  n: "اليوم",    g: "🏠", kids: ["dash"] },
-    { k: "spend", n: "المصروف",  g: "🧾", kids: ["spend", "env"] },
-    { k: "plan",  n: "الخطة",    g: "🧭", kids: ["plan", "wish"] },
-    { k: "money", n: "مالي",     g: "🏦", kids: ["accts", "inv"] },
-    { k: "rep",   n: "التقارير", g: "📊", kids: ["rep", "year"] }
+    { k: "dash",  n: "اليوم",    g: "<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M4 11.5 12 5l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5.5h-5V20H5a1 1 0 0 1-1-1z\"/></svg>", kids: ["dash"] },
+    { k: "spend", n: "المصروف",  g: "<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6M9 16h3\"/></svg>", kids: ["spend", "env"] },
+    { k: "plan",  n: "الخطة",    g: "<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"8.5\"/><circle cx=\"12\" cy=\"12\" r=\"4.5\"/><circle cx=\"12\" cy=\"12\" r=\"1\"/></svg>", kids: ["plan", "wish"] },
+    { k: "money", n: "مالي",     g: "<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M4 7.5A1.5 1.5 0 0 1 5.5 6H18a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5.5A1.5 1.5 0 0 1 4 18.5zM4 8l12-4 1 2M15.5 13h.01\"/></svg>", kids: ["accts", "inv"] },
+    { k: "rep",   n: "التقارير", g: "<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M4 20h16M7 16v-5M12 16V7M17 16v-8\"/></svg>", kids: ["rep", "year"] }
   ];
   var SUB_N = { spend: "العمليّات", env: "أرصدة البنود", plan: "البنود والأهداف", wish: "الأمنيات",
                 accts: "الحسابات", inv: "الاستثمار", rep: "التحليل", year: "السنة" };
@@ -8707,7 +8720,8 @@ padding:10px 15px;border-top:1px solid var(--line)}
       sub = 'شهرٌ لم يبدأ — هذا دخلُه كاملاً';
     }
     var pace = "";
-    if(upto && plan > 0){
+    /* لا مسارَ قبل أوّل عمليّة: من بدأ اليومَ ليس «أبطأ من خطّته» */
+    if(upto && plan > 0 && ((m && m.items) || []).length){
       pace = Math.abs(diff) < 1
         ? '<span class="hpace ok">على خطّتك تماماً</span>'
         : (diff > 0
@@ -13847,7 +13861,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
                                "المظهر والفتح", "التبويبات",
                                "التنبيه والتسجيل", "الشروح"] },
     { n: "شهرك", of: ["الشهر المالي", "الترحيل بين الشهور"] },
-    { n: "الأهداف والاستثمار", of: ["الأهداف", "جهات الاستثمار",
+    { n: "الأهداف والاستثمار", of: ["الأهداف", "جهات الاستثمار", "محافظ الاستثمار",
                                    "سقف الاستثمار الشهري"] },
     { n: "عن التطبيق", of: ["عن التطبيق", "تثبيت التطبيق", "القناة",
                            "معالج البدء"] }
@@ -13869,24 +13883,48 @@ padding:10px 15px;border-top:1px solid var(--line)}
      شاشة. فهرسٌ أفقيّ يلتصق بالأعلى ويقفز إلى القسم. والحاسبُ له قائمتُه */
   function setJump(){
     var wrap = document.querySelector("#root > .wrap");
-    if(!wrap || ui.tab !== "set" || window.innerWidth >= 1180) return;
-    var secs = Array.prototype.slice.call(wrap.children).filter(function(el){
-      return el.classList && el.classList.contains("sec") && el.querySelector("h2");
+    if(!wrap || ui.tab !== "set" || window.innerWidth >= 820) return;
+    /* الأقسامُ وحداتٌ (عنوانٌ وما يليه) تُرتَّب بعائلاتها الخمس — كقائمة
+       الحاسب — وفوق كلِّ عائلةٍ عنوانُها. والفهرسُ خمسةُ أزرارٍ لا ثمانيةٌ وعشرون. */
+    var kids = Array.prototype.slice.call(wrap.children), units = [], cur = null, lead = [], tail = [];
+    kids.forEach(function(el){
+      if(el.tagName === "FOOTER"){ tail.push(el); return; }
+      if(el.classList.contains("sec") && el.querySelector("h2")){ cur = { els: [el], h: el }; units.push(cur); return; }
+      if(cur) cur.els.push(el); else lead.push(el);
     });
-    if(secs.length < 6) return;
+    if(units.length < 6) return;
+    units.forEach(function(u, i){
+      var nm = u.h.querySelector("h2").textContent.trim(), g = grpOf(nm);
+      u.f = famOf(g ? g.n : nm); u.i = i;
+    });
+    units.sort(function(p, q){ return (p.f - q.f) || (p.i - q.i); });
+    kids.forEach(function(el){ wrap.removeChild(el); });
+    lead.forEach(function(el){ wrap.appendChild(el); });
     var box = document.createElement("div");
     box.className = "setjump";
     box.setAttribute("role", "navigation");
-    box.setAttribute("aria-label", "أقسام الإعدادات");
-    box.innerHTML = secs.map(function(el, i){
-      el.id = "sj" + i;
-      return '<button data-sj="' + i + '">' + esc(el.querySelector("h2").textContent.trim()) + '</button>';
+    box.setAttribute("aria-label", "مجموعات الإعدادات");
+    wrap.appendChild(box);
+    var fams = [], last = -1;
+    units.forEach(function(u){
+      if(u.f !== last){
+        last = u.f;
+        var nm = SET_FAM[u.f] ? SET_FAM[u.f].n : "أخرى";
+        var hd = document.createElement("div");
+        hd.className = "setfam"; hd.id = "sjf" + u.f; hd.textContent = nm;
+        wrap.appendChild(hd);
+        fams.push({ f: u.f, n: nm });
+      }
+      u.els.forEach(function(el){ wrap.appendChild(el); });
+    });
+    tail.forEach(function(el){ wrap.appendChild(el); });
+    box.innerHTML = fams.map(function(x){
+      return '<button data-sj="' + x.f + '">' + esc(x.n) + '</button>';
     }).join("");
-    wrap.insertBefore(box, secs[0]);
     box.onclick = function(e){
-      var b = e.target && e.target.closest ? e.target.closest("[data-sj]") : null;
-      if(!b) return;
-      var t = document.getElementById("sj" + b.getAttribute("data-sj"));
+      var b2 = e.target && e.target.closest ? e.target.closest("[data-sj]") : null;
+      if(!b2) return;
+      var t = document.getElementById("sjf" + b2.getAttribute("data-sj"));
       if(t) t.scrollIntoView({ behavior: "smooth", block: "start" });
     };
   }
@@ -16807,7 +16845,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "0.2-beta+44";
+  var APP_VERSION = "0.2-beta+45";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
@@ -16908,7 +16946,11 @@ padding:10px 15px;border-top:1px solid var(--line)}
     toast("جارٍ التحديث…");
   }
   function kb(n){
-    return n < 1024 ? (n + " بايت") : (Math.round(n / 102.4) / 10 + "KB");
+    /* والكبيرُ بوحدته: «36652131.9KB» لا تُقرأ — «35 GB» تُقرأ */
+    if(n < 1024) return n + " بايت";
+    if(n < 1048576) return Math.round(n / 102.4) / 10 + "KB";
+    if(n < 1073741824) return Math.round(n / 104857.6) / 10 + "MB";
+    return Math.round(n / 107374182.4) / 10 + "GB";
   }
   function clock(t){
     var d = new Date(t);
@@ -17007,7 +17049,8 @@ padding:10px 15px;border-top:1px solid var(--line)}
 
   function onbStep(){
     if(!onb) return;
-    if(onb.step === 1) return onbS1();
+      if(onb.step === 1) return onbS1();
+      if(onb.step === "prop") return onbProp();
     if(onb.step === 2) return onbS2();
     if(onb.step === 3) return onbS3();
     if(onb.step === 4) return onbS4();
@@ -17016,7 +17059,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
 
   /* ١ · الراتب ويومه */
   function onbS1(){
-    ask({ title: "لنبدأ خطتك", msg: onbHead("١") + " · دخلك",
+      ask({ title: "لنبدأ خطتك", msg: "سؤالٌ واحد — ومنه نقترح عليك خطّةً كاملة تعدّلها متى شئت.",
       live: true,
       fields: [
         { label: "كم راتبك الشهري؟", type: "number", value: onb.salary },
@@ -17024,7 +17067,8 @@ padding:10px 15px;border-top:1px solid var(--line)}
       ],
       html: function(v){
         var inc = num(v && v[0]), d = Math.round(num(v && v[1]));
-        if(inc <= 0) return onbBar("اكتب راتبك لنبدأ.", false);
+          /* لا تحذيرَ قبل أن يكتب — كان «اكتب راتبك» يظهر أحمرَ والخانةُ فارغة */
+          if(inc <= 0) return onbBar("اكتب راتبك، ويومَ وصوله إن لم يكن أوّلَ الشهر.", true);
         return onbBar("شهرك المالي سيبدأ يوم <b>" + (d >= 2 && d <= 28 ? d : 1)
           + "</b> — يوم يصلك راتبك لا أوّل الشهر، فتُحسب فترتك كما تعيشها.", true);
       },
@@ -17033,8 +17077,8 @@ padding:10px 15px;border-top:1px solid var(--line)}
         var inc = Math.round(num(v[0]));
         if(inc <= 0){ toast("اكتب راتباً أكبر من صفر"); return; }
         onb.salary = inc;
-        onb.day = Math.round(num(v[1])) || 1;
-        onb.step = 2; onbStep();
+          onb.day = Math.round(num(v[1])) || 1;
+          onb.step = "prop"; onbStep();
       },
       cancel: "ابدأ فارغاً", onCancel: onbQuit });
   }
@@ -17059,7 +17103,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
         if(!onbPicks().length){ toast("اختر بنداً واحداً على الأقلّ"); return; }
         onb.step = 3; onbStep();
       },
-      cancel: "رجوع", onCancel: function(){ onb.step = 1; onbStep(); } });
+        cancel: "رجوع", onCancel: function(){ onb.step = "prop"; onbStep(); } });
   }
 
   /* ٣ · ادفع لنفسك أوّلاً */
@@ -17147,6 +17191,47 @@ padding:10px 15px;border-top:1px solid var(--line)}
       cancel: "رجوع", onCancel: function(){ onb.step = 4; onbStep(); } });
   }
 
+
+  /* ── خطّةٌ مقترحة ──
+     نِسَبٌ من الراتب لأسرةٍ سعوديّةٍ متوسّطة — لا قسمةٌ متساوية تجعل البنزينَ
+     كالبقالة. والباقي هامشٌ غيرُ مخصّص لما لا يُتوقّع، يوزّعه متى شاء. */
+  var ONB_RATIO = { grocery: 15, bills: 8, fuel: 7, telecom: 3, food: 8, health: 4,
+                    personal: 6, family: 6, charity: 2, subsc: 2, other: 9 };
+  var ONB_SAVE = 10;
+  function onbPropose(){
+    var inc = num(onb.salary), out = [], used = 0;
+    for(var k in ONB_RATIO){
+      var c = catOf(k);
+      if(!c || c.n === "بند محذوف") continue;
+      var a = Math.round(inc * ONB_RATIO[k] / 100 / 10) * 10;
+      if(a > 0){ out.push({ c: c, a: a }); used += a; }
+    }
+    var save = Math.round(inc * ONB_SAVE / 100 / 10) * 10;
+    return { rows: out, used: used, save: save, free: inc - used - save };
+  }
+  function onbProp(){
+    var Pp = onbPropose();
+    ask({ title: "هذه خطّتُك المقترحة", msg: "على راتب <b>" + fmt(onb.salary) + "</b> — بنِسَبٍ تناسب أكثرَ الأسر. "
+        + "ابدأ بها الآن وعدّل أيَّ بندٍ متى شئت من شاشة الخطة.",
+      fields: [],
+      html: function(){
+        return '<ul class="dlist onbprop">'
+          + Pp.rows.map(function(r){
+              return '<li><span>' + r.c.e + ' ' + esc(r.c.n) + '</span><span class="dv">' + fmt(r.a) + '</span></li>';
+            }).join("")
+          + '<li class="sv"><span>🛟 ادّخارٌ للطوارئ (' + ONB_SAVE + '٪)</span><span class="dv">' + fmt(Pp.save) + '</span></li>'
+          + '<li class="fr"><span>هامشٌ غيرُ مخصّص</span><span class="dv">' + fmt(Pp.free) + '</span></li>'
+          + '</ul>';
+      },
+      ok: "ابدأ بهذه الخطّة",
+      onOk: function(){
+        onbSel = {}; onb.amt = {};
+        Pp.rows.forEach(function(r){ onbSel[r.c.k] = true; onb.amt[r.c.k] = r.a; });
+        onb.goal = Pp.save; onb.inv = 0;
+        onbFinish();
+      },
+      cancel: "عدّلها خطوةً خطوة", onCancel: function(){ onb.step = 2; onbStep(); } });
+  }
   function onbFinish(){
     state.income = { salary: num(onb.salary), extra: 0 };
     if(onb.day >= 2 && onb.day <= 28) state.monthStart = onb.day;
@@ -17170,6 +17255,8 @@ padding:10px 15px;border-top:1px solid var(--line)}
                           m: num(onb.inv), "in": 0, val: 0 });
     }
     state.onboard = true;
+    /* الدخلُ قيل للتوّ — فطقسُ الشهر يبدأ بعده لا به */
+    if(!month(todayKey()).setup) month(todayKey()).setup = "inc";
     onbSel = null; onb = null;
     toast("بُنيت خطتك — عدّلها من شاشة الخطة");
     save();
