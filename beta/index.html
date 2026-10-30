@@ -50,7 +50,7 @@
   --s1:2px; --s2:4px; --s3:8px; --s4:12px; --s5:16px; --s6:24px;
   --r-bar:4px; --r-ui:10px; --r-card:16px; --r-pill:99px;
   --bg:#F1F2F5; --card:#FFFFFF; --card-2:#F7F8FA;
-  --ink:#15171C; --ink-2:#5A616E; --ink-3:#6E7684;
+  --ink:#15171C; --ink-2:#5A616E; --ink-3:#646B78;
   --line:#E2E5EB; --line-2:#CBD1DA;
   --accent:#4C3AE3; --accent-soft:#EDEAFE;
   --ok:#0F7355; --ok-2:#2E9E79; --ok-soft:#E2F1EC;
@@ -113,7 +113,7 @@ h1,h2,h3{font-family:"Alexandria","IBM Plex Sans Arabic",sans-serif;margin:0;lin
 .mnav button{border:0;background:transparent;color:var(--ink-2);font-size:17px;line-height:1;
   width:32px;height:32px;border-radius:50%;cursor:pointer;font-family:inherit}
 .mnav button:hover{background:var(--card-2);color:var(--ink)}
-.mnav .lbl{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:500;padding:0 4px;min-width:72px;text-align:center}
+.mnav .lbl{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:13px;font-weight:500;padding:0 4px;min-width:72px;text-align:center}
 
 .card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);margin-bottom:14px}
 .card.p{padding:16px}
@@ -126,10 +126,10 @@ h1,h2,h3{font-family:"Alexandria","IBM Plex Sans Arabic",sans-serif;margin:0;lin
 .hero{padding:24px 24px 16px}
 .hero-top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:13px}
 .lab{font-size:13px;color:var(--ink-3);margin-bottom:2px}
-.big{font-family:"IBM Plex Mono",monospace;font-size:34px;font-weight:600;line-height:1.05;letter-spacing:-.02em}
+.big{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:34px;font-weight:600;line-height:1.05;letter-spacing:-.02em}
 .big .r{font-size:15px;font-weight:400;color:var(--ink-3);margin-inline-start:5px}
 .side{text-align:left}
-.side .v{font-family:"IBM Plex Mono",monospace;font-size:21px;font-weight:600}
+.side .v{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:21px;font-weight:600}
 .bar{height:10px;border-radius:99px;background:var(--track);overflow:hidden;display:flex}
 .bar i{display:block;height:100%}
 .foot{display:flex;justify-content:space-between;font-size:13px;color:var(--ink-3);margin-top:8px;gap:12px;flex-wrap:wrap}
@@ -137,7 +137,7 @@ h1,h2,h3{font-family:"Alexandria","IBM Plex Sans Arabic",sans-serif;margin:0;lin
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
 .stat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 16px;box-shadow:var(--shadow)}
 .stat .lab{margin-bottom:4px}
-.stat .v{font-family:"IBM Plex Mono",monospace;font-size:21px;font-weight:600;line-height:1.15}
+.stat .v{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:21px;font-weight:600;line-height:1.15}
 .stat .s{font-size:11px;color:var(--ink-3);margin-top:2px}
 
 /* ══ الدفتر ══ */
@@ -150,7 +150,7 @@ h1,h2,h3{font-family:"Alexandria","IBM Plex Sans Arabic",sans-serif;margin:0;lin
 .ygrid.ledger td{padding:3px 4px}
 .ygrid.ledger td.now{background:var(--accent-soft)}
 .lcell{width:52px;background:transparent;border:1.5px solid transparent;border-radius:8px;
-  padding:5px 4px;color:var(--ink-2);font-family:"IBM Plex Mono",monospace;font-size:13px;
+  padding:5px 4px;color:var(--ink-2);font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:13px;
   font-variant-numeric:tabular-nums;text-align:center;direction:ltr;outline:none;
   -moz-appearance:textfield}
 .lcell::-webkit-outer-spin-button,.lcell::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
@@ -170,7 +170,7 @@ h1,h2,h3{font-family:"Alexandria","IBM Plex Sans Arabic",sans-serif;margin:0;lin
 .daterow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:11px}
 .daterow label{font-size:11px;color:var(--ink-3);flex:none}
 .dinp{background:var(--card-2);border:1.5px solid var(--line);border-radius:10px;
-  padding:8px 12px;color:var(--ink);font-family:"IBM Plex Mono",monospace;font-size:13px;
+  padding:8px 12px;color:var(--ink);font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:13px;
   outline:none;direction:ltr}
 .dinp:focus{border-color:var(--accent);background:var(--card)}
 .dhint{font-size:11px;color:var(--ink-3)}
@@ -182,11 +182,11 @@ h1,h2,h3{font-family:"Alexandria","IBM Plex Sans Arabic",sans-serif;margin:0;lin
   cursor:pointer;width:26px;height:26px;border-radius:10px;font-size:13px;line-height:1;
   flex:none;font-family:inherit;padding:0}
 .mstrip2 .msy:hover{border-color:var(--accent);color:var(--accent)}
-.mstrip2 .msl{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-3);
+.mstrip2 .msl{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:11px;color:var(--ink-3);
   flex:none;min-width:34px;text-align:center}
 .msrow{display:flex;gap:2px;flex:1;min-width:0;overflow-x:auto;
   -webkit-overflow-scrolling:touch;scrollbar-width:none}
-.msrow .ms i{font-style:normal;font-family:"IBM Plex Mono",monospace;
+.msrow .ms i{font-style:normal;font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;
   font-size:10px;opacity:.55;margin-inline-end:4px}
 .msrow .ms.on i{opacity:.85}
 /* الاسم كاملاً حيث يتّسع، والمختصر على الجوال — لا تمرير في الحالين */
@@ -244,8 +244,8 @@ h1,h2,h3{font-family:"Alexandria","IBM Plex Sans Arabic",sans-serif;margin:0;lin
 .track{display:block;height:6px;border-radius:99px;background:var(--track);overflow:hidden;margin-top:6px}
 .track i{display:block;height:100%;border-radius:99px}
 .rt{display:block;text-align:left;flex:none}
-.rt .a{display:block;font-family:"IBM Plex Mono",monospace;font-size:15px;font-weight:600;line-height:1.25}
-.rt .b{display:block;font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-3);line-height:1.3;margin-top:1px}
+.rt .a{display:block;font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:15px;font-weight:600;line-height:1.25}
+.rt .b{display:block;font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:11px;color:var(--ink-3);line-height:1.3;margin-top:1px}
 .row.zero{opacity:.45}
 .row.tap{cursor:pointer}
 .row.tap:hover{background:var(--card-2)}
@@ -266,12 +266,12 @@ border-color:var(--accent);color:var(--accent)}
 .subrow:last-child{border-bottom:0}
 .subrow .tick{width:14px;height:14px;border-radius:4px;flex:none;opacity:.55}
 .subrow .sn{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.subrow .sv{font-family:"IBM Plex Mono",monospace;font-size:13px;color:var(--ink-3)}
+.subrow .sv{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:13px;color:var(--ink-3)}
 .subadd{padding:12px 16px 12px}
 
 input,select,button,textarea{font-family:inherit;font-size:16px;min-width:0;max-width:100%}
 .ni{width:84px;background:var(--card);border:1.5px solid var(--line);border-radius:10px;padding:4px 8px;
-  color:var(--ink);font-family:"IBM Plex Mono",monospace;font-size:15px;font-weight:600;
+  color:var(--ink);font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:15px;font-weight:600;
   text-align:center;direction:ltr;outline:none}
 .ni:focus{border-color:var(--accent)}
 .ni.w{width:112px}
@@ -279,7 +279,7 @@ input,select,button,textarea{font-family:inherit;font-size:16px;min-width:0;max-
 
 .amt-row{display:flex;gap:8px;margin-bottom:11px}
 .amt{flex:1 1 0;min-width:0;background:var(--card-2);border:1.5px solid var(--line);border-radius:16px;
-  padding:12px 16px;color:var(--ink);font-family:"IBM Plex Mono",monospace;font-size:21px;
+  padding:12px 16px;color:var(--ink);font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:21px;
   font-weight:600;text-align:center;direction:ltr;outline:none}
 .amt::placeholder{color:var(--ink-3);font-weight:400}
 .amt:focus{border-color:var(--accent);background:var(--card)}
@@ -344,7 +344,7 @@ input,select,button,textarea{font-family:inherit;font-size:16px;min-width:0;max-
 .item .t{flex:1;min-width:0}
 .item .t b{font-weight:500;font-size:15px}
 .item .t s{display:block;text-decoration:none;font-size:11px;color:var(--ink-3)}
-.item .a{display:block;font-family:"IBM Plex Mono",monospace;font-size:15px;font-weight:600;flex:none}
+.item .a{display:block;font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:15px;font-weight:600;flex:none}
 
 .empty{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 16px;line-height:1.8}
 .empty b{display:block;color:var(--ink-2);font-weight:600;font-size:15px;margin-bottom:4px}
@@ -394,14 +394,14 @@ background:transparent;cursor:pointer;padding:0;transition:.12s}
 .schr>b{min-width:0;font-size:14px;font-weight:500;overflow:hidden;
 text-overflow:ellipsis;white-space:nowrap}
 .schr>s{text-decoration:none;font-size:11px;color:var(--ink-3);white-space:nowrap}
-.schr>i{font-style:normal;font-family:"IBM Plex Mono",monospace;font-size:12.5px;
+.schr>i{font-style:normal;font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:12.5px;
 color:var(--ok);font-weight:600}
 .schr.no>i{color:var(--ink-3);font-weight:400}
 .schr>i.bad{color:var(--warn)}
 .pxr.one{grid-template-columns:minmax(0,1fr) auto}
 .pxr.one>s{min-width:0;white-space:normal}
 .wpxr{display:flex;flex-direction:column}
-.pxr>b{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:600}
+.pxr>b{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:13px;font-weight:600}
 .pxr>s{min-width:0;text-decoration:none;font-size:11px;color:var(--ink-3);line-height:1.7}
 .pxr.lo>b{color:var(--ok)}
 .wpx .wact{margin-top:8px}
@@ -417,7 +417,7 @@ margin-top:2px;line-height:1.7}
    وهي نقطةٌ سطريّةٌ كأختِها `ndot` — فزرُّ القائمة ليس موضعَ إسنادٍ
    للمطلق، ولو أُطلقت لعلّقت نفسَها على أوّل مسنِدٍ أعلى منه. */
 .nav button .bdot{display:inline-block;width:6px;height:6px;border-radius:50%;
-margin-inline-start:5px;background:var(--warn);vertical-align:middle}
+margin-inline-start:5px;background:transparent;border:1.5px solid var(--ink-3);vertical-align:middle}
 .brand .btag{display:inline-block;margin-inline-start:8px;padding:2px 7px;
 border:1px solid var(--warn);border-radius:99px;background:var(--warn-soft);
 color:var(--warn);font-size:10.5px;font-weight:600;vertical-align:middle;
@@ -460,7 +460,7 @@ padding:20px 14px 14px;cursor:pointer;text-align:center}
 .wbig{font-size:34px;line-height:1.1;filter:saturate(1.05)}
 .wnm3{font-size:15px;font-weight:600;max-width:100%;overflow:hidden;
 text-overflow:ellipsis;white-space:nowrap}
-.wpr{text-decoration:none;font-family:"IBM Plex Mono",monospace;font-size:13px;
+.wpr{text-decoration:none;font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:13px;
 color:var(--ink-2);font-weight:600}
 .wchips{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;margin-top:2px}
 .wchip{font-size:10.5px;padding:2px 10px;border-radius:99px;background:var(--card-2);
@@ -479,14 +479,14 @@ display:flex;align-items:center;justify-content:center;font-size:17px;overflow:h
 .wtile.open .wtx{min-width:0;display:flex;flex-direction:column;gap:3px}
 .wtile.open .wnm3{font-size:15px;font-weight:600}
 .wtile.open .wchips{justify-content:flex-start;margin:0}
-.wtile.open .rt .a{font-family:"IBM Plex Mono",monospace;font-size:14px}
+.wtile.open .rt .a{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:14px}
 .wtile.open .wtrack{position:absolute;inset-inline:0;bottom:0;margin:0;border-radius:0}
 .wcard.open .wbody{margin-top:0}
 .wcard.open .wcol>*{padding-top:8px}
 .wcard.open .wfoot{padding:9px 16px}
 .wfil{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
 .wfil .chip i{font-style:normal;margin-inline-start:6px;opacity:.6;
-font-family:"IBM Plex Mono",monospace;font-size:10px}
+font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:10px}
 .lnk{color:var(--accent);cursor:pointer}
 /* الجهةُ الأخرى: بدايةُ السطر عندنا يمينٌ — وهناك يقف الشريطُ الجانبيّ */
 .wfab{position:fixed;inset-inline-end:18px;bottom:calc(88px + env(safe-area-inset-bottom));
@@ -495,6 +495,8 @@ background:var(--accent);color:#fff;font-size:26px;line-height:1;
 box-shadow:0 8px 24px -8px rgba(0,0,0,.5);transition:.14s}
 .wfab:hover{transform:translateY(-2px)}
 @media(min-width:900px){ .wfab{bottom:26px;inset-inline-end:26px} }
+/* ما يقع تحت الزرّ العائم يُدفع فوقه: ارتفاعُه وهامشُه */
+.wrap.v-wish{padding-bottom:calc(150px + env(safe-area-inset-bottom))}
 /* بطاقةُ الإضافة: بحجم البطاقات وبحدٍّ منقوط — تُرى ولا تُزاحم */
 .wadd2{display:flex;flex-direction:column;align-items:center;justify-content:center;
 gap:4px;min-height:150px;padding:18px 14px;border-radius:16px;cursor:pointer;
@@ -535,7 +537,7 @@ border:1px solid var(--line);color:var(--ink-3)}
 .simnum b{font-weight:600}
 .simnum s{display:block;text-decoration:none;font-size:11px;color:var(--ink-3);margin-top:1px}
 .simrows{display:flex;flex-direction:column;gap:2px}
-.simr>b{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:600}
+.simr>b{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:13px;font-weight:600}
 .simr>s{min-width:0;text-decoration:none;font-size:11px;color:var(--ink-3);line-height:1.7}
 .simr.warn>b,.simr.cost>b{color:var(--warn)}
 .wout{}
@@ -681,7 +683,7 @@ footer{text-align:center;color:var(--ink-3);font-size:13px;padding:24px 0 0}
   .f2grid > .f2.half{grid-column:auto}
 }
 .f2 input:focus{border-color:var(--accent);background:var(--card)}
-.f2 input[type=number]{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:21px;
+.f2 input[type=number]{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-weight:600;font-size:21px;
   text-align:center;direction:ltr}
 .dacts{display:flex;gap:8px;margin-top:16px}
 .dacts .act{flex:1;padding:12px;font-size:15px;text-align:center;border-radius:16px}
@@ -699,7 +701,7 @@ color:var(--ink-3);transition:.14s}
 .dmore.on{color:var(--accent);border-color:var(--accent)}
 @media(prefers-reduced-motion:reduce){ .dmore>i{transition:none} }
 /* مدى الثمن على البطاقة */
-.wrng{display:block;text-decoration:none;font-family:"IBM Plex Mono",monospace;
+.wrng{display:block;text-decoration:none;font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;
 font-size:10.5px;color:var(--ink-3);margin-top:2px}
 .dlgfoot{margin-top:12px;padding-top:12px;border-top:1px solid var(--line);
 display:flex;flex-wrap:wrap;gap:0 18px;align-items:flex-start}
@@ -720,7 +722,7 @@ display:flex;flex-wrap:wrap;gap:0 18px;align-items:flex-start}
 .dlist li{display:flex;justify-content:space-between;gap:12px;font-size:13px;
   padding:8px 0;border-bottom:1px dashed var(--line)}
 .dlist li:last-child{border-bottom:0}
-.dlist .dv{font-family:"IBM Plex Mono",monospace;font-weight:600}
+.dlist .dv{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-weight:600}
 
 /* ── معالج بداية الشهر ── */
 .wiz{background:var(--card);border:2px solid var(--accent);border-radius:16px;padding:16px;
@@ -751,7 +753,7 @@ display:flex;flex-wrap:wrap;gap:0 18px;align-items:flex-start}
 .lchip button:hover{opacity:1}
 
 /* ── أنواع البنود (لوحة مضغوطة) ── */
-.tpill{font-family:"IBM Plex Mono",monospace;font-size:10px;padding:2px 8px;border-radius:99px;
+.tpill{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:10px;padding:2px 8px;border-radius:99px;
   margin-inline-start:6px;white-space:nowrap;vertical-align:middle}
 .tp-var{background:var(--card-2);color:var(--ink-3)}
 .tp-fix{background:var(--ok-soft);color:var(--ok)}
@@ -765,13 +767,13 @@ display:flex;flex-wrap:wrap;gap:0 18px;align-items:flex-start}
   border-bottom:1px solid var(--line);background:var(--card-2);font-size:13px;color:var(--ink-2)}
 .capline .fill{height:6px;border-radius:99px;background:var(--track);flex:1;min-width:70px;overflow:hidden}
 .capline .fill i{display:block;height:100%;border-radius:99px}
-.capline b{font-family:"IBM Plex Mono",monospace;font-weight:600;color:var(--ink)}
+.capline b{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-weight:600;color:var(--ink)}
 .capwarn{color:var(--warn);font-weight:600}
 .instbox{padding:12px 16px;border-bottom:1px solid var(--line)}
 .instbox:last-child{border-bottom:0}
 .instrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:baseline}
 .instrow .inm{font-size:15px}
-.instrow .iv{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:600}
+.instrow .iv{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:13px;font-weight:600}
 .instrow .ix{font-size:11px;color:var(--ink-3);display:block;margin-top:2px}
 .instbar{display:flex;gap:2px;margin-top:7px}
 .instbar i{flex:1;height:6px;border-radius:4px;background:var(--line-2);display:block}
@@ -807,12 +809,12 @@ display:flex;flex-wrap:wrap;gap:0 18px;align-items:flex-start}
   align-items:stretch;justify-content:flex-end;gap:2px}
 .spark i{display:block;width:100%;border-radius:4px 4px 0 0;background:var(--line-2)}
 .spark i.last{background:var(--accent)}
-.spark em{font-family:"IBM Plex Mono",monospace;font-style:normal;font-size:10px;
+.spark em{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-style:normal;font-size:10px;
   color:var(--ink-3);text-align:center;direction:ltr}
 
 .cmp .cn{font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.cmp .cv{font-family:"IBM Plex Mono",monospace;font-size:13px;color:var(--ink-3)}
-.cmp .cd{font-family:"IBM Plex Mono",monospace;font-size:15px;font-weight:600;text-align:left;min-width:74px}
+.cmp .cv{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:13px;color:var(--ink-3)}
+.cmp .cd{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:15px;font-weight:600;text-align:left;min-width:74px}
 .cmp .up{color:var(--warn)}
 .cmp .dn{color:var(--ok)}
 .clsbar{display:flex;height:10px;border-radius:99px;overflow:hidden;background:var(--track);margin:10px 0 8px}
@@ -830,14 +832,14 @@ display:flex;flex-wrap:wrap;gap:0 18px;align-items:flex-start}
 .gear:hover{color:var(--accent);border-color:var(--accent)}
 .gear.on{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
 .mrow{gap:8px}
-.mrow .mn{font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.mrow .ms{font-size:11px;color:var(--ink-3);display:block}
+.mrow .mn{font-size:15px;min-width:0;overflow-wrap:anywhere}
+.mrow .ms{font-size:12px;color:var(--ink-3);display:block;white-space:normal;line-height:1.55}
 .mini.bad{color:var(--ink-3)}
 .mini.bad:hover{border-color:var(--warn);color:var(--warn)}
 .mini.on{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
 .f2 textarea{width:100%;background:var(--card-2);border:1.5px solid var(--line);border-radius:16px;
   padding:12px 12px;color:var(--ink);font-size:13px;outline:none;min-height:160px;
-  font-family:"IBM Plex Mono",monospace;direction:ltr;text-align:left;resize:vertical}
+  font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;direction:ltr;text-align:left;resize:vertical}
 .f2 textarea:focus{border-color:var(--accent)}
 
 /* ══════════ تخطيط الحاسب ══════════ */
@@ -926,10 +928,10 @@ display:flex;flex-wrap:wrap;gap:0 18px;align-items:flex-start}
 .kl{font-size:11px;color:var(--ink-3);display:flex;align-items:center;gap:8px}
 .ki{width:24px;height:24px;border-radius:8px;display:flex;align-items:center;
   justify-content:center;font-size:13px;flex:none}
-.kv{font-family:"IBM Plex Mono",monospace;font-size:24px;font-weight:600;
+.kv{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:24px;font-weight:600;
   line-height:1.15;margin-top:8px;letter-spacing:-.02em;direction:ltr}
 .kd{font-size:11px;color:var(--ink-3);margin-top:4px;line-height:1.6}
-.kd b{font-family:"IBM Plex Mono",monospace;font-weight:600;direction:ltr;display:inline-block}
+.kd b{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-weight:600;direction:ltr;display:inline-block}
 .kd b.kup{color:var(--warn)}
 .kd b.kdn{color:var(--ok)}
 
@@ -951,7 +953,7 @@ display:flex;flex-wrap:wrap;gap:0 18px;align-items:flex-start}
   align-items:center;justify-content:center;font-size:13px;font-weight:700}
 .alrt .at b{display:block;font-size:13px;font-weight:600;margin-bottom:2px}
 .alrt .at s{text-decoration:none;font-size:11px;color:var(--ink-3);line-height:1.7;display:block}
-.alrt .at s b{display:inline;font-family:"IBM Plex Mono",monospace;color:var(--ink-2);font-size:11px}
+.alrt .at s b{display:inline;font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;color:var(--ink-2);font-size:11px}
 
 /* ══ اللوحة الواحدة: العنوان داخل البطاقة لا فوقها ══
    كان العنوان يطفو خارج البطاقة فتبدو الصفحة عناوين معلّقة وصناديق
@@ -981,7 +983,7 @@ display:flex;flex-wrap:wrap;gap:0 18px;align-items:flex-start}
 .sortbar .sbt .chip{color:var(--ink-3)}
 .sortbar .sbt .chip.on{color:var(--accent)}
 .ptab.pv{grid-template-columns:minmax(0,1fr) 58px 62px 58px 62px}
-.ptab .pp{font-family:"IBM Plex Mono",monospace;font-size:13px;color:var(--ink-3);
+.ptab .pp{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:13px;color:var(--ink-3);
   text-align:center;line-height:1.3}
 .ptab .pp s{display:block;text-decoration:none;font-size:10px;margin-top:1px}
 .ptab .pp s.up{color:var(--warn)}
@@ -989,7 +991,7 @@ display:flex;flex-wrap:wrap;gap:0 18px;align-items:flex-start}
 
 /* ══ ماذا لو ══ */
 .wsum{font-size:13px;line-height:1.75;border-radius:10px;padding:9px 12px;margin-bottom:11px}
-.wsum b{font-family:"IBM Plex Mono",monospace;font-weight:600}
+.wsum b{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-weight:600}
 .wsum.ok{background:var(--ok-soft);color:var(--ok)}
 .wsum.bad{background:var(--warn-soft);color:var(--warn)}
 
@@ -1013,12 +1015,12 @@ display:flex;flex-wrap:wrap;gap:0 18px;align-items:flex-start}
 .ires .rq{background:var(--card);padding:11px 15px;display:block}
 .ires .rq s{display:block;text-decoration:none;font-size:11px;color:var(--ink-3);
   margin-bottom:3px}
-.ires .rq b{display:block;font-family:"IBM Plex Mono",monospace;font-size:21px;
+.ires .rq b{display:block;font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:21px;
   font-weight:600;line-height:1.15;letter-spacing:-.02em;direction:ltr;text-align:right}
 .ires .rq b.dim{color:var(--ink-3);font-weight:400}
 .ires .rq b.up{color:var(--ok)}
 .ires .rq b.dn{color:var(--warn)}
-.ires .rq em{display:block;font-style:normal;font-family:"IBM Plex Mono",monospace;
+.ires .rq em{display:block;font-style:normal;font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;
   font-size:11px;color:var(--ink-3);margin-top:2px;direction:ltr;text-align:right}
 /* مسار القيمة */
 .ispark{display:flex;align-items:flex-end;gap:3px;padding:12px 15px 8px;width:100%}
@@ -1026,7 +1028,7 @@ display:flex;flex-wrap:wrap;gap:0 18px;align-items:flex-start}
   align-items:stretch;justify-content:flex-end;gap:3px}
 .ispark i{display:block;width:100%;border-radius:3px 3px 0 0;background:var(--line-2)}
 .ispark i.last{background:var(--ok-2)}
-.ispark em{font-family:"IBM Plex Mono",monospace;font-style:normal;font-size:10px;
+.ispark em{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-style:normal;font-size:10px;
   color:var(--ink-3);text-align:center;direction:ltr}
 /* الإقفال شريطُ فعلٍ في الذيل لا نموذجاً بعنوان */
 .invclose{margin-top:0;padding-top:0;border-top:0}
@@ -1069,7 +1071,7 @@ display:flex;flex-wrap:wrap;gap:0 18px;align-items:flex-start}
 .qinc .f{display:flex;flex-direction:column;gap:3px;flex:none}
 .qinc .f label{font-size:10px;color:var(--ink-3)}
 .qinc .qi2{width:104px;background:var(--card-2);border:1.5px solid var(--line);
-  border-radius:10px;padding:6px 10px;color:var(--ink);font-family:"IBM Plex Mono",monospace;
+  border-radius:10px;padding:6px 10px;color:var(--ink);font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;
   font-size:15px;font-weight:600;text-align:center;direction:ltr;outline:none}
 .qinc .qi2:focus{border-color:var(--accent);background:var(--card)}
 .qinc .qsum{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;
@@ -1077,7 +1079,7 @@ display:flex;flex-wrap:wrap;gap:0 18px;align-items:flex-start}
 .qinc .qs{display:flex;flex-direction:column;gap:1px;text-align:left;
   font-family:"IBM Plex Sans Arabic",system-ui,sans-serif;letter-spacing:normal}
 .qinc .qs s{text-decoration:none;font-size:10px;color:var(--ink-3)}
-.qinc .qs b{font-family:"IBM Plex Mono",monospace;font-size:15px;font-weight:600}
+.qinc .qs b{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:15px;font-weight:600}
 .qinc .qs b.ok{color:var(--ok)}
 .qinc .qs b.bad{color:var(--warn)}
 .qinc .qs.big b{font-size:21px;letter-spacing:-.02em}
@@ -1099,13 +1101,13 @@ display:flex;flex-wrap:wrap;gap:0 18px;align-items:flex-start}
   background:var(--card);border:1px solid var(--line);border-radius:16px;
   box-shadow:var(--shadow);margin-bottom:10px}
 .qbar .qp{font-size:11px;color:var(--ink-2);flex:none}
-.qbar .qp b{font-family:"IBM Plex Mono",monospace;font-size:15px;color:var(--ink)}
+.qbar .qp b{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:15px;color:var(--ink)}
 .qbar .qtrack{flex:1 1 90px;min-width:70px;height:6px;border-radius:99px;
   background:var(--track);overflow:hidden}
 .qbar .qtrack i{display:block;height:100%;border-radius:99px;background:var(--ok);
   transition:width .25s}
 .qbar .qh{font-size:11px;color:var(--ink-3);flex:1 1 100%;line-height:1.6}
-.qbar .qh b{font-family:"IBM Plex Mono",monospace;color:var(--ink-2);font-weight:600}
+.qbar .qh b{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;color:var(--ink-2);font-weight:600}
 @media (min-width:820px){
   .qbar .qh{flex:0 1 auto;margin-inline-start:auto}
 }
@@ -1134,7 +1136,7 @@ color:var(--gold);font-variant-numeric:tabular-nums;cursor:help}
 .frow .fd{width:10px;height:10px;border-radius:3px}
 .frow .fn b{display:block;font-size:15px;font-weight:500}
 .frow .fn s{display:block;text-decoration:none;font-size:11px;color:var(--ink-3)}
-.frow .fv{font-family:"IBM Plex Mono",monospace;font-size:15px;font-weight:600;text-align:left}
+.frow .fv{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:15px;font-weight:600;text-align:left}
 .frow .fv s{display:block;text-decoration:none;font-size:11px;color:var(--ink-3);font-weight:400}
 
 /* أين يذهب راتبك */
@@ -1149,7 +1151,7 @@ color:var(--gold);font-variant-numeric:tabular-nums;cursor:help}
 .trow .tn b{font-size:15px;font-weight:500}
 .trow .tc{font-size:10px;padding:1px 7px;border-radius:99px;margin-inline-start:6px;
   vertical-align:middle}
-.trow .tv{font-family:"IBM Plex Mono",monospace;font-size:15px;font-weight:600;text-align:left}
+.trow .tv{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:15px;font-weight:600;text-align:left}
 .trow .tv s{display:block;text-decoration:none;font-size:10px;color:var(--ink-3);font-weight:400}
 
 /* دعوة التصنيف */
@@ -1168,11 +1170,11 @@ color:var(--gold);font-variant-numeric:tabular-nums;cursor:help}
 .arow .an b{display:block;font-size:15px;font-weight:500}
 .arow .an s{display:block;text-decoration:none;font-size:11px;color:var(--ink-3)}
 .arow .av{text-align:left}
-.arow .av b{font-family:"IBM Plex Mono",monospace;font-size:15px;font-weight:600}
+.arow .av b{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:15px;font-weight:600}
 .arow .av b.up{color:var(--warn)}
 .arow .av b.dn{color:var(--ok)}
 .arow .av s{display:block;text-decoration:none;font-size:10px;color:var(--ink-3);
-  font-family:"IBM Plex Mono",monospace}
+  font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace}
 
 /* الادخار والتسريب */
 .srow{display:grid;grid-template-columns:76px minmax(0,1fr) auto;gap:10px;align-items:center;
@@ -1181,7 +1183,7 @@ color:var(--gold);font-variant-numeric:tabular-nums;cursor:help}
 .srow.tot{background:var(--card-2);font-weight:600}
 .srow .sm{font-size:11px;color:var(--ink-2);white-space:nowrap}
 .srow .sn2{font-size:11px;color:var(--ink-3)}
-.srow .sv{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:600;text-align:left}
+.srow .sv{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:13px;font-weight:600;text-align:left}
 .srow .sv.neg{color:var(--warn)}
 .srow .sv s{display:block;text-decoration:none;font-size:10px;color:var(--ink-3);font-weight:400}
 
@@ -1198,7 +1200,7 @@ color:var(--gold);font-variant-numeric:tabular-nums;cursor:help}
   justify-content:center;font-size:13px}
 .crow .cn{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .crow .cn s{display:block;text-decoration:none;font-size:10px;color:var(--ink-3);
-  font-family:"IBM Plex Mono",monospace}
+  font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace}
 .crow .cb{display:flex;gap:3px;flex:none}
 .crow .cb .chip{padding:2px 9px;font-size:11px;border-width:1px}
 
@@ -1209,11 +1211,11 @@ color:var(--gold);font-variant-numeric:tabular-nums;cursor:help}
 .rrow.bad{background:var(--warn-soft)}
 .rrow .rn b{display:block;font-size:15px;font-weight:600}
 .rrow .rn s{display:block;text-decoration:none;font-size:11px;color:var(--ink-3);margin-top:1px}
-.rrow .rv{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:600}
+.rrow .rv{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:13px;font-weight:600}
 .rrow.bad .rv{color:var(--warn)}
 .rlist{margin:8px 0 0;padding-inline-start:16px;font-size:13px;line-height:1.8}
-.rlist b{font-family:"IBM Plex Mono",monospace}
-.rpill{font-family:"IBM Plex Mono",monospace;font-size:10px;padding:2px 7px;border-radius:99px;
+.rlist b{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace}
+.rpill{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:10px;padding:2px 7px;border-radius:99px;
   margin-inline-start:6px;white-space:nowrap;vertical-align:middle;
   background:var(--card-2);color:var(--ink-3)}
 .rpill.bad{background:var(--warn-soft);color:var(--warn);font-weight:600}
@@ -1227,14 +1229,14 @@ color:var(--gold);font-variant-numeric:tabular-nums;cursor:help}
 .brow .bi{width:26px;height:26px;border-radius:8px;display:flex;align-items:center;
   justify-content:center;font-size:13px}
 .brow .bn{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.brow .bv{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:600}
+.brow .bv{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:13px;font-weight:600}
 .brow .bv.dim{color:var(--ink-3);font-weight:400}
 .brow .ba{color:var(--ink-3);font-size:11px;text-align:center}
-.brow .bd{font-family:"IBM Plex Mono",monospace;font-size:11px;text-align:left;color:var(--ink-3)}
+.brow .bd{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:11px;text-align:left;color:var(--ink-3)}
 .brow .bd.up{color:var(--warn)}
 .brow .bd.dn{color:var(--ok)}
 .bsum{font-size:13px;line-height:1.7;border-radius:10px;padding:9px 12px}
-.bsum b{font-family:"IBM Plex Mono",monospace;font-weight:600}
+.bsum b{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-weight:600}
 .bsum.ok{background:var(--ok-soft);color:var(--ok)}
 .bsum.warn{background:var(--gold-soft);color:var(--gold)}
 .bsum.bad{background:var(--warn-soft);color:var(--warn)}
@@ -1263,7 +1265,7 @@ color:var(--gold);font-variant-numeric:tabular-nums;cursor:help}
 .psteps .pstep:hover{background:var(--card-2)}
 .psteps .pstep .sn{display:block;text-decoration:none;font-size:11px;color:var(--ink-3);
   margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.psteps .pstep b{display:block;font-family:"IBM Plex Mono",monospace;font-size:21px;
+.psteps .pstep b{display:block;font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:21px;
   font-weight:600;line-height:1.15;letter-spacing:-.02em;direction:ltr;text-align:right}
 .psteps .pstep em{display:block;font-style:normal;font-size:11px;color:var(--ink-2);
   margin-top:3px}
@@ -1271,7 +1273,7 @@ color:var(--gold);font-variant-numeric:tabular-nums;cursor:help}
   margin-top:1px}
 /* اللون معنى لا زينة: الدخل هو المصدر، والالتزام عبء، والادخار وحده
    مكسب. والمرحلة الأخيرة خضراء إن أُغلقت الخطة وحمراء إن تجاوزتها. */
-.psteps .pstep .sn i{font-style:normal;font-family:"IBM Plex Mono",monospace;
+.psteps .pstep .sn i{font-style:normal;font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;
   color:var(--ink-3);margin-inline-end:5px;font-size:10px}
 .psteps .pstep.l-inc b{color:var(--ink)}
 .psteps .pstep.l-duty b{color:var(--ink-2)}
@@ -1314,7 +1316,7 @@ color:var(--gold);font-variant-numeric:tabular-nums;cursor:help}
 .setnav .snv{display:flex;align-items:baseline;justify-content:space-between;gap:10px;
   width:100%;text-align:right;border:0;background:transparent;color:var(--ink-2);
   font-family:inherit;font-size:13px;padding:9px 12px;border-radius:10px;cursor:pointer}
-.setnav .snv s{text-decoration:none;font-family:"IBM Plex Mono",monospace;
+.setnav .snv s{text-decoration:none;font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;
   font-size:11px;color:var(--ink-3);flex:none}
 .setnav .snv:hover{background:var(--card-2);color:var(--ink)}
 .setnav .snv.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
@@ -1468,12 +1470,12 @@ color:var(--ink-3);cursor:pointer;font-size:11px;flex:none}
   border-bottom:1px solid var(--line);background:var(--card-2)}
 .bankhead .bn{flex:1;min-width:0;font-size:15px;font-weight:600;overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap}
-.bankhead .bv{font-family:"IBM Plex Mono",monospace;font-size:15px;font-weight:600}
+.bankhead .bv{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:15px;font-weight:600}
 .bankhead .bc{font-size:11px;color:var(--ink-3)}
 .acct{padding-inline-start:24px;cursor:pointer}
 .acct:hover{background:var(--card-2)}
 .acct .an{font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.acct .av{font-family:"IBM Plex Mono",monospace;font-size:15px;font-weight:600;text-align:left}
+.acct .av{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:15px;font-weight:600;text-align:left}
 .tagline{display:flex;align-items:center;gap:4px;margin-top:3px;flex-wrap:wrap}
 .tag{font-size:10px;padding:2px 8px;border-radius:99px;white-space:nowrap}
 .tag.ops{background:var(--card-2);color:var(--ink-3)}
@@ -1486,7 +1488,7 @@ color:var(--ink-3);cursor:pointer;font-size:11px;flex:none}
 .dbar{display:block;height:6px;border-radius:99px;background:var(--track);overflow:hidden}
 .dbar i{display:block;height:100%;border-radius:99px;background:var(--ok)}
 .dtx{display:block;font-size:11px;color:var(--ink-3);margin-top:5px}
-.dtx b{font-family:"IBM Plex Mono",monospace;color:var(--ink-2);font-weight:600}
+.dtx b{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;color:var(--ink-2);font-weight:600}
 .dtx b.rem{color:var(--warn)}
 .apanel{background:var(--card-2);border-bottom:1px solid var(--line);padding:8px 16px 12px}
 .apanel .lab{margin-bottom:6px}
@@ -1498,11 +1500,11 @@ color:var(--ink-3);cursor:pointer;font-size:11px;flex:none}
 .ahint{font-size:10px;color:var(--ink-3);padding:0 0 4px;line-height:1.6}
 .salpill{font-size:11px;padding:2px 8px;border-radius:99px;background:var(--ok-soft);
   color:var(--ok);font-weight:600;white-space:nowrap}
-.spentpill{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:600;color:var(--warn)}
+.spentpill{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:13px;font-weight:600;color:var(--warn)}
 .abtns{display:flex;gap:4px;flex-wrap:wrap;margin-top:9px}
 .srcpick{margin-top:10px;padding-top:12px;border-top:1px dashed var(--line)}
 .srcpick .lab{margin-bottom:6px}
-.itemacct{font-family:"IBM Plex Mono",monospace;font-size:10px;padding:2px 4px;
+.itemacct{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:10px;padding:2px 4px;
   border-radius:99px;background:var(--card-2);color:var(--ink-3);margin-inline-start:6px}
 
 /* ══ تبويب السنة ══ */
@@ -1510,12 +1512,12 @@ color:var(--ink-3);cursor:pointer;font-size:11px;flex:none}
   padding:8px 16px;border-bottom:1px solid var(--line)}
 .yrow:last-child{border-bottom:0}
 .yrow.now{background:var(--accent-soft)}
-.yrow .ym{font-family:"IBM Plex Mono",monospace;font-size:13px;color:var(--ink-2)}
+.yrow .ym{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:13px;color:var(--ink-2)}
 .yrow.now .ym{color:var(--accent);font-weight:600}
 .ybars{display:flex;flex-direction:column;gap:2px}
 .ybar{height:7px;border-radius:99px;background:var(--track);overflow:hidden;display:block}
 .ybar i{display:block;height:100%;border-radius:99px}
-.yrow .ys{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:600;text-align:left}
+.yrow .ys{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:13px;font-weight:600;text-align:left}
 .yrow .ys s{display:block;text-decoration:none;font-size:10px;color:var(--ink-3);font-weight:400}
 .yrow.empty{opacity:.4}
 .ylegend{display:flex;gap:16px;flex-wrap:wrap;padding:12px 16px;font-size:11px;
@@ -1534,7 +1536,7 @@ color:var(--ink-3);cursor:pointer;font-size:11px;flex:none}
   font-size:13px}
 .ygrid thead .cn{background:var(--card-2);z-index:3}
 .ygrid tbody tr:hover .cn{background:var(--card-2)}
-.ygrid .v{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums}
+.ygrid .v{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-variant-numeric:tabular-nums}
 .ygrid .z{color:var(--ink-3);opacity:.4}
 .ygrid .tot{font-weight:600;background:var(--card-2)}
 .ygrid tfoot td{font-weight:600;background:var(--card-2);border-bottom:0}
@@ -1543,10 +1545,10 @@ color:var(--ink-3);cursor:pointer;font-size:11px;flex:none}
   border-bottom:1px solid var(--line)}
 .tl{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line)}
 .tl:last-child{border-bottom:0}
-.tl .tm{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-3);
+.tl .tm{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:11px;color:var(--ink-3);
   flex:none;min-width:62px}
 .tl .tn{flex:1;min-width:0;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tl .tv{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:600;color:var(--warn)}
+.tl .tv{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:13px;font-weight:600;color:var(--warn)}
 
 /* ══ جدول الخطة ══ */
 .ptab{display:grid;grid-template-columns:minmax(0,1fr) 58px 58px 60px;gap:4px;
@@ -1566,7 +1568,7 @@ color:var(--ink-3);cursor:pointer;font-size:11px;flex:none}
 .ptab .ptrack{display:block;height:3px;border-radius:99px;background:var(--track);
   overflow:hidden;margin-top:4px}
 .ptab .ptrack i{display:block;height:100%;border-radius:99px}
-.ptab .pv{font-family:"IBM Plex Mono",monospace;font-size:13px;text-align:center;
+.ptab .pv{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:13px;text-align:center;
   font-variant-numeric:tabular-nums;color:var(--ink-2)}
 .ptab .pv.plan{font-weight:600;color:var(--ink)}
 .ptab .pv.neg{color:var(--warn);font-weight:600}
@@ -1578,7 +1580,7 @@ color:var(--ink-3);cursor:pointer;font-size:11px;flex:none}
 .ptab.zero .pnm b{color:var(--ink-3);font-weight:400}
 .carrybtn{border:0;background:var(--ok-soft);color:var(--ok);border-radius:99px;
   font-size:10px;padding:2px 8px;cursor:pointer;margin-inline-start:5px;
-  font-family:"IBM Plex Mono",monospace;white-space:nowrap}
+  font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;white-space:nowrap}
 .carrybtn.neg{background:var(--warn-soft);color:var(--warn)}
 .carrybtn:hover{filter:brightness(1.15)}
 /* شريط الترتيب — يعلو الجدول */
@@ -1609,7 +1611,7 @@ color:var(--ink-3);cursor:pointer;font-size:11px;flex:none}
 .fitbar.down .ft b{color:var(--warn)}
 .fitbar.up .ft b{color:var(--ok)}
 .fitbar .ft s{text-decoration:none;font-size:13px;color:var(--ink-2);display:block;margin-top:3px}
-.fitbar .ft s b{font-family:"IBM Plex Mono",monospace;display:inline;font-size:13px;color:var(--ink)}
+.fitbar .ft s b{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;display:inline;font-size:13px;color:var(--ink)}
 .fitbar .fh{font-size:11px;color:var(--ink-3);margin-top:10px;line-height:1.75}
 .fitbar .fh b{color:var(--ink-2);font-weight:600}
 .hintnote.gcard{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
@@ -1640,7 +1642,7 @@ padding:3px 6px;transition:background .14s}
 background:var(--accent-soft)}
 /* والسهمُ حبّةٌ كحبّات التطبيق — يدور فيُعلم أنّه فُتح */
 .qtab .qsx{gap:5px;padding:3px 7px 3px 5px}
-.qtab .qsx>em{font-style:normal;font-family:"IBM Plex Mono",monospace;
+.qtab .qsx>em{font-style:normal;font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;
 font-size:10px;opacity:.75}
 .qtab .qsx.on{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
 .qtab .qsx.on>i{transform:rotate(-180deg)}
@@ -1661,18 +1663,18 @@ animation:qsubIn .18s ease-out both}
 /* سجلُّ التعديلات: كم كان · وكم صار · ومتى */
 .lgr{grid-template-columns:34px minmax(0,1fr) auto auto;gap:10px}
 .lgr .sub{white-space:normal;line-height:1.7}
-.lgr .sub em{font-style:normal;font-family:"IBM Plex Mono",monospace;
+.lgr .sub em{font-style:normal;font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;
 color:var(--ink-2);font-size:11px}
 .lgmv{display:flex;align-items:center;gap:7px}
 .lgn{display:flex;flex-direction:column;align-items:center;gap:1px;min-width:56px;
 padding:4px 9px;border-radius:9px;background:var(--card-2)}
 .lgn>s{text-decoration:none;font-size:9.5px;color:var(--ink-3)}
-.lgn>b{font-family:"IBM Plex Mono",monospace;font-size:14px;font-weight:600;
+.lgn>b{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:14px;font-weight:600;
 color:var(--ink-3);font-variant-numeric:tabular-nums;direction:ltr}
 .lgn.to{background:var(--accent-soft)}
 .lgn.to>b{color:var(--ink)}
 .lgmv>i{font-style:normal;color:var(--ink-3);font-size:12px}
-.subh .ds{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--ink-3)}
+.subh .ds{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:10.5px;color:var(--ink-3)}
 .lfil{margin-bottom:10px}
 .lgn.out{background:var(--warn-soft)}
 .lgn.out>b{color:var(--warn)}
@@ -1701,6 +1703,16 @@ color:var(--gold);white-space:nowrap}
   .lgr>span:nth-child(2){grid-column:2;grid-row:1}
   .lgr>.rt{grid-column:3;grid-row:1}
   .lgmv{grid-column:2 / -1;grid-row:2;margin-top:4px} }
+@media(max-width:520px){
+  /* الاسمُ كان يُعطى ما يبقى بعد ثلاثة أعمدة — فيبقى منه حرف.
+     صار سطراً كاملاً، والأرقامُ الثلاثة تحته بالعرض نفسه */
+  .qtab:not(.head),.ptab:not(.head){grid-template-columns:repeat(3,minmax(0,1fr)) !important;row-gap:6px}
+  .qtab:not(.head) .qn,.ptab:not(.head) .pn{grid-column:1 / -1}
+  .qtab.head,.ptab.head{grid-template-columns:repeat(3,minmax(0,1fr)) !important}
+  .qtab.head>span:first-child,.ptab.head>span:first-child{display:none}
+  .qtab .qt b,.ptab .pnm b{white-space:normal}
+  .ptab .pnm s{white-space:normal}
+}
 .qtab{display:grid;grid-template-columns:minmax(0,1fr) 78px 84px 58px;gap:4px;
   align-items:center;padding:8px 12px;border-bottom:1px solid var(--line)}
 .qtab.head{background:var(--card-2);font-size:10px;color:var(--ink-3);position:sticky;top:0;z-index:2}
@@ -1710,15 +1722,17 @@ color:var(--gold);white-space:nowrap}
 .qtab .qi{width:26px;height:26px;border-radius:10px;flex:none;display:flex;align-items:center;
   justify-content:center;font-size:13px}
 .qtab .qt{min-width:0;flex:1}
+.qtab .qv>s{display:block;text-decoration:none;font-size:10px;font-weight:400;line-height:1.3;color:var(--ink-3)}
+.qtab .qv>s.dn{color:var(--warn)}
 .qtab .qt b{font-size:13px;font-weight:500;display:block;overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap}
 .qtab .qt s{text-decoration:none;font-size:10px;color:var(--ink-3);display:block}
-.qtab .qv{font-family:"IBM Plex Mono",monospace;font-size:13px;text-align:center;
+.qtab .qv{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:13px;text-align:center;
   color:var(--ink-2);font-variant-numeric:tabular-nums}
 .qtab .qv.neg{color:var(--warn);font-weight:600}
 .qtab .qv.dim{opacity:.35}
 .qtab input.qin{width:100%;background:var(--card-2);border:1.5px solid var(--line);
-  border-radius:10px;padding:8px 4px;color:var(--ink);font-family:"IBM Plex Mono",monospace;
+  border-radius:10px;padding:8px 4px;color:var(--ink);font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;
   font-size:15px;font-weight:600;text-align:center;direction:ltr;outline:none}
 .qtab input.qin:focus{border-color:var(--accent);background:var(--card)}
 .qtab input.qin.has{border-color:var(--ok);color:var(--ok)}
@@ -1732,24 +1746,24 @@ color:var(--gold);white-space:nowrap}
 .own .od{width:9px;height:9px;border-radius:4px;flex:none}
 .own .on{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .own .os{font-size:11px;color:var(--ink-3);display:block}
-.own .ov{font-family:"IBM Plex Mono",monospace;font-size:15px;font-weight:600;text-align:left}
+.own .ov{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:15px;font-weight:600;text-align:left}
 .own .ov.neg{color:var(--warn)}
 .mstrip{display:grid;grid-template-columns:56px minmax(0,1fr) 66px;gap:12px;align-items:center;
   padding:8px 16px;border-bottom:1px solid var(--line)}
 .mstrip:last-of-type{border-bottom:1px solid var(--line)}
 .mstrip.now{background:var(--accent-soft)}
-.mstrip .mm{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-3)}
+.mstrip .mm{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:11px;color:var(--ink-3)}
 .mstrip.now .mm{color:var(--accent);font-weight:600}
 .mstrip .mb{display:flex;flex-direction:column;gap:2px}
 .mstrip .mbar{display:block;height:6px;border-radius:99px;background:var(--track);overflow:hidden}
 .mstrip .mbar i{display:block;height:100%;border-radius:99px}
-.mstrip .mv2{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:600;text-align:left}
+.mstrip .mv2{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:13px;font-weight:600;text-align:left}
 .mstrip .mv2 s{display:block;text-decoration:none;font-size:10px;color:var(--ink-3);font-weight:400}
 .invpath{padding:16px 16px}
 .invpath .ip{display:flex;justify-content:space-between;gap:12px;font-size:13px;
   padding:8px 0;border-bottom:1px dashed var(--line);color:var(--ink-2)}
 .invpath .ip:last-of-type{border-bottom:0}
-.invpath .ip b{font-family:"IBM Plex Mono",monospace;font-weight:600;color:var(--ink)}
+.invpath .ip b{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-weight:600;color:var(--ink)}
 .invpath .ip b.up{color:var(--ok)}
 .invpath .ip b.dn{color:var(--warn)}
 
@@ -1760,7 +1774,7 @@ color:var(--gold);white-space:nowrap}
 .proof .pk{font-size:10px;font-weight:700;color:var(--ok);flex:none}
 .proof.bad .pk{color:var(--warn)}
 .proof .pt{font-size:11px;color:var(--ink-2);line-height:1.7}
-.proof .pt b{font-family:"IBM Plex Mono",monospace;font-weight:600;color:var(--ink)}
+.proof .pt b{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-weight:600;color:var(--ink)}
 .proof .pt b.g{color:var(--warn)}
 
 /* ══ سجلّ حركة الحساب ══ */
@@ -1772,8 +1786,8 @@ color:var(--gold);white-space:nowrap}
 .lg .lk.ok{background:var(--ok-soft);color:var(--ok)}
 .lg .lk.warn{background:var(--warn-soft);color:var(--warn)}
 .lg .lt{font-size:11px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.lg .ld{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--ink-3);direction:ltr}
-.lg .la{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:600;direction:ltr}
+.lg .ld{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:10px;color:var(--ink-3);direction:ltr}
+.lg .la{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:13px;font-weight:600;direction:ltr}
 .lg .la.ok{color:var(--ok)}
 .lg .la.warn{color:var(--warn)}
 
@@ -1796,23 +1810,23 @@ border:1px solid var(--line);border-radius:16px;gap:8px;justify-content:center}
 .vb{flex:1 1 0;max-width:64px;min-width:0;display:flex;flex-direction:column;
 justify-content:flex-end;align-items:stretch;gap:0}
 .vb i{display:block;width:100%}
-.vb .vn{display:block;font-family:"IBM Plex Mono",monospace;font-size:10.5px;
+.vb .vn{display:block;font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:10.5px;
 font-weight:600;text-align:center;margin-bottom:4px;color:var(--ok)}
 .vb.neg .vn{color:var(--warn)}
 .vb i.gap.up{background:var(--ok);border-radius:4px 4px 0 0}
 .vb i.gap.dn{background:var(--warn);border-radius:4px 4px 0 0;opacity:.85}
-.vb em{font-family:"IBM Plex Mono",monospace;font-style:normal;font-size:10px;
+.vb em{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-style:normal;font-size:10px;
 color:var(--ink-3);text-align:center;margin-top:5px;direction:ltr}
 .vslg{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:11px;
 color:var(--ink-3)}
-.vslg b{font-family:"IBM Plex Mono",monospace;color:var(--ink-2);font-weight:600}
+.vslg b{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;color:var(--ink-2);font-weight:600}
 /* قسمةُ مالك: شريطٌ واحدٌ ومفتاحُه */
 /* بطاقةُ الزكاة */
 .zrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;
 align-items:baseline;padding:8px 0;border-bottom:1px solid var(--line)}
 .zrow:last-of-type{border-bottom:0}
 .zrow .zl{font-size:13px;color:var(--ink-2)}
-.zrow .zv{font-family:"IBM Plex Mono",monospace;font-size:19px;font-weight:600;
+.zrow .zv{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:19px;font-weight:600;
 text-align:left}
 .zrow.big .zv{font-size:25px}
 .zrow .zv.ok{color:var(--ok)}
@@ -1828,8 +1842,8 @@ background:var(--card-2);margin-top:6px}
 color:var(--ink-2)}
 .alleg i{display:inline-block;width:10px;height:10px;border-radius:3px;
 margin-inline-end:5px;vertical-align:middle}
-.alleg b{font-family:"IBM Plex Mono",monospace;font-weight:600}
-.alleg s{text-decoration:none;color:var(--ink-3);font-family:"IBM Plex Mono",monospace}
+.alleg b{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-weight:600}
+.alleg s{text-decoration:none;color:var(--ink-3);font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace}
 .ygrid .tsub{display:block;text-decoration:none;font-size:10px;color:var(--ink-3);
 margin-top:2px}
 /* مقابضُ اللوح في سطرٍ واحدٍ لا كلٌّ في سطر */
@@ -1873,7 +1887,7 @@ opacity:.45}
   text-overflow:ellipsis;white-space:nowrap}
 .ihead .it s{text-decoration:none;font-size:11px;color:var(--ink-3);display:block;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ihead .iv{font-family:"IBM Plex Mono",monospace;font-size:17px;font-weight:600}
+.ihead .iv{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:17px;font-weight:600}
 .ibody{padding:12px 16px 16px}
 .ibody .lab{margin-bottom:6px}
 .iedit{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
@@ -1882,14 +1896,14 @@ opacity:.45}
   padding-top:12px;border-top:1px solid var(--line)}
 .perf .pf{display:block;min-width:0}
 .perf .pf s{display:block;text-decoration:none;font-size:11px;color:var(--ink-3)}
-.perf .pf b{display:block;font-family:"IBM Plex Mono",monospace;font-size:17px;
+.perf .pf b{display:block;font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:17px;
   font-weight:600;line-height:1.25;direction:ltr}
 .perf .pf b.up{color:var(--ok)}
 .perf .pf b.dn{color:var(--warn)}
 .perf .pf em{font-style:normal;font-size:10px;color:var(--ink-3)}
 .invclose{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
 .invclose .calc{font-size:11px;color:var(--ink-3);margin-top:8px;line-height:1.7}
-.invclose .calc b{font-family:"IBM Plex Mono",monospace;color:var(--ink-2);font-weight:600}
+.invclose .calc b{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;color:var(--ink-2);font-weight:600}
 .invclose .calc b.up{color:var(--ok)}
 .invclose .calc b.dn{color:var(--warn)}
 .invclose .calc .sep{opacity:.4}
@@ -1901,7 +1915,7 @@ opacity:.45}
 .env:hover{background:var(--card-2)}
 .env .en{font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .env .es{font-size:11px;color:var(--ink-3);display:block}
-.env .ev{font-family:"IBM Plex Mono",monospace;font-size:15px;font-weight:600;text-align:left;
+.env .ev{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:15px;font-weight:600;text-align:left;
   min-width:56px}
 .env .track{margin-top:5px}
 .env .carry{font-size:10px;padding:2px 4px}
@@ -1910,7 +1924,7 @@ opacity:.45}
   display:flex;justify-content:space-between;gap:12px;align-items:baseline}
 .envhead b{font-size:13px;color:var(--ink-2);font-weight:600}
 .envhead s{text-decoration:none;font-size:10px;color:var(--ink-3)}
-.envhead .t{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:600;color:var(--ink)}
+.envhead .t{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:13px;font-weight:600;color:var(--ink)}
 
 /* ══ صفحة حسابات البنود ══ */
 /* ما تحرّره الأقساط المنتهية — خبرٌ مطمئنٌّ لا تحذير */
@@ -2003,12 +2017,12 @@ padding:10px 15px;border-top:1px solid var(--line)}
   text-overflow:ellipsis;white-space:nowrap}
 .ecard .etx s{text-decoration:none;font-size:11px;color:var(--ink-3);display:block;margin-top:1px}
 .ecard .eamt{text-align:left}
-.ecard .eamt b{display:block;font-family:"IBM Plex Mono",monospace;font-size:17px;font-weight:600}
-.ecard .eamt s{display:block;text-decoration:none;font-family:"IBM Plex Mono",monospace;
+.ecard .eamt b{display:block;font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:17px;font-weight:600}
+.ecard .eamt s{display:block;text-decoration:none;font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;
   font-size:10px;color:var(--ink-3)}
 .ecard .eamt b.pos{color:var(--ok)}
 .ecard .eamt b.neg{color:var(--warn)}
-.chg{font-family:"IBM Plex Mono",monospace;font-size:10px;padding:2px 8px;border-radius:99px;
+.chg{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:10px;padding:2px 8px;border-radius:99px;
   margin-inline-start:6px;white-space:nowrap}
 .chg.up{background:var(--warn-soft);color:var(--warn)}
 .chg.dn{background:var(--ok-soft);color:var(--ok)}
@@ -2019,7 +2033,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
   border-bottom:1px solid var(--line)}
 .eled th:first-child{text-align:right}
 .eled td{padding:8px 4px;text-align:center;border-bottom:1px dashed var(--line);
-  font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums}
+  font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-variant-numeric:tabular-nums}
 .eled td:first-child{text-align:right;color:var(--ink-3);font-size:11px}
 .eled tr:last-child td{border-bottom:0}
 .eled td.bal{font-weight:600;color:var(--ink)}
@@ -2028,7 +2042,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
 .eacct{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px;padding-top:12px;
   border-top:1px dashed var(--line);font-size:13px;color:var(--ink-3)}
 .eacct b{color:var(--ink-2);font-weight:600}
-.eacct .bal2{font-family:"IBM Plex Mono",monospace;color:var(--ok);font-weight:600}
+.eacct .bal2{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;color:var(--ok);font-weight:600}
 .esum{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:14px;padding-top:12px;
   border-top:1px solid var(--line)}
 .esum div{text-align:center}
@@ -2039,7 +2053,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
 .gmode.full{background:var(--ok);color:#fff;font-weight:600}
 .gcalc{font-size:11px;color:var(--ink-3);margin-top:7px;padding-top:8px;
   border-top:1px dashed var(--line);line-height:1.7}
-.gcalc b{color:var(--ink-2);font-weight:600;font-family:"IBM Plex Mono",monospace}
+.gcalc b{color:var(--ink-2);font-weight:600;font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace}
 .grow{cursor:pointer}
 .grow:hover{background:var(--card-2)}
 .grow.done{background:var(--ok-soft)}
@@ -2049,12 +2063,12 @@ padding:10px 15px;border-top:1px solid var(--line)}
   text-overflow:ellipsis;white-space:nowrap}
 .grow .gtx s{text-decoration:none;font-size:11px;color:var(--ink-3);display:block;margin-top:1px}
 .grow .gamt{text-align:left}
-.grow .gamt b{display:block;font-family:"IBM Plex Mono",monospace;font-size:17px;font-weight:600}
+.grow .gamt b{display:block;font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:17px;font-weight:600}
 .grow .gamt b.neg{color:var(--warn)}
-.grow .gamt s{display:block;text-decoration:none;font-family:"IBM Plex Mono",monospace;
+.grow .gamt s{display:block;text-decoration:none;font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;
   font-size:10px;color:var(--ink-3)}
 .gpanel{background:var(--card-2);border-bottom:1px solid var(--line);padding:12px 16px 16px}
-.esum .sv{font-family:"IBM Plex Mono",monospace;font-size:17px;font-weight:600;display:block;margin-top:2px}
+.esum .sv{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:17px;font-weight:600;display:block;margin-top:2px}
 .env .ev.neg{color:var(--warn)}
 .env .ev.pos{color:var(--ok)}
 .trail{margin:8px 0 0;padding:0;list-style:none;font-size:13px}
@@ -2062,8 +2076,8 @@ padding:10px 15px;border-top:1px solid var(--line)}
   border-bottom:1px dashed var(--line);align-items:center}
 .trail li:last-child{border-bottom:0}
 .trail li.hd{color:var(--ink-3);font-size:10px;border-bottom:1px solid var(--line)}
-.trail .m{font-family:"IBM Plex Mono",monospace;color:var(--ink-3);font-size:11px}
-.trail .n{font-family:"IBM Plex Mono",monospace;text-align:center;
+.trail .m{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;color:var(--ink-3);font-size:11px}
+.trail .n{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;text-align:center;
   font-variant-numeric:tabular-nums}
 .trail .n.up{color:var(--ok)}
 .trail .n.dn{color:var(--warn)}
@@ -2077,7 +2091,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
   padding-top:12px;border-top:1px solid var(--line)}
 .netrow div{text-align:center}
 .netrow .nl{font-size:11px;color:var(--ink-3);display:block}
-.netrow .nv{font-family:"IBM Plex Mono",monospace;font-size:17px;font-weight:600;display:block;margin-top:2px}
+.netrow .nv{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:17px;font-weight:600;display:block;margin-top:2px}
 .kindtag{font-size:10px;padding:2px 8px;border-radius:99px;background:var(--card-2);
   color:var(--ink-3);border:1px solid var(--line);white-space:nowrap}
 .acct.debt .av{color:var(--warn)}
@@ -2086,7 +2100,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
 .distcard .dl:last-of-type{border-bottom:1px solid var(--line)}
 .distcard .dl .dn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .distcard .dl .dn s{text-decoration:none;display:block;font-size:11px;color:var(--ink-3)}
-.distcard .dl .da{font-family:"IBM Plex Mono",monospace;font-weight:600}
+.distcard .dl .da{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-weight:600}
 .distcard .dl .mark{font-size:15px;text-align:center}
 .distcard .dl.ok{background:var(--ok-soft)}
 .distcard .dl.ok .mark{color:var(--ok)}
@@ -2103,7 +2117,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
 .atools .mini.on{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
 .agroup{padding:8px 16px 8px;font-size:11px;color:var(--ink-3);background:var(--card-2);
   border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:12px}
-.agroup b{font-family:"IBM Plex Mono",monospace;color:var(--ink-2);font-weight:600}
+.agroup b{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;color:var(--ink-2);font-weight:600}
 .acct.pinned .an::before{content:"\1F4CC";font-size:10px;margin-inline-end:5px}
 .acct.arch{opacity:.55}
 .nores{padding:24px 16px;text-align:center;color:var(--ink-3);font-size:13px}
@@ -2111,28 +2125,233 @@ padding:10px 15px;border-top:1px solid var(--line)}
 .wspark .spark i{background:var(--ok)}
 .wspark .spark i.last{background:var(--accent)}
 .wspark .spark i.neg{background:var(--warn)}
-.wspark .foot b{font-family:"IBM Plex Mono",monospace;color:var(--ink-2);font-weight:600}
+.wspark .foot b{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;color:var(--ink-2);font-weight:600}
 .rec{padding:12px 16px 16px}
 .recrow{display:flex;justify-content:space-between;gap:12px;font-size:13px;
   padding:8px 0;border-bottom:1px dashed var(--line);color:var(--ink-2)}
 .recrow:last-of-type{border-bottom:0}
-.recrow b{font-family:"IBM Plex Mono",monospace;font-weight:600;color:var(--ink)}
+.recrow b{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-weight:600;color:var(--ink)}
 .recrow.sum{border-top:1px solid var(--line);border-bottom:0;margin-top:4px;padding-top:12px}
 .recrow.sum span{font-weight:600;color:var(--ink)}
 .gapbox{border-radius:16px;padding:12px 16px;margin-top:12px;font-size:13px;line-height:1.7}
 .gapbox.ok{background:var(--ok-soft);color:var(--ok)}
 .gapbox.bad{background:var(--warn-soft);color:var(--warn)}
 .gapbox.up{background:var(--gold-soft);color:var(--gold)}
-.gapbox b{font-family:"IBM Plex Mono",monospace;font-weight:700}
+.gapbox b{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-weight:700}
 .snapnote{padding:16px 16px;font-size:13px;color:var(--ink-3);line-height:1.8;text-align:center}
 .logrow{display:flex;align-items:center;gap:8px;font-size:13px;padding:4px 0;border-bottom:1px dashed var(--line)}
 .logrow:last-child{border-bottom:0}
 .logrow .lk{width:6px;height:6px;border-radius:50%;flex:none}
 .logrow .lt{flex:1;min-width:0;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.logrow .la{font-family:"IBM Plex Mono",monospace;font-weight:600}
-.logrow .ld{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--ink-3)}
-.derived{font-family:"IBM Plex Mono",monospace;font-size:15px;font-weight:600;color:var(--ok);
+.logrow .la{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-weight:600}
+.logrow .ld{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:10px;color:var(--ink-3)}
+.derived{font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;font-size:15px;font-weight:600;color:var(--ok);
   background:var(--ok-soft);border-radius:10px;padding:4px 12px;text-align:center;display:block}
+
+/* ══ الحاسب ══
+   الشاشةُ أبعدُ عن العين من الجوال، والخطُّ الذي يُقرأ في اليد (١٠–١١)
+   يصير على المكتب نقشاً. فكلُّ ما دون ١٢ يُرفع إليها هنا وحده — والجوالُ
+   على حاله. وتولّدت القائمةُ من القواعد نفسها فلا تفوتها قاعدة. */
+@media (min-width:1180px){
+  .stat .s,
+  .ledbar .lh,
+  .lockbar,
+  .daterow label,
+  .dhint,
+  .mstrip2 .msl,
+  .msrow .ms,
+  .mstoday,
+  .sub,
+  .rt .b,
+  .blk-h .t s,
+  .f label,
+  .pill,
+  .mini,
+  .item .t s,
+  .whint,
+  .wtag,
+  .schr>s,
+  .pxr>s,
+  .wpnum s,
+  .covprev>s,
+  .covlab>s,
+  .wchip,
+  .wadd2>s,
+  .impx>s,
+  .simchip,
+  .simnum s,
+  .simr>s,
+  .wlab,
+  .emolab s,
+  .emog>s,
+  .calchint,
+  .gdvals s,
+  .snvfam,
+  .navupd .nvv,
+  .f2 label,
+  .dlab,
+  .wrng,
+  .tpill,
+  .xtra label,
+  .xtra .hintx,
+  .instrow .ix,
+  .item .au,
+  .planbar .badge,
+  .ovr,
+  .carry,
+  .spark em,
+  .sugg,
+  .kl,
+  .kd,
+  .alrt .at s,
+  .alrt .at s b,
+  .sec:has(+ .card) .hint,
+  .planbar .pbgrp .gl,
+  .planbar .mini,
+  .ptab .pp s,
+  .hsub .hj,
+  .ires .rq s,
+  .ires .rq em,
+  .ispark em,
+  .invclose .arow .cl,
+  .logtog,
+  .qinc .f label,
+  .qinc .qs s,
+  .qbar .qp,
+  .qbar .qh,
+  .repbar .rl,
+  .repbar .rh,
+  .frow .fn s,
+  .frow .fv s,
+  .trow .tc,
+  .trow .tv s,
+  .clsnag s,
+  .arow .an s,
+  .arow .av s,
+  .srow .sm,
+  .srow .sn2,
+  .srow .sv s,
+  .crow .cn s,
+  .crow .cb .chip,
+  .rrow .rn s,
+  .rpill,
+  .brow .ba,
+  .brow .bd,
+  .increr .inclab,
+  .increr .f label,
+  .increr .incacts .pill,
+  .psteps .pstep .sn,
+  .psteps .pstep em,
+  .psteps .pstep .ss,
+  .laybar,
+  .setnav .snv s,
+  .syncdot,
+  .sec:has(+ .kpis) .hint, .sec:has(+ .grid) .hint,
+  .bankhead .bc,
+  .tag,
+  .dtx,
+  .arow .al,
+  .arow .chip.sm,
+  .ahint,
+  .salpill,
+  .itemacct,
+  .yrow .ys s,
+  .ylegend,
+  .ygrid thead th,
+  .yhint,
+  .tl .tm,
+  .ptab.head,
+  .ptab .pnm s,
+  .carrybtn,
+  .sortbar .sl,
+  .sortbar .chip,
+  .ptab.zrow .zt,
+  .metaline,
+  .fitbar .fh,
+  .qtab.qsub .qok,
+  .qtab .qsx>em,
+  .lgr .sub em,
+  .subh .ds,
+  .lgnote,
+  .mign,
+  .mini.gset,
+  .qtab.head,
+  .qtab .qv>s,
+  .qtab .qt s,
+  .own .os,
+  .mstrip .mm,
+  .mstrip .mv2 s,
+  .proof .pk,
+  .proof .pt,
+  .lg .lk,
+  .lg .lt,
+  .lg .ld,
+  .qtab .qv .qpc,
+  .vb .vn,
+  .vb em,
+  .vslg,
+  .zrow .zs,
+  .alleg,
+  .ygrid .tsub,
+  .itogs .logtog,
+  .f2grid.tight label,
+  .ihead .it s,
+  .perf .pf s,
+  .perf .pf em,
+  .invclose .calc,
+  .env .es,
+  .env .carry,
+  .envhead s,
+  .sallg s,
+  .anlab,
+  .wshtag,
+  tr.ygrp .cn,
+  .ecard .etx s,
+  .ecard .eamt s,
+  .chg,
+  .eled th,
+  .eled td:first-child,
+  .esum .sl,
+  .gmode,
+  .gcalc,
+  .grow .gtx s,
+  .grow .gamt s,
+  .trail li.hd,
+  .trail .m,
+  .netrow .nl,
+  .kindtag,
+  .distcard .dl .dn s,
+  .agroup,
+  .logrow .ld{font-size:12px}
+  /* السطرُ لا يتجاوز ما تتّبعه العين: ٧٢ حرفاً — وكان ٢٠٠ في شاشة الاستثمار */
+  .hintnote,.dmsg,.empty,.guide p,.gtxt,.sec + p,.card > p{max-width:72ch}
+  .lgn > s,.vtag{font-size:12px}
+  .colwrap > .stick{position:sticky;top:14px}
+  /* أعمدةُ الأرقام على الحاسب تتّسع لما فيها — وكانت مقاسَ الجوال
+     فيلتفّ «−٢٦٦ مُرحَّل» ثلاثةَ أسطر في مساحةٍ تفيض فراغاً */
+  .qtab{grid-template-columns:minmax(0,1fr) 104px 120px 112px}
+  .ptab{grid-template-columns:minmax(0,1fr) 92px 92px 96px}
+  .ptab.pv{grid-template-columns:minmax(0,1fr) 88px 92px 88px 92px}
+  .qtab .qv>s{white-space:nowrap}
+  /* صفٌّ عريضٌ تبتعد أرقامُه عن اسمه مئاتِ البكسلات — فيُضاء تحت المؤشّر
+     لتتبعه العينُ من الاسم إلى رقمه ولا تقفز إلى صفٍّ آخر */
+  .qtab:not(.head):hover,.ptab:not(.head):not(.foot):hover{background:var(--card-2)}
+  .nav button.kbhint{display:flex}
+}
+.nav .kbhint,.kbhint{display:none;align-items:center;gap:6px;margin:10px 12px 0;padding:6px 10px;
+  border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink-3);
+  font:inherit;font-size:12px;cursor:pointer}
+.kbhint:hover{color:var(--ink);border-color:var(--ink-3)}
+.kbhint s{text-decoration:none;font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;
+  border:1px solid var(--line);border-radius:5px;padding:0 5px;font-size:11px}
+.kbl{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.kbl li{display:flex;align-items:center;gap:12px;font-size:14px}
+.kbl .kk{min-width:64px;text-align:center;font-family:"IBM Plex Mono","IBM Plex Sans Arabic",monospace;
+  font-size:13px;padding:3px 8px;border:1px solid var(--line);border-bottom-width:2px;border-radius:7px;
+  background:var(--card-2);color:var(--ink)}
+.trail li{grid-template-columns:minmax(0,1.3fr) repeat(3,minmax(0,1fr))}
+.trail.mv li{grid-template-columns:minmax(0,1.3fr) repeat(4,minmax(0,1fr))}
+.trail .bal.neg{color:var(--warn)}
 </style>
 
 <div id="root"></div>
@@ -2237,13 +2456,16 @@ padding:10px 15px;border-top:1px solid var(--line)}
       if(!sel) return;
       var root = document.getElementById("root");
       if(!root || !root.contains(el)) return;
+      /* ومعه سياقُه: الحوارُ والشاشة. فالمعرّفُ df0 يتكرّر في كلّ حوار —
+         وكان ادّخارُ الخطوة الثالثة يُكتب في بقالة الرابعة حين يُضغط Enter */
       _typed = { sel: sel, val: String(el.value == null ? "" : el.value),
-                 a: el.selectionStart, b: el.selectionEnd };
+                 a: el.selectionStart, b: el.selectionEnd, dlg: dlg, tab: ui.tab };
     }catch(e){ _typed = null; }
   }
   function putTyped(){
     var t = _typed; _typed = null;
     if(!t || !t.sel) return;
+    if(t.dlg !== dlg || t.tab !== ui.tab) return;   /* سياقٌ آخر: خانةٌ أخرى وإن اتّفق المعرّف */
     try{
       var el = document.querySelector(t.sel);
       if(!el) return;
@@ -2285,7 +2507,24 @@ padding:10px 15px;border-top:1px solid var(--line)}
 
   /* ═══ أدوات ═══ */
   function pad(n){ return (n < 10 ? "0" : "") + n; }
-  function todayKey(){ var d = new Date(); return d.getFullYear() + "-" + pad(d.getMonth() + 1); }
+  /* الشهرُ الجاري شهرُ الراتب لا شهرُ التقويم: من يقبض في ٢٧ أكتوبر
+     فما يصرفه في ٢٨ منه من شهر نوفمبر الماليّ — وكان يُعرض أكتوبر
+     فيُقال عن كلِّ عمليّةٍ «حُفظت في نوفمبر» ويُحكم على شهرٍ غير شهره. */
+  function todayKey(){
+    var d = new Date(), cal = d.getFullYear() + "-" + pad(d.getMonth() + 1);
+    try{ return (typeof state === "object" && state) ? monthOfDate(todayDate()) : cal; }
+    catch(e){ return cal; }
+  }
+  /* يومٌ بعينه داخل الشهر الماليّ mk — فما يُؤرَّخ به يقع فيه لا في جاره.
+     ومن قبض في العاشر فأوّلُ شهر مارس عنده ١٠ مارس، لا ١ مارس الذي هو
+     من فبراير. وdayOfCal يومُ تقويمٍ (١–٢٨) يُوضع في نافذة الشهر. */
+  function mkDay(mk, dayOfCal){
+    var st = monthStart(), d = Math.max(1, Math.min(28, Math.round(num(dayOfCal)) || 1));
+    if(st <= 1) return mk + "-" + pad(d);
+    var base = st >= 15 ? shift(mk, -1) : mk;
+    return (d >= st ? base : shift(base, 1)) + "-" + pad(d);
+  }
+  function mkFirst(mk){ return mkDay(mk, monthStart()); }
   /* تاريخُ اليوم كاملاً. و`todayKey` مفتاحُ شهرٍ لا تاريخ — والخلطُ
      بينهما يكتب في العمليّة يوماً ناقصاً فتقع خارج يومها في السجلّ. */
   function todayDate(){
@@ -2294,7 +2533,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
   }
   /* يومٌ افتراضيٌّ للشهر المعروض: اليومُ إن كان شهرَه، وإلّا أوّلُه */
   function dayIn(mk){
-    return (mk === todayKey()) ? todayDate() : (mk + "-01");
+    return (mk === todayKey()) ? todayDate() : mkFirst(mk);
   }
   function shift(k, by){
     var y = +k.slice(0,4), m = +k.slice(5) + by;
@@ -2312,12 +2551,44 @@ padding:10px 15px;border-top:1px solid var(--line)}
     if(n <= 10) return n + " أشهر";
     return n + " شهراً";
   }
+  /* العددُ والمعدود بقاعدةٍ واحدة: واحد · اثنان · ٣–١٠ جمعٌ · ١١–٩٩ مفردٌ
+     منصوب · والمئةُ وما فوقها مفردٌ مجرور. والصفةُ تتبع المعدود. */
+  var AR_N = {
+    "بند": ["بند", "بندان", "بنود", "بنداً"],
+    "حساب": ["حساب", "حسابان", "حسابات", "حساباً"],
+    "عملية": ["عملية", "عمليتان", "عمليات", "عمليةً"],
+    "حركة": ["حركة", "حركتان", "حركات", "حركةً"],
+    "شهر": ["شهر", "شهران", "أشهر", "شهراً"],
+    "هدف": ["هدف", "هدفان", "أهداف", "هدفاً"],
+    "فرع": ["فرع", "فرعان", "فروع", "فرعاً"],
+    "جهة": ["جهة", "جهتان", "جهات", "جهةً"],
+    "أمر": ["أمر", "أمران", "أوامر", "أمراً"]
+  };
+  var AR_ADJ = {
+    "نشط": ["نشط", "نشطان", "نشطة", "نشطاً"],
+    "مستقل": ["مستقلّ", "مستقلّان", "مستقلّة", "مستقلّاً"],
+    "مخفي": ["مخفيّ", "مخفيّان", "مخفيّة", "مخفيّاً"],
+    "فرعي": ["فرعيّ", "فرعيّان", "فرعيّة", "فرعيّاً"],
+    "ثابتة": ["ثابتة", "ثابتتان", "ثابتة", "ثابتةً"],
+    "مفصلة": ["مفصّلة", "مفصّلتان", "مفصّلة", "مفصّلةً"]
+  };
+  function arN(n, w, adj){
+    n = Math.abs(Math.round(num(n)));
+    var f = AR_N[w] || [w, w, w, w], a = adj ? (AR_ADJ[adj] || [adj, adj, adj, adj]) : null;
+    if(n === 0) return "لا " + f[0] + (a ? " " + a[0] : "");
+    if(n === 1) return f[0] + (a ? " " + a[0] : "") + " واحد" + (/ة$/.test(f[0]) ? "ة" : "");
+    if(n === 2) return f[1] + (a ? " " + a[1] : "");
+    var m = n % 100;
+    if(m >= 3 && m <= 10) return n + " " + f[2] + (a ? " " + a[2] : "");
+    if(m >= 11) return n + " " + f[3] + (a ? " " + a[3] : "");
+    return n + " " + f[0] + (a ? " " + a[0] : "");
+  }
   function arBand(n){
     n = Math.abs(Math.round(n));
     if(n === 1) return "بند";
     if(n === 2) return "بندان";
-    if(n <= 10) return n + " بنود";
-    return n + " بنداً";
+    if(n <= 10) return arN(n, "بند") + "";
+    return arN(n, "بند") + "";
   }
   /* ── العملة والأرقام ──
      «ريال» كانت مكتوبة في خمسة وأربعين موضعاً؛ صارت رمزاً واحداً. */
@@ -2327,8 +2598,12 @@ padding:10px 15px;border-top:1px solid var(--line)}
     return String(str).replace(/[0-9]/g, function(d){ return AR_DIGITS.charAt(+d); });
   }
   function fmt(n){
-    var out = Math.round(n || 0).toLocaleString("en-US");
-    return state.arDigits ? arNum(out) : out;
+    var r = Math.round(n || 0);
+    /* السالبُ في سياقٍ عربيّ تقفز علامتُه إلى آخره فيُقرأ «299-».
+       علامةُ اتّجاهٍ يساريّة قبله تُبقيها في أوّله: «−299» */
+    var out = Math.abs(r).toLocaleString("en-US");
+    if(state.arDigits) out = arNum(out);
+    return r < 0 ? "‎−" + out : out;
   }
   function esc(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){
     return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]; }); }
@@ -2727,14 +3002,21 @@ padding:10px 15px;border-top:1px solid var(--line)}
       /* من دخل الشهر نفسه: يتغيّر الراتب فتتغيّر معه */
       var o = key ? planOvr(mk) : null;
       if(o && o[key] !== undefined) return num(o[key]);
+      /* وقبل بداية الخطة لا شيء — كبقيّة الأنواع في rawP */
+      if(mk && mk < planFrom()) return 0;
       return Math.round(income(mk || ui.month) * num(x.pct) / 100);
     }
     if(t === "cycle"){
       /* المبلغ الكامل مقسوماً على دورته — كالموسميّ ودورتُه مختارة */
       var o2 = key ? planOvr(mk) : null;
       if(o2 && o2[key] !== undefined) return num(o2[key]);
+      if(mk && mk < planFrom()) return 0;
       var ev = Math.max(1, Math.round(num(x.every) || 12));
-      return Math.round(num(x.full) / ev);
+      /* لا يُقرَّب كلَّ شهرٍ على حدة: ١٠٠٠ على ١٢ تصير ٨٣ فيُجمع ٩٩٦
+         ويقصر الظرفُ عن الفاتورة. يُوزَّع الباقي على أشهر الدورة فيبلغها. */
+      var full = Math.round(num(x.full)), base = Math.floor(full / ev), rem = full - base * ev;
+      var km = mk || ui.month, idx = ((+km.slice(0, 4)) * 12 + (+km.slice(5)) - 1) % ev;
+      return base + (idx < rem ? 1 : 0);
     }
     return rawP(x, mk, key);
   }
@@ -3176,15 +3458,18 @@ padding:10px 15px;border-top:1px solid var(--line)}
     var mn = Math.round(num(amt) / mo * 10) / 10;
     if(mn < 0.1) return "";
     return "ويؤخّر «" + esc(g.n) + "» نحوَ "
-      + (mn < 1 ? "شهرٍ" : (mn < 2 ? "شهرٍ" : (mn < 3 ? "شهرين" : (mn + " أشهر")))) + ".";
+      + (mn < 1 ? "شهرٍ" : (mn < 2 ? "شهرٍ" : (mn < 3 ? "شهرين" : (arN(mn, "شهر") + "")))) + ".";
   }
-  function carryOf(c, mk){
+  /* مشيُ الترحيل شهراً بشهر — يقرؤه carryOf رقماً وcarryTrail شرحاً،
+     فلا يقول الشرحُ غيرَ ما يقوله الرقم. وكانا مشيين: الشرحُ يُهمل
+     حركاتِ الظرف ووضعَ الترحيل، فيُختم برصيدٍ غير الرصيد. */
+  function carryWalk(c, mk, each){
     var mode = carryMode();
     /* بندٌ يدّخر لهدف: يُرحَّل فائضُه ولو أُطفئ الترحيلُ عامّةً —
        فادّخارٌ لا يتراكم لا يبلغ هدفاً أبداً (ق٥). */
     if(c && c.goal && byId(state.goals, c.goal)) mode = "all";
     if(mode === "none") return 0;
-    var keys = Object.keys(state.months).sort(), carry = 0;
+    var keys = Object.keys(state.months).sort(), carry = 0, pf = planFrom();
     for(var i=0;i<keys.length;i++){
       var k = keys[i];
       if(k >= mk) break;
@@ -3192,17 +3477,25 @@ padding:10px 15px;border-top:1px solid var(--line)}
       /* شهرٌ بلا عمل لا يُرحِّل. وحركةُ الظرف عملٌ كالعمليّة —
          فمن سحب من ظرفه في شهرٍ لم يصرف فيه، سحبُه لا يُهمَل. */
       if(!m || ((!m.items || !m.items.length) && !envMoved(k))) continue;
+      /* وشهرٌ قبل بداية الخطة لا خطّةَ فيه — فصرفُه لم يُقتطع من ظرفٍ
+         ليُدان به. ولولا هذا لصار تاريخُك المستورد عجزاً في كلّ بند:
+         صرفُ ستّة أشهرٍ على خطّة شهرٍ واحد. إلا أن تكتب فيه خطّةً بيدك. */
+      if(k < pf && !hasOvr(k)) continue;
       var act = 0;
       (m.items || []).forEach(function(it){ if(it.c === c.k) act += num(it.a); });
+      var pl = catPlan(c, k), mv = envDelta(c, k), inC = Math.round(carry);
       /* والحركاتُ تدخل الترحيل: لو دخلت المتاحَ وحدَه لعادت الأظرفُ
          في أوّل الشهر القادم كأنّ السحبَ لم يقع. */
-      carry = (catPlan(c, k) + carry + envDelta(c, k)) - act;
+      carry = (pl + carry + mv) - act;
       /* «السالب وحده» يُقصّ في كل خطوة لا في النهاية — وإلا تراكم
          الفائض في الطريق ثم قُصّ، فأعطى رقماً لا معنى له. */
       if(mode === "neg" && carry > 0) carry = 0;
+      if(each) each({ k: k, plan: pl, spent: act, moved: mv, inC: inC,
+                      diff: Math.round(pl + mv - act), bal: Math.round(carry) });
     }
     return Math.round(carry);
   }
+  function carryOf(c, mk){ return carryWalk(c, mk); }
   /* المتاحُ في الظرف — **الموضعُ الوحيد** لحسابه.
      كان مكتوباً في سبعة مواضع بصياغته نفسِها، فوُحِّد قبل أن تُضاف
      إليه الحركات: زيادةٌ في موضعٍ تُنسى في ستّة. */
@@ -3238,7 +3531,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
     return '<div class="dlab">أشهر سيتغيّر رصيدها</div><ul class="dlist">'
       + show.map(function(x){
           return '<li><span>' + esc(mName(x.mk)) + '</span><span class="dv '
-            + (x.d > 0 ? "up" : "dn") + '">' + (x.d > 0 ? "+" : "−") + fmt(Math.abs(x.d))
+            + (x.d > 0 ? "up" : "dn") + '">' + (x.d > 0 ? "‎+" : "‎−") + fmt(Math.abs(x.d))
             + '</span></li>';
         }).join("")
       + (rest > 0 ? '<li><span>و' + arMonths(rest) + ' أخرى</span><span class="dv"></span></li>' : "")
@@ -3273,19 +3566,8 @@ padding:10px 15px;border-top:1px solid var(--line)}
   }
   /* من أين جاء الرصيد المرحَّل: صفّ لكل شهر سابق فيه حركة */
   function carryTrail(c, mk){
-    var keys = Object.keys(state.months).sort(), out = [], carry = 0;
-    for(var i=0;i<keys.length;i++){
-      var k = keys[i];
-      if(k >= mk) break;
-      var m = state.months[k];
-      if(!m || !m.items || !m.items.length) continue;
-      var act = 0;
-      m.items.forEach(function(it){ if(it.c === c.k) act += num(it.a); });
-      var pl = catPlan(c, k), inC = Math.round(carry);
-      carry = (pl + carry) - act;
-      out.push({ k: k, plan: pl, spent: act, inC: inC,
-                 diff: Math.round(pl - act), bal: Math.round(carry) });
-    }
+    var out = [];
+    carryWalk(c, mk, function(r){ out.push(r); });
     return out;
   }
   /* الحساب المخصَّص للبند إن وُجد */
@@ -3360,7 +3642,17 @@ padding:10px 15px;border-top:1px solid var(--line)}
     return out;
   }
   function instMonthly(mk){ var s = 0; allInst(mk).forEach(function(i){ s += i.p; }); return s; }
-  function instRemain(mk){ var s = 0; allInst(mk).forEach(function(i){ s += i.p * i.left; }); return s; }
+  function instRemain(mk){
+    var s = 0, by = actuals(mk), bs = by.bySub;
+    allInst(mk).forEach(function(i){
+      /* قسطُ هذا الشهر إن دُفع خرج من المتبقي — وإلا بقي يُعدّ دَيناً
+         بعد سداده حتى ينقضي الشهر */
+      var paid = (i.x === i.c) ? (by.by[i.c.k] || 0) : (bs[i.x.id] || 0);
+      var left = i.left - (i.p > 0 && paid >= i.p - 0.5 ? 1 : 0);
+      s += i.p * Math.max(0, left);
+    });
+    return s;
+  }
   function instFreeMonth(mk){
     var a = allInst(mk);
     if(!a.length) return null;
@@ -3391,10 +3683,16 @@ padding:10px 15px;border-top:1px solid var(--line)}
     });
   }
   function catAvg(ck, n){
-    var h = catHistory(ck, n || 3).filter(function(x){ return x.v > 0; });
-    if(!h.length) return 0;
-    var s = 0; h.forEach(function(x){ s += x.v; });
-    return Math.round(s / h.length);
+    /* من أشهرٍ تمّت، والأصفارُ تُعدّ: بندٌ يُدفع ٦٠٠ كلَّ ثلاثة أشهر
+       متوسّطُه ٢٠٠ في الشهر لا ٦٠٠ — وهذا الرقمُ يُقترح خطّةً، فلو
+       أُسقطت الأصفارُ لحُجز له ثلاثةُ أضعاف حاجته. */
+    var keys = doneMonths().slice(-(n || 3));
+    if(!keys.length) return 0;
+    var s = 0;
+    keys.forEach(function(k){
+      state.months[k].items.forEach(function(it){ if(it.c === ck) s += num(it.a); });
+    });
+    return Math.round(s / keys.length);
   }
   function prevDataMonth(mk){
     var keys = monthsWithData(), out = null;
@@ -3455,7 +3753,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
     var p = autoPending(mk), m = month(mk), n = 0;
     p.forEach(function(x){
       var rec = { id: uid(), c: x.c.k, a: x.a, t: "سُجّل تلقائياً",
-                  d: mk + "-" + pad(autoDay()), auto: true };
+                  d: mkDay(mk, autoDay()), auto: true };
       if(x.s) rec.s = x.s.id;
       if(trackSrc() && state.salaryAcct && acctOf(state.salaryAcct)) rec.acct = state.salaryAcct;
       m.items.push(rec); linkSpend(rec); n++;
@@ -3497,7 +3795,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
       if(L === "save") return;          /* بند الاستثمار يُحسب في الادخار وحده */
       if(L === "duty") duty += catPlan(c, mk); else flex += catPlan(c, mk);
     });
-    return { inc: income(mk), duty: duty, save: planGoals() + planInv(), flex: flex };
+    return { inc: income(mk), duty: duty, save: planGoals(mk) + planInv(), flex: flex };
   }
   function planExp(){ var s = 0; state.cats.forEach(function(c){ s += catPlan(c); }); return s; }
   function activeGoals(){ return state.goals.filter(function(g){ return !g.arch; }); }
@@ -3508,10 +3806,10 @@ padding:10px 15px;border-top:1px solid var(--line)}
      في بابها — بندٌ في `planExp` أو محفظةٌ في سقف الاستثمار. ولو
      جُمعت هنا أيضاً لخرج من راتبك ضعفُ ما تريد. */
   function goalHeldElsewhere(g){ return !!goalCat(g) || !!goalInv(g); }
-  function planGoals(){
+  function planGoals(mk){
     var s = 0;
     activeGoals().forEach(function(g){
-      if(!goalHeldElsewhere(g)) s += goalMonthly(g);
+      if(!goalHeldElsewhere(g)) s += goalMonthly(g, mk);
     });
     return s;
   }
@@ -3631,7 +3929,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
               + '<td class="v">' + fmt(holdVal(x)) + '</td>'
               + '<td class="v z">' + fmt(holdAvg(x)) + '</td>'
               + '<td class="v ' + (pr >= 0 ? "gp" : "gn") + '">'
-              + (pr >= 0 ? "+" : "−") + fmt(Math.abs(pr)) + '</td>'
+              + (pr >= 0 ? "‎+" : "‎−") + fmt(Math.abs(pr)) + '</td>'
               + '<td class="v"><button class="mini" data-holdsell="' + v.id + '|'
               + x.id + '">بِعْ</button></td></tr>';
           }).join("")
@@ -3676,7 +3974,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
     var as = invAccts(v);
     if(as.length > 1)
       return '<div class="ahint" style="padding:8px 0 0">هذه المحفظة فيها '
-        + as.length + ' حسابات — قيمتُها مجموعُ أرصدتها، تُحدَّث من تبويب '
+        + arN(as.length, "حساب") + ' — قيمتُها مجموعُ أرصدتها، تُحدَّث من تبويب '
         + '«الحسابات».</div>';
     var prev = invValAt(v, shift(mk, -1)); if(prev === null) prev = 0;
     var put = invPut(v, mk), now = invValAt(v, mk), mode = invEntry(v);
@@ -3698,7 +3996,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
           : '<b>' + fmt(prev) + '</b> + <b>' + fmt(put) + '</b> + ربحك')
       + (gain === null ? '' :
           ' <span class="sep">·</span> الآن <b class="' + (gain >= 0 ? "up" : "dn") + '">'
-          + (gain >= 0 ? "+" : "−") + fmt(Math.abs(gain)) + '</b>')
+          + (gain >= 0 ? "‎+" : "‎−") + fmt(Math.abs(gain)) + '</b>')
       + '</div></div>';
   }
   /* مسار القيمة عبر الأشهر — الرقم وحده لا يقول أصاعدٌ أم هابط */
@@ -3822,7 +4120,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
           return '<span class="vb' + (g < 0 ? " neg" : "") + '" title="'
             + esc(mName(r.mk)) + ' · وضعتَ ' + fmt(r.net) + ' · صارت '
             + fmt(r.val) + '">'
-            + '<b class="vn">' + (g > 0 ? "+" : g < 0 ? "−" : "") + fmt(Math.abs(g))
+            + '<b class="vn">' + (g > 0 ? "+" : g < 0 ? "‎−" : "") + fmt(Math.abs(g))
             + '</b>'
             + '<i class="gap ' + (g >= 0 ? "up" : "dn") + '" style="height:'
             + hh + 'px"></i>'
@@ -3943,10 +4241,10 @@ padding:10px 15px;border-top:1px solid var(--line)}
       + '<button class="act" data-invlater="1">لاحقاً</button></div></div>';
   }
   function arNum2b(n){
-    return n === 1 ? "ظرفٍ واحد" : n === 2 ? "ظرفين" : (n + " أظرف");
+    return n === 1 ? "ظرفٍ واحد" : n === 2 ? "ظرفين" : (n % 100 >= 3 && n % 100 <= 10 ? (n + " أظرف") : (n + " ظرفاً"));
   }
   function arNum2(n){
-    return n === 1 ? "محفظةٌ واحدة" : n === 2 ? "محفظتان" : (n + " محافظ");
+    return n === 1 ? "محفظةٌ واحدة" : n === 2 ? "محفظتان" : (n % 100 >= 3 && n % 100 <= 10 ? (n + " محافظ") : (n + " محفظةً"));
   }
   function invCompare(){
     var L = (state.invest || []).slice();
@@ -3971,7 +4269,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
             + '<td class="v">' + fmt(r.val) + '</td>'
             + '<td class="v z">' + (VAL > 0 ? pctTxt(r.val / VAL) : "—") + '</td>'
             + '<td class="v ' + (r.pr >= 0 ? "gp" : "gn") + '">'
-            + (r.pr >= 0 ? "+" : "−") + fmt(Math.abs(r.pr)) + '</td>'
+            + (r.pr >= 0 ? "‎+" : "‎−") + fmt(Math.abs(r.pr)) + '</td>'
             + '<td class="v ' + (r.pr >= 0 ? "gp" : "gn") + '">'
             + (r.net > 0 ? pctTxt(r.pc) : "—") + '</td>'
             + '<td class="v z">' + fmt(r.put) + '</td></tr>';
@@ -4018,7 +4316,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
       return '<tr><td class="cn">' + esc(mName(mk)) + '</td>'
         + '<td class="v">' + fmt(val) + '</td>'
         + '<td class="v z">' + fmt(put) + '</td>'
-        + '<td class="v ' + (g >= 0 ? "gp" : "gn") + '">' + (g >= 0 ? "+" : "−") + fmt(Math.abs(g)) + '</td>'
+        + '<td class="v ' + (g >= 0 ? "gp" : "gn") + '">' + (g >= 0 ? "‎+" : "‎−") + fmt(Math.abs(g)) + '</td>'
         + '<td class="v">' + (base > 0 ? pctTxt(g / base) : "—") + '</td></tr>';
     }).join("");
     return '<div class="ygrid iwide">'
@@ -4222,7 +4520,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
     if(now === null) return null;
     var prev = invValAt(v, shift(mk, -1));
     if(prev === null) prev = 0;
-    return Math.round(now - prev - invPut(v, mk));
+    return Math.round(now - prev - invPut(v, mk) + invOutOf(v, mk));
   }
   function invMonthsOf(v){
     var set = {}, as = invAccts(v);
@@ -4238,7 +4536,8 @@ padding:10px 15px;border-top:1px solid var(--line)}
     if(now === null) return null;
     var prev = invValAt(v, shift(mk, -1));
     if(prev === null) prev = 0;
-    var base = prev + invPut(v, mk);
+    /* وما سُحب منها يُردّ إلى الأساس: لم يخسره السوق بل أخذتَه أنت */
+    var base = prev + invPut(v, mk) - invOutOf(v, mk);
     if(base <= 0) return null;
     return now / base;                      /* = 1 + r · لا يكون سالباً */
   }
@@ -4251,7 +4550,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
         var a = invValAt(v, mk); if(a === null) return;
         any = true; now += a;
         var b = invValAt(v, shift(mk, -1)); prev += (b === null ? 0 : b);
-        put += invPut(v, mk);
+        put += invPut(v, mk) - invOutOf(v, mk);
       });
       if(!any) return;
       var base = prev + put;
@@ -4260,7 +4559,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
     });
     return { r: chain - 1, n: n };
   }
-  function pctTxt(x){ return (x * 100).toFixed(1).replace(/\.0$/, "").replace("-", "−") + "٪"; }
+  function pctTxt(x){ return (x * 100).toFixed(1).replace(/\.0$/, "").replace("-", "‎−") + "٪"; }
   /* الكتابة: القيمة هي ما يُخزَّن دائماً */
   function setInvValue(v, mk, val){
     var as = invAccts(v), t = Math.max(0, num(val));
@@ -4577,7 +4876,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
       return t;
     }
     if(!q){
-      q = { id: uid(), c: ck, a: rest, t: "إدخال سريع", d: mk + "-01",
+      q = { id: uid(), c: ck, a: rest, t: "إدخال سريع", d: mkFirst(mk),
             q: true, at: Date.now() };
       var ca = spendAcct(catOf(ck), "");
       if(ca) q.acct = ca;
@@ -4623,7 +4922,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
       return t;
     }
     if(!q){
-      q = { id: uid(), c: ck, s: sid, a: rest, t: "إدخال سريع", d: mk + "-01",
+      q = { id: uid(), c: ck, s: sid, a: rest, t: "إدخال سريع", d: mkFirst(mk),
             q: true, at: Date.now() };
       var ca = spendAcct(catOf(ck), sid);
       if(ca) q.acct = ca;
@@ -4709,13 +5008,13 @@ padding:10px 15px;border-top:1px solid var(--line)}
   var LKINDS = {
     "in":   { n: "إيداع",  s: "+", c: "ok",   d: "مال دخل الحساب" },
     "gain": { n: "ربح",    s: "+", c: "ok",   d: "نموّ المحفظة نفسها" },
-    "out":  { n: "سحب",    s: "−", c: "warn", d: "مال خرج الحساب" },
-    "loss": { n: "خسارة",  s: "−", c: "warn", d: "انخفاض المحفظة" },
-    "fee":  { n: "رسوم",   s: "−", c: "warn", d: "عمولة الجهة" },
-    "pay":  { n: "سداد",   s: "−", c: "ok",   d: "نقص ممّا عليك" },
+    "out":  { n: "سحب",    s: "‎−", c: "warn", d: "مال خرج الحساب" },
+    "loss": { n: "خسارة",  s: "‎−", c: "warn", d: "انخفاض المحفظة" },
+    "fee":  { n: "رسوم",   s: "‎−", c: "warn", d: "عمولة الجهة" },
+    "pay":  { n: "سداد",   s: "‎−", c: "ok",   d: "نقص ممّا عليك" },
     "borrow": { n: "اقتراض", s: "+", c: "warn", d: "زاد ما عليك" },
     "adjup": { n: "تسوية", s: "+", c: "ok",   d: "تصحيح بالزيادة" },
-    "adjdn": { n: "تسوية", s: "−", c: "warn", d: "تصحيح بالنقص" }
+    "adjdn": { n: "تسوية", s: "‎−", c: "warn", d: "تصحيح بالنقص" }
   };
   function lkind(k){ return LKINDS[k] || LKINDS["out"]; }
   function acctLog(a){ if(!a.log) a.log = []; return a.log; }
@@ -4809,6 +5108,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
     var prev = shift(mk, -1);
     var d = distMap(mk), put = 0;
     for(var key in d){ if(key.charAt(0) === "i") put += num(d[key]); }
+    (state.invest || []).forEach(function(v){ put -= invOutOf(v, mk); });
     return Math.round(invAssetsAt(mk) - invAssetsAt(prev) - put);
   }
   function reconcile(mk){
@@ -4839,7 +5139,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
     }).join("") + '</div>'
       + '<div class="foot"><span>الأعمدة مقيسة بين <b>' + fmt(lo) + '</b> و<b>' + fmt(hi) + '</b>'
       + ' — لا من الصفر</span><span>'
-      + (vals[vals.length-1] - vals[0] >= 0 ? "+" : "−")
+      + (vals[vals.length-1] - vals[0] >= 0 ? "‎+" : "‎−")
       + fmt(Math.abs(vals[vals.length-1] - vals[0])) + ' خلال ' + arMonths(last.length) + '</span></div>';
   }
 
@@ -5062,7 +5362,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
   function goalSaved(g){
     /* بندٌ يملكه: رصيدُ ظرفه هو مُدَّخرُه — ما حجزتَه ولم تصرفه */
     var gc = goalCat(g);
-    if(gc) return Math.max(0, money(catPlan(gc) + carryOf(gc) - (actuals(ui.month).by[gc.k] || 0)));
+    if(gc) return Math.max(0, money(effPlan(gc, ui.month) - (actuals(ui.month).by[gc.k] || 0)));
     var l = linkedTo("g:" + g.id);
     if(l.length) return linkedSum("g:" + g.id);
     /* مالُه يقعد في محفظة: قيمتُها هي مُدَّخرُه — رقمٌ واحدٌ لا رقمان */
@@ -5123,10 +5423,13 @@ padding:10px 15px;border-top:1px solid var(--line)}
     });
     return t;
   }
+  /* أشهرٌ فيها حركةٌ وقد انتهت — فالشهرُ الجاري ناقصٌ يُنزل كلَّ متوسّط */
+  function doneMonths(){
+    var now = todayKey();
+    return monthsWithData().filter(function(k){ return k < now; });
+  }
   function avgSpend(){
-    var ks = Object.keys(state.months).filter(function(k){
-      return state.months[k].items && state.months[k].items.length;
-    }).sort().slice(-3);
+    var ks = doneMonths().slice(-3);
     if(!ks.length) return planExp() || baseSalary();
     var t = 0;
     ks.forEach(function(k){ t += livingSpend(k); });
@@ -5210,7 +5513,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
       + "الباقي من دخلك"
       + (subs ? (" · و<b>" + subs + "</b> من فروعه تذهب معه") : "")
       + "."
-      + (nit ? ("<br>و<b>" + nit + " عملية</b> بمجموع <b>" + fmt(tot)
+      + (nit ? ("<br>و<b>" + arN(nit, "عملية") + "</b> بمجموع <b>" + fmt(tot)
                + "</b> تبقى في شهورها <b>بلا اسمِ بند</b> — فتُقرأ تقاريرُك "
                + "ناقصةً.") : "")
       + "<br><br><b>«أخفِه» أرفق</b>: يرفعه من الشاشات ويبقي أرقامَه "
@@ -5230,8 +5533,11 @@ padding:10px 15px;border-top:1px solid var(--line)}
     if(gMode(g) === "endless") return { done: false, months: null, when: "", endless: true };
     if(isDone(g)) return { done: true, months: 0, when: "" };
     var rem = Math.max(0, goalTarget(g) - goalSaved(g));
-    if(num(g.m) <= 0) return { done: false, months: null, when: "" };
-    var n = Math.ceil(rem / num(g.m));
+    /* قسطُه الحقيقيّ: خطّةُ بندِه أو إيداعُ محفظته إن حملاه — وكان
+       يُقرأ g.m وحدَه فيقول لهدفٍ يملكه بندٌ «بلا موعد» */
+    var mo = goalMonthly(g);
+    if(mo <= 0) return { done: false, months: null, when: "" };
+    var n = Math.ceil(rem / mo);
     return { done: false, months: n, when: shift(todayKey(), n) };
   }
   function freshDone(){ return state.goals.filter(function(g){ return isDone(g) && !g.arch; }); }
@@ -5755,8 +6061,8 @@ padding:10px 15px;border-top:1px solid var(--line)}
   function dlgHTML(){
     if(!dlg) return "";
     var f = dlg.fields || [];
-    return '<div class="ovl" data-ovl="1"><div class="dlg">'
-      + '<h3>' + esc(dlg.title) + '</h3>'
+    return '<div class="ovl" data-ovl="1"><div class="dlg" role="dialog" aria-modal="true" aria-labelledby="dlgT">'
+      + '<h3 id="dlgT">' + esc(dlg.title) + '</h3>'
       + (dlg.msg ? '<p class="dmsg">' + dlg.msg + '</p>' : "")
       + '<div class="dlghtml">'
       + (typeof dlg.html === "function"
@@ -5787,7 +6093,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
   function dlgField(x, i){
     return (function(){
           if(x.type === "select")
-            return '<div class="f2' + (x.w ? (" " + x.w) : "") + '"><label>'
+            return '<div class="f2' + (x.w ? (" " + x.w) : "") + '"><label for="df' + i + '">'
               + esc(x.label) + '</label>'
               + '<select id="df' + i + '" class="sel"'
               + (x.rerender ? ' data-dlgre="1"' : '') + '>'
@@ -5797,7 +6103,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
                 }).join("")
               + '</select></div>';
           if(x.type === "area")
-            return '<div class="f2"><label>' + esc(x.label) + '</label>'
+            return '<div class="f2"><label for="df' + i + '">' + esc(x.label) + '</label>'
               + '<textarea id="df' + i + '" placeholder="' + esc(x.ph || "") + '">'
               + esc(x.value == null ? "" : x.value) + '</textarea></div>';
           /* حقلٌ مخفيّ: يحمل قيمةً يكتبها غيرُه — كالرمز يكتبه الوجه.
@@ -5807,7 +6113,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
               + (x.emo ? ' data-emofield="1"' : '')
               + (x.hook ? (' data-' + x.hook + '="1"') : "")
               + ' value="' + esc(x.value == null ? "" : x.value) + '">';
-          return '<div class="f2' + (x.w ? (" " + x.w) : "") + '"><label>'
+          return '<div class="f2' + (x.w ? (" " + x.w) : "") + '"><label for="df' + i + '">'
             + esc(x.label) + '</label>'
             + '<input id="df' + i + '" type="' + (x.type || "text") + '"'
             + (x.type === "number" ? ' inputmode="decimal"' : "")
@@ -6366,7 +6672,9 @@ padding:10px 15px;border-top:1px solid var(--line)}
   function monthSurplus(mk){
     var inc = income(mk), plan = 0, save = 0;
     state.cats.forEach(function(c){ plan += catPlan(c, mk); });
-    activeGoals().forEach(function(g){ save += goalMonthly(g, mk); });
+    /* هدفٌ يحمله بندٌ أو محفظة: قسطُه في خطّة ذلك البند أو في إيداع
+       المحفظة — فلو عُدّ هنا ثانيةً لنقص الفائضُ بقدره كلَّ شهر */
+    activeGoals().forEach(function(g){ if(!goalHeldElsewhere(g)) save += goalMonthly(g, mk); });
     if(!invCat()) save += invMonthly();
     return { inc: inc, plan: plan, save: save, sur: inc - plan - save };
   }
@@ -6379,7 +6687,8 @@ padding:10px 15px;border-top:1px solid var(--line)}
     var out = [], cum = 0;
     for(var i = 0; i < n; i++){
       var mk = shift(k, i), S = monthSurplus(mk);
-      cum += Math.max(0, S.sur);
+      /* العجزُ يأكل ما تجمّع قبله — لا يُتجاهل فيُبشَّر بمالٍ لن يكون */
+      cum = Math.max(0, cum + S.sur);
       out.push({ k: mk, i: i, sur: S.sur, cum: cum });
     }
     return out;
@@ -6491,6 +6800,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
   }
   function arDays(n){
     n = Math.abs(Math.round(n));
+    if(n === 1) return "يوم";
     if(n === 2) return "يومين";
     if(n <= 10) return n + " أيّام";
     return n + " يوماً";
@@ -7207,20 +7517,24 @@ padding:10px 15px;border-top:1px solid var(--line)}
            + '<div class="acts"><button class="act solid" data-tab="spend">'
            + 'سجّل مصروفَ هذا الشهر</button></div></div>';
     } else {
-      body = '<ul class="trail"><li class="hd"><span>الشهر</span>'
-           + '<span class="n">المخطط</span><span class="n">صرفت</span><span class="n">الرصيد</span></li>'
+      var anyMv = tr.some(function(r){ return r.moved; });
+      body = '<ul class="trail' + (anyMv ? " mv" : "") + '"><li class="hd"><span>الشهر</span>'
+           + '<span class="n">المخطط</span>'
+           + (anyMv ? '<span class="n">نُقل</span>' : "")
+           + '<span class="n">صرفت</span><span class="n">الرصيد</span></li>'
            + tr.map(function(r){
-               return '<li><span class="m">' + r.k + '</span>'
+               return '<li><span class="m">' + esc(mName(r.k)) + '</span>'
                  + '<span class="n">' + fmt(r.plan) + '</span>'
-                 + '<span class="n ' + (r.spent > r.plan ? "dn" : "") + '">' + fmt(r.spent) + '</span>'
-                 + '<span class="n bal">' + (r.bal >= 0 ? "" : "−") + fmt(Math.abs(r.bal)) + '</span></li>';
+                 + (anyMv ? '<span class="n">' + (r.moved ? (r.moved > 0 ? "‎+" : "‎−") + fmt(Math.abs(r.moved)) : "—") + '</span>' : "")
+                 + '<span class="n ' + (r.spent > r.plan + r.moved ? "dn" : "") + '">' + fmt(r.spent) + '</span>'
+                 + '<span class="n bal' + (r.bal < 0 ? " neg" : "") + '">' + (r.bal >= 0 ? "" : "‎−") + fmt(Math.abs(r.bal)) + '</span></li>';
              }).join("")
            + '</ul>';
     }
     ask({
       title: "رصيد «" + c.n + "»",
       msg: 'هذا البند حساب مستقل. كل شهر: <b>رصيد الشهر الماضي + مبلغ خطته − ما صرفت</b> '
-        + '= الرصيد الجديد.<br>رصيده الآن <b>' + (bal >= 0 ? "" : "−") + fmt(Math.abs(bal))
+        + '= الرصيد الجديد.<br>رصيده الآن <b>' + (bal >= 0 ? "" : "‎−") + fmt(Math.abs(bal))
         + '</b> ريال، يُضاف إلى ميزانية ' + esc(mName(mk)) + '.',
       html: body,
       ok: "إغلاق",
@@ -7757,7 +8071,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
     } else if(t === "set"){
       sub = "كل تعديل يُحفظ تلقائياً";
     } else if(t === "accts"){
-      sub = accts().length + " حساباً · صافي ثروتك " + fmt(assetTotal() - liabTotal(k));
+      sub = arN(accts().length, "حساب") + " · صافي ثروتك " + fmt(assetTotal() - liabTotal(k));
     } else if(t === "inv"){
       sub = "ساهمتَ بـ " + fmt(investIn()) + " · قيمتها " + fmt(investVal());
     } else {
@@ -7792,12 +8106,12 @@ padding:10px 15px;border-top:1px solid var(--line)}
         })()
       + H.a
       + (ui.tab === "year"
-          ? '<div class="mnav"><button data-ynav="-1">‹</button>'
+          ? '<div class="mnav"><button data-ynav="-1" aria-label="السنة السابقة" title="السنة السابقة">‹</button>'
             + '<span class="lbl">' + esc(curYear()) + '</span>'
-            + '<button data-ynav="1">›</button></div>'
-          : '<div class="mnav"><button data-nav="-1">‹</button>'
+            + '<button data-ynav="1" aria-label="السنة التالية" title="السنة التالية">›</button></div>'
+          : '<div class="mnav"><button data-nav="-1" aria-label="الشهر السابق" title="الشهر السابق · →">‹</button>'
             + '<span class="lbl">' + esc(mName(ui.month)) + '</span>'
-            + '<button data-nav="1">›</button></div>')
+            + '<button data-nav="1" aria-label="الشهر التالي" title="الشهر التالي · ←">›</button></div>')
       + syncChipHTML(true)
       + '<button class="gear' + (ui.tab === "set" ? " on" : "") + '" data-settab="1" title="الإعدادات">⚙</button>'
       + '</div></div>' + monthStrip();
@@ -7829,6 +8143,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
             + (nd ? ('<i class="ndot">' + nd + '</i>') : "") + '</button>';
         }).join("")
       + navUpdate()
+      + '<button class="kbhint" data-kbhelp="1" title="اختصارات لوحة المفاتيح">⌨ اختصارات <s>/</s></button>'
       + '</div></div>';
   }
   /* صفٌّ ثابت آخر القائمة: رقم النسخة دائماً، وحالُ التحديث إن وُجد.
@@ -7857,7 +8172,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
     var d = now - prev, p = Math.round(d / prev * 100);
     if(!p) return '<b>بلا تغيّر</b> عن الشهر الماضي';
     var bad = badUp ? d > 0 : d < 0;
-    return '<b class="' + (bad ? "kup" : "kdn") + '">' + (d > 0 ? "+" : "−")
+    return '<b class="' + (bad ? "kup" : "kdn") + '">' + (d > 0 ? "‎+" : "‎−")
       + Math.abs(p) + '٪</b> عن ' + fmt(prev);
   }
   /* ما يطلب فعلاً الآن — بترتيب الأهمية */
@@ -7881,7 +8196,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
       out.push({ i: "↑", t: "warn",
         h: over.length === 1 ? "بند تجاوز ما أُتيح له"
            : (over.length === 2 ? "بندان تجاوزا ما أُتيح لهما"
-              : over.length + " بنود تجاوزت ما أُتيح لها"),
+              : arN(over.length, "بند") + " تجاوزت ما أُتيح لها"),
         b: over.slice(0, 3).map(function(x){
              return esc(x.n) + " <b>+" + fmt(x.d) + "</b>"; }).join(" · ")
            + (over.length > 3 ? " …" : "")
@@ -8075,14 +8390,14 @@ padding:10px 15px;border-top:1px solid var(--line)}
       state.goals.forEach(function(g){ gA += linkedSum("g:" + g.id); });
       state.invest.forEach(function(v){ iA += linkedSum("i:" + v.id); });
       h += '<div class="sec"><h2>كل ما تملك</h2>'
-        + '<span class="hint">' + accts().length + ' حساباً في ' + banks().length + ' جهة</span></div>'
+        + '<span class="hint">' + arN(accts().length, "حساب") + ' في ' + arN(banks().length, "جهة") + '</span></div>'
         + '<div class="card">'
         + '<div class="own"><span class="ol"><span class="od" style="background:var(--ink-3)"></span>'
         + '<span><span class="on">تشغيلي</span><span class="os">منه تصرف يومياً</span></span></span>'
         + '<span class="ov">' + fmt(opsA) + '</span></div>'
         + '<div class="own"><span class="ol"><span class="od" style="background:var(--ok)"></span>'
         + '<span><span class="on">مدّخر لأهدافك</span><span class="os">'
-        + activeGoals().length + ' هدفاً نشطاً</span></span></span>'
+        + arN(activeGoals().length, "هدف", "نشط") + '</span></span></span>'
         + '<span class="ov" style="color:var(--ok)">' + fmt(gA) + '</span></div>'
         + '<div class="own"><span class="ol"><span class="od" style="background:var(--ok-2)"></span>'
         + '<span><span class="on">في محافظ الاستثمار</span><span class="os">'
@@ -8120,7 +8435,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
           + '<span class="mbar"><i style="width:' + (r.exp / mx2 * 100) + '%;background:var(--warn)"></i></span>'
           + '</span>'
           + '<span class="mv2" style="color:' + (r.net < 0 ? "var(--warn)" : "var(--ok)") + '">'
-          + (r.net >= 0 ? "+" : "−") + fmt(Math.abs(r.net))
+          + (r.net >= 0 ? "‎+" : "‎−") + fmt(Math.abs(r.net))
           + '<s>' + fmt(r.inc) + ' / ' + fmt(r.exp) + '</s></span></div>';
       }).join("");
       var tI = 0, tE = 0;
@@ -8129,7 +8444,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
         + '<span class="mm">المجموع</span>'
         + '<span style="font-size:11.5px;color:var(--ink-3)">دخل ' + fmt(tI) + ' · مصروف ' + fmt(tE) + '</span>'
         + '<span class="mv2" style="color:' + (tI - tE < 0 ? "var(--warn)" : "var(--ok)") + '">'
-        + (tI - tE >= 0 ? "+" : "−") + fmt(Math.abs(tI - tE)) + '</span></div>';
+        + (tI - tE >= 0 ? "‎+" : "‎−") + fmt(Math.abs(tI - tE)) + '</span></div>';
       h += '</div>';
       h += '<div class="acts"><button class="act" data-tab="year">'
         + 'افتح السنة كاملة</button></div>';
@@ -8147,7 +8462,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
         + '<div class="ip"><span>قيمة محافظك اليوم</span><b>' + fmt(iv) + '</b></div>'
         + '<div class="ip"><span>ما ساهمت به إجمالاً</span><b>' + fmt(ii) + '</b></div>'
         + '<div class="ip"><span>' + (ipr >= 0 ? "ربح" : "خسارة") + '</span>'
-        + '<b class="' + (ipr >= 0 ? "up" : "dn") + '">' + (ipr >= 0 ? "+" : "−") + fmt(Math.abs(ipr))
+        + '<b class="' + (ipr >= 0 ? "up" : "dn") + '">' + (ipr >= 0 ? "‎+" : "‎−") + fmt(Math.abs(ipr))
         + (ii ? " · " + (ipr / ii * 100).toFixed(1) + "٪" : "") + '</b></div>'
         + '<div class="ip"><span>مساهمتك الشهرية</span><b>' + fmt(im2)
         + (icap2 ? ' <span style="color:var(--ink-3);font-weight:400">من سقف ' + fmt(icap2) + '</span>' : "")
@@ -8304,7 +8619,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
       return '<button class="pstep l-' + x.k + (cur === x.k ? " on" : "")
         + (bad ? " bad" : (shut ? " shut" : "")) + '" data-player="' + x.k + '">'
         + '<s class="sn"><i>' + (i + 1) + '</i>' + x.n + (shut ? ' ✓' : "") + '</s>'
-        + '<b>' + (x.k === "inc" ? "" : "−") + fmt(amt) + '</b>'
+        + '<b>' + (x.k === "inc" ? "" : "‎−") + fmt(amt) + '</b>'
         + '<em>' + (x.k === "flex"
             ? (Math.abs(rest) < 1 ? "موزّع بالكامل"
                : rest > 0 ? "بقي " + fmt(rest) + " بلا وجهة"
@@ -8456,7 +8771,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
             + '<span class="ba">←</span>'
             + '<span class="bv">' + fmt(x.sug) + '</span>'
             + '<span class="bd ' + (d > 0 ? "up" : (d < 0 ? "dn" : "")) + '">'
-            + (d > 0 ? "+" : (d < 0 ? "−" : "")) + fmt(Math.abs(d)) + '</span></div>';
+            + (d > 0 ? "+" : (d < 0 ? "‎−" : "")) + fmt(Math.abs(d)) + '</span></div>';
         }).join("")
         + '<div class="brow tot"><span class="bi" style="background:var(--card-2)">Σ</span>'
         + '<span class="bn">المرن بعد البناء</span>'
@@ -8478,7 +8793,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
           if(own) setP(mk, x.k, x.sug); else c.p = x.sug;
           n++;
         });
-        toast("بُنيت خطة " + n + " بنداً من صرفك الفعلي");
+        toast("بُنيت خطة " + arN(n, "بند") + " من صرفك الفعلي");
         save();
       } });
   }
@@ -8629,7 +8944,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
             + '<span class="bv dim">' + fmt(x.now) + '</span><span class="ba">←</span>'
             + '<span class="bv">' + fmt(nv) + '</span>'
             + '<span class="bd ' + (d > 0 ? "dn" : (d < 0 ? "up" : "")) + '">'
-            + (d > 0 ? "+" : (d < 0 ? "−" : "")) + fmt(Math.abs(d)) + '</span></div>';
+            + (d > 0 ? "+" : (d < 0 ? "‎−" : "")) + fmt(Math.abs(d)) + '</span></div>';
         }).join("") + '</div>';
       },
       ok: "طبّقه على " + mName(mk),
@@ -8720,7 +9035,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
           else if(clsDraft && clsDraft[c.k]) c.cls = clsDraft[c.k];
         });
         clsDraft = null;
-        toast(n ? "صُنّف " + n + " بنداً" : "لا تغيير");
+        toast(n ? "صُنّف " + arN(n, "بند") + "" : "لا تغيير");
         save();
       },
       onCancel: function(){ clsDraft = null; } });
@@ -8863,8 +9178,13 @@ padding:10px 15px;border-top:1px solid var(--line)}
   /* كم مضى من الشهر الجاري؟ — فلا يُحاكَم نصفُ شهرٍ بشهرٍ كامل */
   function monthProgress(mk){
     if(mk !== todayKey()) return 1;
-    var d = new Date(), days = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
-    return Math.max(0.05, d.getDate() / days);
+    /* من يوم الراتب لا من أوّل التقويم: من قبض في ٢٥ فاليومُ الثالثُ
+       من شهره ليس العاشرَ من التقويم */
+    var a = new Date(mkFirst(mk) + "T12:00:00"), b = new Date(mkFirst(shift(mk, 1)) + "T12:00:00");
+    var t = new Date(todayDate() + "T12:00:00");
+    var days = Math.max(1, Math.round((b - a) / 86400000));
+    var gone = Math.round((t - a) / 86400000) + 1;
+    return Math.max(0.05, Math.min(1, gone / days));
   }
   /* أشهرُ القياس: ما قبل الشهر المعروض — فالجاري يُقاس ولا يَقيس */
   function statMonths(MS, mk){
@@ -8888,6 +9208,10 @@ padding:10px 15px;border-top:1px solid var(--line)}
     /* التجاوز: كم شهراً صُرف فيه فوق خطّته */
     var over = 0, planned = 0;
     past.forEach(function(x){
+      /* الشهرُ الذي لا حركةَ فيه لا يُعدّ هنا كما لم يُعدّ في المتوسّط —
+         وإلا قيل «تجاوزتَه ١ من ٥» والأشهرُ المقيسةُ ثلاثة */
+      var m = state.months[x];
+      if(!m || !m.items || !m.items.length) return;
       var p = catPlan(c, x), v = money(actuals(x).by[c.k] || 0);
       if(p > 0){ planned++; if(v > p + 0.5) over++; }
     });
@@ -8903,7 +9227,11 @@ padding:10px 15px;border-top:1px solid var(--line)}
     }
     var now = money(actuals(mk).by[c.k] || 0);
     var prog = monthProgress(mk);
-    return { c: c, n: n, vals: vals, avg: money(avg), sd: money(sd),
+    var cm = state.months[mk];
+    return { c: c, mk: mk, n: n, vals: vals, avg: money(avg), sd: money(sd),
+             /* شهرٌ لم تُسجَّل فيه حركةٌ بعد: صفرُه غيابٌ لا صرف */
+             empty: !cm || !cm.items || !cm.items.length,
+             avail: effPlan(c, mk), carry: carryOf(c, mk),
              sum: money(sum), over: over, planned: planned, trend: trend,
              now: now, plan: catPlan(c, mk), prog: prog,
              /* المتوقَّع لو مضى الشهرُ على هذا النسق */
@@ -8917,16 +9245,31 @@ padding:10px 15px;border-top:1px solid var(--line)}
     spike: { n: "شاذّ",   i: "▲", c: "warn",  w: 3 },
     rise:  { n: "صاعد",  i: "↗", c: "gold",  w: 2 },
     ok:    { n: "طبيعيّ", i: "✓", c: "ok",    w: 1 },
+    wait:  { n: "لم يُسجَّل", i: "○", c: "ink", w: 0 },
     young: { n: "يُقاس",  i: "·", c: "ink",   w: 0 }
   };
   function catVerdict(st){
     /* لا حكمَ بلا ثلاثة أشهر: شهرٌ واحدٌ ليس نمطاً */
     if(st.n < 3)
       return { k: "young", why: "مضى " + arMonths(st.n) + " — الحكمُ بعد ثلاثة" };
+    /* شهرٌ بلا حركة: كان يُقال لكلّ بندٍ «داخلَ معدّلك» وصرفُه صفرٌ لأنّه
+       لم يُسجَّل لا لأنّه اقتصد. لا حكمَ على ما لم يُكتب. */
+    if(st.empty)
+      return { k: "wait", why: "لا حركةَ مسجَّلةً في " + mName(st.mk) + " بعد" };
+    /* الحكمُ على خطّة الشهر — والسببُ يذكر المُرحَّل. فمن صرف ٩٠٠ وخطّتُه
+       ٤٠٠ متجاوزٌ ولو غطّاه رصيدُه، لكن يُقال له إنّه مغطّى؛ وكانت شاشةُ
+       المصروف تقول «متبقٍ +١٠٠» والتحليلُ «متجاوز» بلا تفسير. ومن عليه
+       عجزٌ مُرحَّل تجاوز المتاحَ قبل أن يبلغ خطّته — فيُقال ذلك أيضاً. */
     var d = money(st.now - st.plan);
+    var lim = (st.avail !== undefined) ? Math.max(0, st.avail) : st.plan;
     if(st.plan > 0 && d > 0.5)
       return { k: "over", why: "تجاوزتَ خطّتَه بـ" + fmt(d)
+                 + (st.carry > 0.5 && st.now <= lim + 0.5 ? " — ورصيدُه المُرحَّل يغطّيه" : "")
                  + (st.prog < 1 ? " وما زال الشهرُ ناقصاً" : "") };
+    var d2 = money(st.now - lim);
+    if(st.plan > 0 && st.carry < -0.5 && d2 > 0.5)
+      return { k: "over", why: "تجاوزتَ المتاحَ له بـ" + fmt(d2)
+                 + " — عليه عجزٌ مُرحَّل " + fmt(-st.carry) + " من قبل" };
     /* بندٌ لم تصرف فيه شيئاً ثمّ صرفت: لا يُقال «داخلَ معدّلك (٠)» —
        فذاك حكمٌ يُضحك. وهو جديدٌ يُعلَن لا شاذٌّ يُقاس. */
     if(st.avg <= 0 && st.now > 0)
@@ -9019,7 +9362,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
       var p = catPlan(c, mk), L = layerOf(c, mk);
       if(L === "save") save += p; else if(L === "duty") duty += p; else flex += p;
     });
-    save += planGoals() + (invCat() ? 0 : planInv());
+    save += planGoals(mk) + (invCat() ? 0 : planInv());
     var now = money(income(mk));
     var pl = money(duty + flex + save);
     return { n: n, def: def, inc: inc, sp: sp,
@@ -9140,6 +9483,14 @@ padding:10px 15px;border-top:1px solid var(--line)}
         + money(Math.ceil(P.st.avg / 10) * 10) + '">ارفع خطّتَه</button>'
         + '<button class="act" data-anmute="' + P.c.k + '">لا شأنَ لي به</button>'
         + '</div></div>';
+    } else if(!(state.months[mk] && (state.months[mk].items || []).length)){
+      /* شهرٌ لم يُسجَّل فيه شيء: لا يُقال «كلُّ بندٍ داخلَ خطّته» — صفرُه غياب */
+      h += '<div class="card anhead sub2"><s class="anlab">'
+        + esc(mName(mk)) + '</s>'
+        + '<h3>لا حركةَ مسجَّلةً بعد</h3>'
+        + '<p>لم تسجّل في ' + esc(mName(mk)) + ' شيئاً، فلا حكمَ عليه. والأحكامُ '
+        + 'تبدأ بأوّل مصروفٍ تكتبه.</p>'
+        + '<div class="acts"><button class="act solid" data-goto="spend">سجّل مصروفاً</button></div></div>';
     } else {
       h += '<div class="card anhead ok sub2"><s class="anlab">'
         + esc(mName(mk)) + '</s>'
@@ -9150,7 +9501,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
 
     /* ── الأوامر ── */
     h += '<div class="sec"><h2>ما تحتاج أن تغيّره</h2>'
-      + '<span class="hint">' + (OR.length ? (OR.length + " أمراً بأرقامها")
+      + '<span class="hint">' + (OR.length ? (arN(OR.length, "أمر") + " بأرقامها")
                                            : "لا شيء — خطّتُك تطابق صرفَك") + '</span></div>';
     if(OR.length){
       h += '<div class="card">' + OR.map(function(o){
@@ -9162,7 +9513,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
           + esc(o.c.n) + ' إلى ' + fmt(o.to) + '</b>'
           + '<s class="sub">' + esc(o.why) + '</s></span>'
           + '<span class="rt"><b class="a ' + (up ? "wno" : "wok") + '">'
-          + (up ? "+" : "−") + fmt(o.gain) + '</b>'
+          + (up ? "‎+" : "‎−") + fmt(o.gain) + '</b>'
           + '<s class="b"><button class="mini" data-anfix="' + o.c.k + '|' + o.to
           + '">نفّذه</button></s></span></div>';
       }).join("") + '</div>';
@@ -9246,7 +9597,8 @@ padding:10px 15px;border-top:1px solid var(--line)}
         if(invCat() && c.k === INVK) return;      /* الاستثمار يُعدّ ادخاراً */
         if(layerOf(c, mk) === "duty") T.duty += v; else T.flex += v;
       });
-      T.savePlan += planGoals() + planInv();
+      /* لشهره لا للمعروض · والاستثمارُ إن كان بنداً عُدّ في بنوده */
+      T.savePlan += planGoals(mk) + (invCat() ? 0 : planInv());
       var d = state.months[mk] && state.months[mk].dist;
       if(d) for(var key in d){
         if(key.charAt(0) === "g" || key.charAt(0) === "i") T.saveMoved += num(d[key]);
@@ -9256,7 +9608,9 @@ padding:10px 15px;border-top:1px solid var(--line)}
   }
   /* دقّة الخطة: لكل بند، انحرافه عن خطته شهراً بشهر */
   function repAccuracy(MS){
-    var out = [];
+    var out = [], now = todayKey();
+    /* دقّةُ الخطة من أشهرٍ تمّت: الجاري ناقصٌ فيُحسب «دون الخطة» كلَّه */
+    MS = (MS || []).filter(function(mk){ return mk < now; });
     visibleCats().forEach(function(c){
       /* مال الاستثمار توزيعٌ لا مصروف — مقارنته بخطته هنا تقارن صفراً
          بألف، ومكانه محور الادخار. */
@@ -9360,7 +9714,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
     TOP.sort(function(a, b){ return b.v - a.v; });
     var mx = TOP.length ? TOP[0].v : 1;
     h += '<div class="sec"><h2>أين يذهب راتبك</h2>'
-      + '<span class="hint">' + TOP.length + ' بنداً · مرتّبة بالنصيب</span></div><div class="card">';
+      + '<span class="hint">' + arN(TOP.length, "بند") + ' · مرتّبة بالنصيب</span></div><div class="card">';
     h += TOP.map(function(x){
       var cl = clsOf(x.c), CO = null;
       CLASSES.forEach(function(y){ if(y.k === cl) CO = y; });
@@ -9419,9 +9773,9 @@ padding:10px 15px;border-top:1px solid var(--line)}
         return '<div class="arow"><span class="ai" style="background:' + x.c.c
           + '22;color:' + x.c.c + '">' + x.c.e + '</span>'
           + '<span class="an"><b>' + esc(x.c.n) + '</b>'
-          + '<s>' + esc(verdict) + ' · تجاوزتَه ' + x.over + ' من ' + x.n + ' شهراً</s></span>'
+          + '<s>' + esc(verdict) + ' · تجاوزتَه ' + x.over + ' من ' + arN(x.n, "شهر") + '</s></span>'
           + '<span class="av"><b class="' + (b > 0 ? "up" : (b < 0 ? "dn" : "")) + '">'
-          + (b > 0 ? "+" : (b < 0 ? "−" : "")) + Math.abs(b) + '٪</b>'
+          + (b > 0 ? "+" : (b < 0 ? "‎−" : "")) + Math.abs(b) + '٪</b>'
           + '<s>خطة ' + fmt(x.plan) + ' · فعلي ' + fmt(x.act) + '</s></span></div>';
       }).join("");
       var worst = AC[0];
@@ -9458,7 +9812,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
       if(R && Math.abs(R.gap) >= 1){ LEAK.push({ k: mk, g: R.gap }); leakSum += R.gap; }
     });
     h += '<div class="sec"><h2>الفرق غير المفسَّر</h2>'
-      + '<span class="hint">' + (LEAK.length ? LEAK.length + " شهراً" : "لا فروق") + '</span></div>'
+      + '<span class="hint">' + (LEAK.length ? arN(LEAK.length, "شهر") + "" : "لا فروق") + '</span></div>'
       + '<div class="card">';
     if(!LEAK.length){
       h += '<div class="empty"><b>لا فرقَ غير مفسَّر ✓</b>'
@@ -9471,10 +9825,10 @@ padding:10px 15px;border-top:1px solid var(--line)}
           + '<span class="sn2">' + (x.g < 0 ? "نقص رصيدك أكثر مما تفسّره خطتك"
                                             : "زاد رصيدك فوق المتوقَّع") + '</span>'
           + '<span class="sv ' + (x.g < 0 ? "neg" : "") + '">'
-          + (x.g > 0 ? "+" : "−") + fmt(Math.abs(x.g)) + '</span></div>';
+          + (x.g > 0 ? "‎+" : "‎−") + fmt(Math.abs(x.g)) + '</span></div>';
       }).join("");
       h += '<div class="yhint" data-note="n7c3c42b" style="border-bottom:0">مجموع الفروق <b>'
-        + (leakSum >= 0 ? "+" : "−") + fmt(Math.abs(leakSum)) + '</b> ريال على '
+        + (leakSum >= 0 ? "‎+" : "‎−") + fmt(Math.abs(leakSum)) + '</b> ريال على '
         + arMonths(MS.length) + '. الفرق السالب مصروف لم تسجّله، والموجب دخل لم تسجّله '
         + '— كلاهما يُصلَح من تبويب الحسابات.</div>';
     }
@@ -9972,7 +10326,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
       h += '<div class="fitbar ' + (down ? "down" : "up") + '">'
         + '<div class="ft"><b>' + (down ? "دخل هذا الشهر أقل من خطتك" : "دخل هذا الشهر أعلى من خطتك") + '</b>'
         + '<s>الدخل <b>' + fmt(inc) + '</b> · الخطة الأساسية <b>' + fmt(bc) + '</b> · '
-        + 'الفرق <b>' + (down ? "−" : "+") + fmt(Math.abs(diff)) + '</b> (' + pctd + '٪)</s></div>'
+        + 'الفرق <b>' + (down ? "‎−" : "‎+") + fmt(Math.abs(diff)) + '</b> (' + pctd + '٪)</s></div>'
         + '<div class="acts">'
         + '<button class="act solid" data-fit="smart">'
         + (down ? "قلّص المرن فقط" : "وسّع المرن فقط") + '</button>'
@@ -10084,7 +10438,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
         + (cry ? '<button class="carrybtn' + (cry < 0 ? " neg" : "") + '" data-carry="' + c.k + '">'
                  + (cry > 0 ? "مُرحَّل +" : "مُرحَّل −") + fmt(Math.abs(cry)) + '</button>' : "")
         + '<span class="chev' + (open ? " on" : "") + '">▾</span></b>'
-        + '<s>' + (subs.length ? subs.length + ' فروع · ' : "")
+        + '<s>' + (subs.length ? arN(subs.length, "فرع") + ' · ' : "")
         + (catAcct(c) ? "💳 " + esc(catAcct(c).n) + " · " : "")
         + (inc ? Math.round(avail/inc*100) + '٪ من الدخل' : "&nbsp;") + '</s>'
         + (avail || sp
@@ -10093,7 +10447,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
         + '</span></span>'
         + (PV ? '<span class="pp">' + fmt(pvv)
               + (pvd ? '<s class="' + (pvd > 0 ? "up" : "dn") + '">'
-                  + (pvd > 0 ? "+" : "−") + fmt(Math.abs(pvd)) + '</s>' : "") + '</span>' : "")
+                  + (pvd > 0 ? "‎+" : "‎−") + fmt(Math.abs(pvd)) + '</s>' : "") + '</span>' : "")
         + '<span class="pv plan">' + fmt(avail) + '</span>'
         + '<span class="pv' + (sp ? "" : " dim") + '">' + fmt(sp) + '</span>'
         + '<span class="pv' + (left < 0 ? " neg" : (left ? "" : " dim")) + '">' + fmt(left) + '</span>'
@@ -10195,11 +10549,11 @@ padding:10px 15px;border-top:1px solid var(--line)}
     h += '<div class="ptab foot' + (PV ? " pv" : "") + '"><span class="pn">'
       + '<span class="pi" style="background:var(--card-2)">Σ</span>'
       + '<span class="pnm"><b>مجموع المصروف</b>'
-      + '<s>' + visibleCats().length + ' بنداً'
+      + '<s>' + arN(visibleCats().length, "بند") + ''
       + (CRY ? ' · منه ' + fmt(CRY) + ' مُرحَّل من قبل' : "") + '</s></span></span>'
       + (PV ? '<span class="pp">' + fmt(TPV)
             + (TP - CRY - TPV ? '<s class="' + (TP - CRY - TPV > 0 ? "up" : "dn") + '">'
-                + (TP - CRY - TPV > 0 ? "+" : "−") + fmt(Math.abs(TP - CRY - TPV)) + '</s>' : "")
+                + (TP - CRY - TPV > 0 ? "‎+" : "‎−") + fmt(Math.abs(TP - CRY - TPV)) + '</s>' : "")
             + '</span>' : "")
       + '<span class="pv">' + fmt(TP) + '</span>'
       + '<span class="pv">' + fmt(TS) + '</span>'
@@ -10241,7 +10595,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
       }).join("");
       h += '<div class="ptab foot"><span class="pn">'
         + '<span class="pi" style="background:var(--card-2)">Σ</span>'
-        + '<span class="pnm"><b>مجموع الادخار</b><s>' + AGP.length + ' هدفاً</s></span></span>'
+        + '<span class="pnm"><b>مجموع الادخار</b><s>' + arN(AGP.length, "هدف") + '</s></span></span>'
         + '<span class="pv">' + fmt(GP) + '</span>'
         + '<span class="pv">' + fmt(GM) + '</span>'
         + '<span class="pv">' + fmt(GP - GM) + '</span></div>';
@@ -10321,7 +10675,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
           + acctSelect("data-gsel", g.id, "g:" + g.id)
           + linkedChips("g:" + g.id, "", "data-gunlink")
           + (goalFromAccts(g)
-              ? '<div class="eta">المُدَّخر محسوب من ' + linkedTo("g:" + g.id).length + ' حساب مرتبط</div>'
+              ? '<div class="eta">المُدَّخر محسوب من ' + arN(linkedTo("g:" + g.id).length, "حساب") + ' مرتبط</div>'
               : (goalInv(g)
                   ? ('<div class="eta">المُدَّخر يُقرأ من محفظة «'
                      + esc(goalInv(g).n) + '» — قيمتُها اليوم '
@@ -10358,7 +10712,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
     var MM = month(k);
     h += '<div class="sec"><h2>هذا الشهر وحده</h2>'
       + '<span class="hint">تغييراتٌ تخصّ هذا الشهر ولا تمسّ خطّتك الأساسيّة</span></div><div class="card">'
-      + mrow("عمليات " + mName(k), (MM.items || []).length + " عملية",
+      + mrow("عمليات " + mName(k), arN((MM.items || []).length, "عملية") + "",
              '<button class="mini bad" data-clearmonth="1">امسحها</button>')
       + mrow("دخل " + mName(k),
              incObj(k).own ? "مخصص لهذا الشهر وحده" : "من الافتراضي العامّ",
@@ -10416,7 +10770,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
       + (restAll < 0 ? "bad" : "") + '">' + fmt(restAll) + '</b></span>'
       + '</span></div>';
     h += '<div class="qbar nospan">'
-      + '<span class="qp"><b>' + done + '</b> من ' + CS.length + ' بنداً أدخلته</span>'
+      + '<span class="qp"><b>' + done + '</b> من ' + arN(CS.length, "بند") + ' أدخلته</span>'
       + '<span class="qtrack"><i style="width:' + (CS.length ? done / CS.length * 100 : 0)
       + '%"></i></span>'
       + (canFill ? '<button class="chip sm" data-qfill="1" title="'
@@ -10464,7 +10818,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
         + iconOf(c) + '</button>'
         + '<span class="qt' + (subs ? " has" : "") + '"'
         + (subs ? (' data-qsub="' + c.k + '" title="'
-                   + esc(subs + " فروع — اضغط الصفّ لتفتحها")) + '"' : "")
+                   + esc(arN(subs, "فرع") + " — اضغط الصفّ لتفتحها")) + '"' : "")
         + '><b>' + esc(c.n)
         + (subs
             ? ('<span class="qsx' + (ui.openQ[c.k] ? " on" : "") + '">'
@@ -10472,7 +10826,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
             : "")
         + '</b>'
         + '<s>' + (capRow ? ('سقفٌ لا يُحجز · ' + fmt(Math.max(0, left)) + ' قبل بلوغه')
-              : dn ? dn + ' عملية مفصّلة (' + fmt(det) + ')'
+              : dn ? arN(dn, "عملية", "مفصلة") + ' (' + fmt(det) + ')'
               : (cry ? (cry > 0 ? "مُرحَّل +" : "مُرحَّل −") + fmt(Math.abs(cry))
                        + ' · المتاح ' + fmt(avail)
                  : (avail ? 'بلا رصيد مُرحَّل' : 'بلا خطة')))
@@ -10494,7 +10848,16 @@ padding:10px 15px;border-top:1px solid var(--line)}
         + (pv ? fmt(pv) : "0") + '">'
         + '<button class="qwhy" data-spwhy="' + c.k + '" title="'
         + esc("سجّل عمليّةً بسببها ويومِها") + '">+</button></span>'
-        + '<span class="qv' + (left < 0 ? " neg" : (left ? "" : " dim")) + '">' + fmt(left) + '</span>'
+        /* المتبقي = خطّة الشهر + المُرحَّل − المصروف. والمُرحَّلُ كان في
+           سطرٍ تحت الاسم يختفي متى فُصّلت عمليّة — فيرى صاحبُه «خطّة ٦٠
+           صُرف ٩٣ متبقٍ −٢٣٩» ولا يدري من أين جاء الفرق */
+        + '<span class="qv' + (left < 0 ? " neg" : (left ? "" : " dim")) + '"'
+        + (cry && !capRow ? ' title="' + esc("خطّة الشهر " + fmt(avail - cry) + " + المُرحَّل "
+              + (cry > 0 ? "" : "‎−") + fmt(Math.abs(cry)) + " − صُرف " + fmt(sp)) + '"' : "")
+        + '>' + fmt(left)
+        + (cry && !capRow ? '<s class="' + (cry < 0 ? "dn" : "up") + '">‎'
+              + (cry > 0 ? "‎+" : "‎−") + fmt(Math.abs(cry)) + ' مُرحَّل</s>' : "")
+        + '</span>'
         + '</div>'
         /* الفروع بالأعمدة نفسها: خطّة · صُرف · باقٍ. ومعها ما بقي من
            السقف بلا فرع، فتجتمع الأرقام ولا يبقى فرقٌ لا يُفسَّر. */
@@ -10554,7 +10917,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
     }).join("");
     h += '<div class="qtab foot"><span class="qn">'
       + '<span class="qi" style="background:var(--card-2)">Σ</span>'
-      + '<span class="qt"><b>المجموع</b><s>' + CS.length + ' بنداً</s></span></span>'
+      + '<span class="qt"><b>المجموع</b><s>' + arN(CS.length, "بند") + '</s></span></span>'
       + '<span class="qv">' + fmt(TA) + '</span>'
       + '<span class="qv" style="font-size:15px">' + fmt(TS) + '</span>'
       + '<span class="qv' + (TA - TS < 0 ? " neg" : "") + '">' + fmt(TA - TS) + '</span></div>';
@@ -10588,7 +10951,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
       }).join("");
       h += '<div class="qtab foot"><span class="qn">'
         + '<span class="qi" style="background:var(--card-2)">Σ</span>'
-        + '<span class="qt"><b>مجموع الادخار</b><s>' + QG.length + ' هدفاً</s></span></span>'
+        + '<span class="qt"><b>مجموع الادخار</b><s>' + arN(QG.length, "هدف") + '</s></span></span>'
         + '<span class="qv">' + fmt(GT) + '</span>'
         + '<span class="qv" style="font-size:15px">' + fmt(GD) + '</span>'
         + '<span class="qv">' + fmt(GT - GD) + '</span></div></div>';
@@ -10887,7 +11250,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
       + fmt(e.f) + '</b></span><i>←</i>'
       + '<span class="lgn to"><s>صار</s><b>' + fmt(e.o) + '</b></span></span>'
       + '<span class="rt"><b class="a ' + (dlt < 0 ? "wno" : "wok") + '">'
-      + (dlt > 0 ? "+" : dlt < 0 ? "−" : "") + fmt(Math.abs(dlt)) + '</b></span></div>';
+      + (dlt > 0 ? "+" : dlt < 0 ? "‎−" : "") + fmt(Math.abs(dlt)) + '</b></span></div>';
   }
   /* رصيدُ كلِّ بندٍ قبل كلِّ عمليّةٍ وبعدها — يُحسب مرّةً للشهر كلِّه
      بترتيب الوقت، فالعمليّةُ لا تعرف موضعَها من بندها وحدَها. */
@@ -11152,7 +11515,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
             state.invest.length + " محفظة · " + nAuto + " بتطبيقٍ آليّ")
       /* ٢ · أربحتُ أم خسرت؟ — على صافي ما وضعتَ لا على ما ساهمت */
       + kpi(PRF >= 0 ? "↑" : "↓", PRF >= 0 ? "ok" : "warn", "ربحُك",
-            (VAL || NET) ? ((PRF >= 0 ? "+" : "−") + fmt(Math.abs(PRF))) : "—", "",
+            (VAL || NET) ? ((PRF >= 0 ? "‎+" : "‎−") + fmt(Math.abs(PRF))) : "—", "",
             NET > 0 ? ("على " + fmt(NET) + " صافي ما وضعت · " + pctTxt(PRF / NET))
                     : (NET < 0 ? ("استرجعتَ " + fmt(Math.abs(NET))
                                   + " أكثرَ ممّا وضعت")
@@ -11228,7 +11591,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
                + (mode === "val" ? (now === null ? "" : now)
                                  : (gain === null ? "" : gain)) + '">'))
         + '<span class="qv ' + (pr > 0 ? "up" : pr < 0 ? "dn" : "dim") + '">'
-        + ((inn || val) ? ((pr >= 0 ? "+" : "−") + fmt(Math.abs(pr))) : "—")
+        + ((inn || val) ? ((pr >= 0 ? "‎+" : "‎−") + fmt(Math.abs(pr))) : "—")
         /* والنسبةُ تحته: المبلغُ وحدَه لا يقول أكثيرٌ هو أم قليل */
         + (inn > 0 ? ('<em class="qpc">' + pctTxt(pr / inn) + '</em>') : "")
         + '</span>'
@@ -11241,7 +11604,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
       + '<span class="qt"><b>مجموع محافظك</b><s>' + state.invest.length + ' محفظة</s></span></span>'
       + '<span class="qv">' + fmt(TV) + '</span>'
       + '<span class="qv ' + (TV - TI > 0 ? "up" : TV - TI < 0 ? "dn" : "dim") + '">'
-      + (TI ? ((TV - TI >= 0 ? "+" : "−") + fmt(Math.abs(TV - TI))) : "—") + '</span>'
+      + (TI ? ((TV - TI >= 0 ? "‎+" : "‎−") + fmt(Math.abs(TV - TI))) : "—") + '</span>'
       + '<span class="qv">' + fmt(TM) + '</span></div>';
     /* السقفُ حيث يُقرأ: تحت المجموع لا في قسمٍ قائمٍ بذاته */
     var IC = invCat();
@@ -11286,7 +11649,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
           + '<span><span class="an">' + esc(a.n) + '</span>'
           + '<span class="tagline"><span class="tag ' + L.cls + '">' + esc(L.t) + '</span>'
           + '<span class="kindtag">' + kindName(kindOf(a)) + '</span></span></span>'
-          + '<span class="av">' + (isDebt(a) ? "−" : "") + fmt(Math.abs(num(a.bal))) + '</span></div>';
+          + '<span class="av">' + (isDebt(a) ? "‎−" : "") + fmt(Math.abs(num(a.bal))) + '</span></div>';
         if(openA){
           var sp6 = trackSrc() ? spentFrom(a.id, ui.month) : 0;
           r += '<div class="apanel">'
@@ -11331,7 +11694,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
     return '<div class="proof' + (gap ? " bad" : "") + '">'
       + '<span class="pk">' + (gap ? "فجوة" : "متّزن") + '</span>'
       + '<span class="pt">افتتاحي <b>' + fmt(openBal(a)) + '</b>'
-      + ' ' + (ledgerSum(a) < 0 ? "−" : "+") + ' حركات <b>' + fmt(Math.abs(ledgerSum(a))) + '</b>'
+      + ' ' + (ledgerSum(a) < 0 ? "‎−" : "‎+") + ' حركات <b>' + fmt(Math.abs(ledgerSum(a))) + '</b>'
       + ' = <b>' + fmt(ledgerBal(a)) + '</b>'
       + (gap ? ' · الرصيد <b>' + fmt(a.bal) + '</b> — فرق <b class="g">' + fmt(gap) + '</b>' : "")
       + '</span></div>';
@@ -11446,7 +11809,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
     h += '<div class="kpis">'
       + kpi("▲", NW < 0 ? "warn" : "gold", "صافي ثروتك", fmt(NW), "",
             "الأصول ناقص الالتزامات")
-      + kpi("◈", "ok", "أصولك", fmt(AS), "", A.length + " حساباً في " + banks().length + " جهة")
+      + kpi("◈", "ok", "أصولك", fmt(AS), "", arN(A.length, "حساب") + " في " + arN(banks().length, "جهة") + "")
       + kpi("↓", "warn", "التزاماتك", fmt(LB), "", "قروض وأقساط متبقّية")
       + kpi("◇", "accent", "تشغيلي", fmt(ops), "", "مال مصروفك اليومي")
       + '</div>'
@@ -11459,11 +11822,11 @@ padding:10px 15px;border-top:1px solid var(--line)}
           : "")
       + '</div>'
       + '<div class="foot"><span>تشغيلي ' + fmt(ops) + ' · أهداف ' + fmt(goalsSum) + ' · استثمار ' + fmt(invSum) + '</span>'
-      + '<span>' + banks().length + ' جهة</span></div>'
+      + '<span>' + arN(banks().length, "جهة") + '</span></div>'
       + '<div class="netrow">'
       + '<div><span class="nl">الأصول</span><span class="nv" style="color:var(--ok)">' + fmt(AS) + '</span></div>'
       + '<div><span class="nl">الالتزامات</span><span class="nv" style="color:var(--warn)">'
-      + (LB ? "−" + fmt(LB) : "0") + '</span></div>'
+      + (LB ? "‎−" + fmt(LB) : "0") + '</span></div>'
       + '<div><span class="nl">الصافي</span><span class="nv">' + fmt(NW) + '</span></div>'
       + '</div></div>';
 
@@ -11557,13 +11920,13 @@ padding:10px 15px;border-top:1px solid var(--line)}
     /* المجموع حسب الوجهة */
     h += '<div class="sec"><h2>أين أموالك</h2><span class="hint">حسب وجهة كل حساب</span></div><div class="card">';
     h += '<div class="row"><span class="ic" style="background:var(--card-2);color:var(--ink-2)">💳</span>'
-      + '<span><span class="nm">تشغيلي</span><span class="sub">' + linkedTo("ops").length + ' حساب · منه تصرف</span></span>'
+      + '<span><span class="nm">تشغيلي</span><span class="sub">' + arN(linkedTo("ops").length, "حساب") + ' · منه تصرف</span></span>'
       + '<span class="rt"><span class="a">' + fmt(ops) + '</span></span></div>';
     h += state.goals.map(function(g){
       var n2 = linkedTo("g:" + g.id).length;
       if(!n2) return "";
       return '<div class="row"><span class="ic" style="background:' + g.c + '22;color:' + g.c + '">' + g.e + '</span>'
-        + '<span><span class="nm">' + esc(g.n) + '</span><span class="sub">' + n2 + ' حساب'
+        + '<span><span class="nm">' + esc(g.n) + '</span><span class="sub">' + arN(n2, "حساب") + ''
         + (goalTarget(g) ? ' · الهدف ' + fmt(goalTarget(g)) : "") + '</span></span>'
         + '<span class="rt"><span class="a" style="color:var(--ok)">' + fmt(linkedSum("g:" + g.id)) + '</span>'
         + (goalTarget(g) ? '<span class="b">' + Math.round(linkedSum("g:" + g.id)/goalTarget(g)*100) + '٪</span>' : "")
@@ -11616,7 +11979,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
       var open = ui.openBank[b] !== false;
       var s2 = '<div class="bankhead" data-bank="' + esc(b) + '">'
         + '<span class="chev' + (open ? " on" : "") + '">▾</span>'
-        + '<span class="bn">' + esc(b) + '<span class="bc"> · ' + list.length + ' حساب'
+        + '<span class="bn">' + esc(b) + '<span class="bc"> · ' + arN(list.length, "حساب") + ''
         + (all.length > list.length ? " من " + all.length : "") + '</span></span>'
         + '<span class="bv">' + fmt(tot) + '</span></div>';
       if(open){
@@ -11636,7 +11999,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
     }  /* نهاية غير-البحث */
 
     if(hid > 0 && !qy)
-      h += '<div class="agroup"><span>' + hid + ' حساباً مخفياً بالمرشّحات الحالية</span>'
+      h += '<div class="agroup"><span>' + arN(hid, "حساب", "مخفي") + ' بالمرشّحات الحالية</span>'
         + '<b><button class="sugg" data-showall="1">أظهر الكل</button></b></div>';
 
     h += '<div style="padding:12px 15px 15px"><button class="addbtn" data-addacct="1">+ أضف حساباً أو محفظة</button></div></div>';
@@ -11665,8 +12028,10 @@ padding:10px 15px;border-top:1px solid var(--line)}
     });
     h += '<div class="kpis k3">'
       + kpi("▤", "accent", "مجموع أرصدة بنودك", fmt(tBal), "",
-            rows.length + " حساباً مستقلاً")
-      + kpi("↑", "ok", "من الأشهر السابقة", fmt(tCarry), "", "مُرحَّل إليك")
+            arN(rows.length, "حساب", "مستقل") + "")
+      + (tCarry < 0
+          ? kpi("↓", "warn", "من الأشهر السابقة", "‎−" + fmt(Math.abs(tCarry)), "", "عجزٌ مُرحَّل عليك")
+          : kpi("↑", "ok", "من الأشهر السابقة", fmt(tCarry), "", tCarry ? "مُرحَّل إليك" : "لا شيء مُرحَّل"))
       + kpi(negN ? "↓" : "✓", negN ? "warn" : "ok",
             negN ? "بنود بالسالب" : "لا بند بالسالب", negN ? String(negN) : "٠", "",
             negN ? negTxt.join(" · ") : "كل بند داخل رصيده")
@@ -11693,7 +12058,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
       + '</div></div>';
 
     h += '<div class="sec"><h2>حسابات بنودك</h2>'
-      + '<span class="hint">' + rows.length + ' حساباً مستقلاً</span>'
+      + '<span class="hint">' + arN(rows.length, "حساب", "مستقل") + '</span>'
       + '<button class="mini" data-envbulk="1" style="margin-inline-start:auto">'
       + '⇊ سحبٌ من أكثر من ظرف</button></div><div class="card">';
     h += rows.map(function(x){
@@ -11735,7 +12100,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
                 + (up ? "var(--warn-soft);color:var(--warn)"
                       : "var(--ok-soft);color:var(--ok)") + '">'
                 + (x.kind === "out" ? "↑" : x.kind === "back" ? "↓"
-                   : x.kind === "top" ? "+" : "−") + '</span>'
+                   : x.kind === "top" ? "‎+" : "‎−") + '</span>'
                 + '<span><b class="nm">' + esc(ENVMV[x.kind] || "حركة")
                 + (x.back && x.kind === "out" ? ' <s class="tpill tp-var">سأرجعه</s>' : "")
                 + '</b><s class="sub">' + (x.n ? esc(x.n) : "بلا سبب")
@@ -11803,7 +12168,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
       var gBal = 0, gMon = 0;
       AGE.forEach(function(g){ gBal += goalSaved(g); gMon += goalMonthly(g); });
       h += '<div class="sec"><h2>أهدافك وادخارك</h2>'
-        + '<span class="hint">' + AGE.length + ' حساباً للادخار</span></div><div class="card">';
+        + '<span class="hint">' + arN(AGE.length, "حساب") + ' للادخار</span></div><div class="card">';
       h += AGE.map(function(g){
         var open = !!ui.openEnv["g:" + g.id];
         var tg = goalTarget(g), sv = goalSaved(g), mo = goalMonthly(g);
@@ -12066,7 +12431,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
     });
     h += '<div class="kpis">'
       + kpi("◈", "accent", "دخل السنة", fmt(Y.inc), "",
-            Y.months + " أشهر · متوسط " + fmt(Math.round(Y.inc / (Y.months || 1))))
+            arN(Y.months, "شهر") + " · متوسط " + fmt(Math.round(Y.inc / (Y.months || 1))))
       + kpi("↓", "warn", "صُرف", fmt(Y.exp), "",
             "متوسط شهري " + fmt(Math.round(Y.exp / (Y.months || 1))))
       + kpi("◇", "ok", "ما تبقّى", fmt(Y.net), "",
@@ -12106,7 +12471,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
         + '<span class="ybar"><i style="width:' + (r.exp / mx * 100) + '%;background:var(--warn)"></i></span>'
         + '</span>'
         + '<span class="ys" style="color:' + (r.net < 0 ? "var(--warn)" : "var(--ok)") + '">'
-        + (r.net >= 0 ? "+" : "−") + fmt(Math.abs(r.net))
+        + (r.net >= 0 ? "‎+" : "‎−") + fmt(Math.abs(r.net))
         + '<s>' + fmt(r.inc) + ' / ' + fmt(r.exp) + '</s></span></div>';
     }).join("");
     h += '</div>';
@@ -12216,7 +12581,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
         + '</div>'
         + '<div class="foot"><span>من <b>' + fmt(v0) + '</b> إلى <b>' + fmt(v1) + '</b></span>'
         + '<span style="color:' + (dv >= 0 ? "var(--ok)" : "var(--warn)") + '">'
-        + (dv >= 0 ? "+" : "−") + fmt(Math.abs(dv)) + '</span></div></div></div>';
+        + (dv >= 0 ? "‎+" : "‎−") + fmt(Math.abs(dv)) + '</span></div></div></div>';
     }
 
     /* ── متى تتحرر: الالتزامات ── */
@@ -12397,7 +12762,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
           var eng = idbState === "ok" ? "IndexedDB" : idbState === "off" ? "تخزين المتصفّح" : "…";
           return '<div class="mrow"><span class="mn">محفوظةٌ في هذا الجهاز'
             + '<span class="ms">'
-            + Object.keys(state.months || {}).length + ' شهراً · ' + n + ' حركة · '
+            + arN(Object.keys(state.months || {}).length, "شهر") + ' · ' + arN(n, "حركة") + ' · '
             + ((state.cats || []).length) + ' بنداً · '
             + ((state.goals || []).length) + ' هدفاً · '
             + ((state.accts || []).length) + ' حساباً'
@@ -12590,7 +12955,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
               + '<span class="ms">لا شهر يخالف — كلّها تقرأ الإعداد العامّ.'
               + '</span></span><span class="pill">الكلّ على العامّ</span></div>';
           return '<div class="mrow"><span class="mn">شهورٌ تخالف العامّ'
-            + '<span class="ms"><b>' + OW.length + ' شهراً</b> لها دخلٌ أو خطةٌ خاصّة. '
+            + '<span class="ms"><b>' + arN(OW.length, "شهر") + '</b> لها دخلٌ أو خطةٌ خاصّة. '
             + 'توحيدها يجعلها تقرأ العامّ — ولا يمسّ حركات مصروفها.</span></span>'
             + '<button class="mini" data-unify="1">وحِّدها</button></div>';
         })()
@@ -12649,7 +13014,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
         + '<input class="ni s" type="text" inputmode="decimal" data-plan="' + INVK + '" value="'
         + rawP(ICS, ui.month, INVK) + '"></div></div>';
     }
-    h += '<div class="sec"><h2>الحسابات</h2><span class="hint">' + accts().length + ' حساب</span></div><div class="card">';
+    h += '<div class="sec"><h2>الحسابات</h2><span class="hint">' + arN(accts().length, "حساب") + '</span></div><div class="card">';
     h += mrow("حساب الراتب", sal ? sal.bank + " · " + sal.n : "لم يُحدَّد بعد",
               '<button class="mini" data-setsal="1">غيّر</button>');
     h += mrow("تتبّع مصدر الدفع",
@@ -12682,7 +13047,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
     }
 
     h += '<div class="sec"><h2>النسخة الاحتياطية</h2></div><div class="card">'
-      + mrow("بياناتك", Object.keys(state.months).length + " شهر · " + nItems + " عملية · " + accts().length + " حساب",
+      + mrow("بياناتك", arN(Object.keys(state.months).length, "شهر") + " · " + arN(nItems, "عملية") + " · " + arN(accts().length, "حساب") + "",
              '<button class="mini" data-backup="1">انسخها</button>'
              + '<button class="mini" data-restore="1">استعادة</button>')
       + '</div>';
@@ -13065,6 +13430,17 @@ padding:10px 15px;border-top:1px solid var(--line)}
       _mem.side[_nm] = (t === colA) ? "A" : "B";
       u.els.forEach(function(e){ t.appendChild(e); });
     });
+      /* عمودٌ قصيرٌ بجانب طويل يترك تحته فراغاً بطول شاشات — فيلتصق
+         بأعلى النافذة ويرافق القارئ. وإن كان أطولَ من النافذة لم يلتصق:
+         فما تحت حافّتها لا يُبلَغ أبداً. */
+      Array.prototype.slice.call(wrap.querySelectorAll(".colwrap")).forEach(function(bx){
+        var a = bx.children[0], b = bx.children[1];
+        if(!a || !b) return;
+        a.classList.remove("stick"); b.classList.remove("stick");
+        var sh = a.offsetHeight < b.offsetHeight ? a : b, lg = sh === a ? b : a;
+        if(lg.offsetHeight - sh.offsetHeight > 240 && sh.offsetHeight < window.innerHeight - 80)
+          sh.classList.add("stick");
+      });
   }
   /* ═══ التقاطُ صورةٍ وتصغيرُها ═══
      بياناتك تُرفع في ملفٍّ واحد، وصورةُ الجوّال ثلاثةُ ميغابايت —
@@ -13453,7 +13829,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
         + "<br>خطتك الأساسية لن تتغيّر.",
         "طبّق", function(){
           var o = fitPlan(ui.month, mode);
-          toast("وُوئمت " + o.n + " بنداً على " + (o.ratio * 100).toFixed(0) + "٪");
+          toast("وُوئمت " + arN(o.n, "بند") + " على " + (o.ratio * 100).toFixed(0) + "٪");
           save();
         });
     });
@@ -13580,7 +13956,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
         if(pv <= 0) return;
         setQuick(mk, c.k, pv); n++;
       });
-      toast(n ? "مُلئ " + n + " بنداً برقم " + mName(shift(mk, -1)) : "لا بند فارغ يُملأ");
+      toast(n ? "مُلئ " + arN(n, "بند") + " برقم " + mName(shift(mk, -1)) : "لا بند فارغ يُملأ");
       save(); render();
     });
     on("[data-carry]", function(b, e){
@@ -13749,7 +14125,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
             made++;
           });
           ui.open[k] = true;
-          if(made > 1) toast("أُضيف " + made + " بنداً فرعياً");
+          if(made > 1) toast("أُضيف " + arN(made, "بند", "فرعي") + "");
           save();
         } });
     });
@@ -14862,7 +15238,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
         if(!setInvValue(v0, mk, val)){ toast("عدّة محافظ — حدّثها من تبويب الحسابات"); return; }
         invMove(v0, "val", val, mk, "");
         toast((g >= 0 ? "ربح " : "خسارة ") + mName(mk) + ": "
-              + (g >= 0 ? "+" : "−") + fmt(Math.abs(g)) + " " + cur());
+              + (g >= 0 ? "‎+" : "‎−") + fmt(Math.abs(g)) + " " + cur());
         save(); render();
       };
       /* حركة تتجاوز نصف المحفظة غالباً خطأ كتابة — أو مبلغ إيداع كُتب مكان القيمة */
@@ -14955,13 +15331,13 @@ padding:10px 15px;border-top:1px solid var(--line)}
     on("[data-wizfix]", function(){
       var n = autoRecord(ui.month);
       month(ui.month).setup = true;
-      toast(n ? ("سُجّلت " + n + " عملية ثابتة") : "لا شيء لتسجيله");
+      toast(n ? ("سُجّلت " + arN(n, "عملية", "ثابتة") + "") : "لا شيء لتسجيله");
       save(); render();
     });
     on("[data-wizfixskip]", function(){ month(ui.month).setup = true; save(); render(); });
     on("[data-autorec]", function(){
       var n = autoRecord(ui.month);
-      toast(n ? ("سُجّلت " + n + " عملية") : "لا شيء لتسجيله");
+      toast(n ? ("سُجّلت " + arN(n, "عملية") + "") : "لا شيء لتسجيله");
       save(); render();
     });
     on("[data-edit]", function(b, e){
@@ -15051,7 +15427,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
     on("[data-clearmonth]", function(){
       var mm = month(ui.month);
       confirmDlg("مسح عمليات " + mName(ui.month) + "؟",
-        "<b>" + mm.items.length + " عملية</b> تُحذف بمبالغها — ولا رجعةَ فيها."
+        "<b>" + arN(mm.items.length, "عملية") + "</b> تُحذف بمبالغها — ولا رجعةَ فيها."
         + "<br>خطّتُك وأرصدتُك وأهدافُك لا تُمسّ.", "امسحها",
         function(){ mm.items = []; save(); }, true);
     });
@@ -15067,7 +15443,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
       var mks = Object.keys(state.months || {}).length, n = 0;
       for(var k in (state.months || {})) n += ((state.months[k].items) || []).length;
       ask({ title: "نسخة احتياطية",
-        msg: "<b>" + mks + " شهراً · " + n + " حركة · "
+        msg: "<b>" + arN(mks, "شهر") + " · " + arN(n, "حركة") + " · "
            + ((state.cats || []).length) + " بنداً</b>."
            + "<br>النسخة الكاملة تحمل كلَّ ما في التطبيق: بنودك وفروعها، "
            + "حساباتك وسجلّاتها، أهدافك وجهاتك وسجلّاتها، قواعدك، وكلَّ "
@@ -15132,9 +15508,9 @@ padding:10px 15px;border-top:1px solid var(--line)}
         ((state.months[_k] || {}).items || []).forEach(function(it){
           _ops++; _sum += num(it.a); });
       confirmDlg("تصفير كل بياناتك؟",
-        "يُمسح: <b>" + _ms + " شهراً</b> · <b>" + _ops + " عملية</b> بمجموع <b>"
-        + fmt(_sum) + "</b> · <b>" + (state.goals || []).length + " هدفاً</b> · <b>"
-        + accts().length + " حساباً</b> · <b>" + (state.invest || []).length
+        "يُمسح: <b>" + arN(_ms, "شهر") + "</b> · <b>" + arN(_ops, "عملية") + "</b> بمجموع <b>"
+        + fmt(_sum) + "</b> · <b>" + arN((state.goals || []).length, "هدف") + "</b> · <b>"
+        + arN(accts().length, "حساب") + "</b> · <b>" + (state.invest || []).length
         + " محفظةَ استثمار</b> · <b>" + (state.wish || []).length + " أمنية</b>."
         + "<br><br><b>لا رجعةَ في هذا</b> — إلّا أن تكون أخذتَ نسخةً احتياطيّة. "
         + "خذها الآن من «النسخة الاحتياطية» إن لم تكن أخذتَها، فهي دقيقةٌ واحدة.",
@@ -15177,7 +15553,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
         ok: "سجّل التسوية",
         onOk: function(v){
           adjustBal(a, to, (v[0] || "").trim() || "تسوية يدوية");
-          toast("سُجّلت تسوية " + (d > 0 ? "+" : "−") + fmt(Math.abs(d)));
+          toast("سُجّلت تسوية " + (d > 0 ? "‎+" : "‎−") + fmt(Math.abs(d)));
           save();
         },
         onCancel: function(){ render(); } });
@@ -15351,12 +15727,12 @@ padding:10px 15px;border-top:1px solid var(--line)}
           + mName(x.from) + " ← " + mName(x.to);
       }).join("<br>");
       confirmDlg("يبدأ الشهر يوم " + v,
-        "<b>" + mv.length + " حركة</b> تنتقل إلى صندوق شهرٍ آخر. تواريخها لا تتغيّر — "
+        "<b>" + arN(mv.length, "حركة") + "</b> تنتقل إلى صندوق شهرٍ آخر. تواريخها لا تتغيّر — "
         + "يتغيّر الشهر الذي تُحسب فيه، فتتغيّر مجاميعك وتقاريرك.<br><br>" + sample
         + (mv.length > 3 ? "<br>… و" + (mv.length - 3) + " غيرها" : ""),
         "طبّقه", function(){
           var done = rebucket(v, false);
-          toast("انتقلت " + done.length + " حركة");
+          toast("انتقلت " + arN(done.length, "حركة") + "");
           save(); render();
         }, false);
       render();
@@ -15578,7 +15954,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
         toast("كلُّ شهورك تقرأ خطّتَك الأساسيّة أصلاً — لا شيءَ لتوحيده");
         return;
       }
-      confirmDlg("وحِّد " + OW.length + " شهراً على العامّ",
+      confirmDlg("وحِّد " + arN(OW.length, "شهر") + " على العامّ",
         "سيُحذف من هذه الشهور دخلُها الخاصّ وخطتُها الخاصة، فتقرأ الافتراضي. "
         + "<b>حركات المصروف لا تُمسّ</b> — لكن تقاريرك ستتغيّر لأن دخل تلك الشهور "
         + "سيصير " + fmt(num(state.income.salary) + num(state.income.extra)) + " " + cur() + ".",
@@ -15590,7 +15966,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
             if(m.plan) delete m.plan;
             if(m.gm) delete m.gm;
           });
-          toast("وُحِّد " + n + " شهراً");
+          toast("وُحِّد " + arN(n, "شهر") + "");
           save(); render();
         }, true);
     });
@@ -15770,24 +16146,25 @@ padding:10px 15px;border-top:1px solid var(--line)}
 
   /* التاريخ الافتراضي: اليوم في الشهر الجاري · أوّل الشهر المفتوح فيما عداه */
   function defaultDate(){
-    var now = new Date(), nk = todayKey();
-    if(ui.month === nk){
-      return nk + "-" + pad(now.getDate());
-    }
-    return ui.month + "-01";
+    /* اليومُ إن كنت في شهرك الجاري — وإلا أوّلُ يومٍ من الشهر الماليّ
+       المعروض، لا أوّلُ التقويم الذي قد يقع في الشهر الذي قبله. */
+    if(ui.month === todayKey()) return todayDate();
+    return mkFirst(ui.month);
   }
   /* الشهر يُشتقّ من التاريخ — لا من الشاشة المفتوحة */
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "0.2-beta+36";
+  var APP_VERSION = "0.2-beta+39";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
   /* القناة تُقرأ من الإصدار — البناءُ يُلحقها به، فلا يحتاج التطبيق
      إعداداً ثانياً يُنسى تحديثه. */
   function channel(){
-    var m = /-([a-z]+)$/.exec(APP_VERSION || "");
+    /* «0.2-beta+36»: لاحقةُ البناء بعد + لا تُسقط القناة — وكانت تُسقطها
+       فتقول التجربةُ عن نفسها «الحيّة» ويذهب رابطُها إلى /beta/beta/ */
+    var m = /-([a-z]+)(?:\+[\w.]+)?$/.exec(APP_VERSION || "");
     return m ? m[1] : "";
   }
   /* رقمُ قشرة سطح المكتب — فارغٌ في المتصفّح، ولا يُدَّعى ما ليس هناك */
@@ -16007,7 +16384,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
         onb.day = Math.round(num(v[1])) || 1;
         onb.step = 2; onbStep();
       },
-      cancel: "أبدأ فارغاً", onCancel: onbQuit });
+      cancel: "ابدأ فارغاً", onCancel: onbQuit });
   }
 
   /* ٢ · البنود */
@@ -16071,12 +16448,15 @@ padding:10px 15px;border-top:1px solid var(--line)}
   function onbS4(){
     var picks = onbPicks();
     var left = num(onb.salary) - num(onb.goal) - num(onb.inv);
-    var each = picks.length ? Math.round(left / picks.length / 10) * 10 : 0;
-    var flds = picks.map(function(k){
+    var each = picks.length ? Math.floor(left / picks.length / 10) * 10 : 0;
+    /* التقريبُ لعشراتٍ يُبقي فتاتاً غيرَ مخصّص (٢٠٨٠ على تسعة = ٢٣٠ × ٩
+       = ٢٠٧٠) فيُقال «يبقى ١٠» لمن لم يبقِ شيئاً. يُعطى آخرُ بندٍ الفتات */
+    var lastEach = picks.length ? Math.max(0, left - each * (picks.length - 1)) : 0;
+    var flds = picks.map(function(k, i){
       var c = catOf(k);
       return { label: c.e + " " + c.n, type: "number", key: k,
                value: (onb.amt[k] !== undefined && onb.amt[k] !== "")
-                        ? onb.amt[k] : each };
+                        ? onb.amt[k] : (i === picks.length - 1 ? lastEach : each) };
     });
     ask({ title: "كم لكل بند؟", msg: onbHead("٤")
         + " · بدأتُ بقسمةٍ متساوية — عدّلها كما تعيش أنت.",
@@ -16112,7 +16492,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
       html: function(){ return '<div class="card">' + storageHTML(false) + '</div>'; },
       ok: "ابْنِ خطتي",
       onOk: onbFinish,
-      cancel: false });
+      cancel: "رجوع", onCancel: function(){ onb.step = 4; onbStep(); } });
   }
 
   function onbFinish(){
@@ -16354,7 +16734,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
     { k: "drive", n: "جوجل درايف — في حسابك أنت",
       d: "يُحفظ ملفٌّ واحد في مجلَّدٍ خفيّ خاصّ بالتطبيق داخل درايفك. "
        + "لا نرى شيئاً، ولا يصل التطبيق إلى بقيّة ملفّاتك — الصلاحية "
-       + "المطلوبة هي appdata وحدها.",
+       + "المطلوبة تقتصر على مجلّد التطبيق وحده.",
       act: '<button class="mini" data-gdin="1">ادخل بدرايف</button>' }
   ];
   /* full=true في الإعدادات: يُعرض ما ليس مهيّأً وسببُه.
@@ -17247,7 +17627,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
       var items = (state.months[mk].items || []);
       var sum = 0;
       items.forEach(function(x){ sum += num(x.a); });
-      line("  " + mk + " — " + items.length + " حركة · " + money(sum));
+      line("  " + mk + " — " + arN(items.length, "حركة") + " · " + money(sum));
     });
     var all = 0, n = 0;
     mks.forEach(function(mk){
@@ -17255,7 +17635,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
     });
     line("");
     rule();
-    line("الإجمالي: " + n + " حركة · " + money(all));
+    line("الإجمالي: " + arN(n, "حركة") + " · " + money(all));
     line("");
     line("هذا الملفّ للقراءة. الاستعادة تكون من ملفّ JSON.");
     return L.join("\r\n");
@@ -17360,7 +17740,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
 
     confirmDlg("أتستعيد هذه النسخة؟",
       (fname ? "<b>" + esc(fname) + "</b><br>" : "")
-      + "فيها <b>" + mks.length + " شهراً</b> · <b>" + n + " حركة</b> بمجموع "
+      + "فيها <b>" + arN(mks.length, "شهر") + "</b> · <b>" + arN(n, "حركة") + "</b> بمجموع "
       + "<b>" + fmt(sum) + "</b> · راتب <b>"
       + fmt(num((d.income || {}).salary)) + "</b>"
       + (d.savedAt ? ("<br>حُفظت: <b>"
@@ -17393,7 +17773,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
                   : ""));
         })()
       + "<br><b>ستحلّ محلّ ما في جهازك الآن</b> ("
-      + cur0 + " حركة). ولا رجعة.",
+      + arN(cur0, "حركة") + "). ولا رجعة.",
       "استعدها", function(){
         try{
           for(var k in state) if(!(k in d)) delete state[k];
@@ -17422,7 +17802,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
                 localStorage.setItem(DEVKEY, String(ex.dev));
             }
           }catch(e3){}
-          toast("تمت الاستعادة · " + n + " حركة");
+          toast("تمت الاستعادة · " + arN(n, "حركة") + "");
           save(); render();
         }catch(e){ toast("تعذّرت الاستعادة"); }
       }, true);
@@ -17456,12 +17836,20 @@ padding:10px 15px;border-top:1px solid var(--line)}
      الحالّ وحده — فالقسط المؤجَّل لم يحل عليه الحول. */
   function zakatOn(){ return !!state.zakat; }
   function zakatBase(){
-    var cash = 0;
+    var cash = 0, pot = 0;
     accts().forEach(function(a){
       if(a.arch || isDebt(a)) return;         /* الدَّين المؤجَّل لا يُطرح: لم يحل حوله */
       cash += num(a.bal);
     });
-    return { cash: cash, base: Math.max(0, cash) };
+    /* والمحفظةُ التي لا يقعد مالُها في حساب: قيمتُها خارج الحسابات،
+       فلو تُركت لقال الوعاءُ «نقدك ومدّخرك ومحافظك» وهو نقدُك وحده.
+       وما كان مالُه في حسابٍ عُدّ هناك — فلا يُعدّ مرّتين. */
+    (state.invest || []).forEach(function(v){
+      if(invFromAccts(v)) return;
+      if(typeof invZak === "function" && !invZak(v)) return;
+      pot += num(invVal(v));
+    });
+    return { cash: cash, pot: money(pot), base: Math.max(0, cash + pot) };
   }
   function zakatDue(){
     var Z = zakatBase(), nis = num(state.nisab);
@@ -17561,6 +17949,9 @@ padding:10px 15px;border-top:1px solid var(--line)}
     }
     all.forEach(function(x){
       if(!x.it.d) return;                 /* حركة بلا تاريخ تبقى مكانها */
+      /* والإجماليُّ السريع والقسطُ التلقائيّ ملكُ شهرهما — تاريخُهما
+         علامةٌ لا يومُ صرف، فلو نُقلا بها لانتقل إجماليُّ مارس إلى فبراير */
+      if(x.it.q || x.it.auto) return;
       var to = monthOfDate(x.it.d, newStart);
       if(to !== x.from) moves.push({ from: x.from, to: to, it: x.it });
     });
@@ -17691,6 +18082,93 @@ padding:10px 15px;border-top:1px solid var(--line)}
   if(window.claude && typeof window.claude.use === "function"){
     window.claude.use("artifact").then(function(api){ pubApi = api; })["catch"](function(){});
   }
+
+  /* ══ لوحةُ المفاتيح ══
+     الحاسبُ أكثرُ ما يُفتح عليه التطبيق، ولم يكن فيه مفتاحٌ واحد: لا Esc
+     يُغلق حواراً، ولا سهمٌ يقلّب شهراً. يُقرأ e.code لا e.key — فالحرفُ
+     في التخطيط العربيّ غيرُه في الإنجليزيّ، والمفتاحُ واحد. */
+  var KB_TABS = ["dash", "spend", "plan", "rep", "year", "env", "accts", "inv", "wish"];
+  function kbTyping(t){
+    if(!t) return false;
+    var tag = t.tagName;
+    return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || t.isContentEditable;
+  }
+  function kbHelp(){
+    var row = function(k, d){ return '<li><span class="kk">' + k + '</span><span>' + d + '</span></li>'; };
+    ask({ title: "اختصاراتُ لوحة المفاتيح",
+      html: '<ul class="kbl">'
+        + row("N", "أضف مصروفاً")
+        + row("→ ←", "الشهر السابق · التالي")
+        + row("T", "عُد إلى شهرك الجاري")
+        + row("1 – 9", "انتقل بين الشاشات بترتيب القائمة")
+        + row("Enter", "احفظ الحوار · انزل إلى الخانة التالية في الجداول")
+        + row("Esc", "أغلق الحوار — أو اخرج من الخانة")
+        + row("/", "هذه القائمة")
+        + '</ul><div class="hintnote">لا تعمل الاختصاراتُ وأنت تكتب في خانة — '
+        + 'فالحرفُ حينها حرفٌ لا أمر.</div>',
+      fields: [], ok: "حسناً", cancel: false });
+  }
+  function kbClick(sel){
+    var el = document.querySelector(sel);
+    if(el){ el.click(); return true; }
+    return false;
+  }
+  function kbKey(e){
+    if(e.defaultPrevented) return;
+    /* Esc: يُغلق الحوارَ كما يُغلقه «إلغاء» — وحوارٌ بلا إلغاءٍ لا يُغلق */
+    if(e.key === "Escape" || e.code === "Escape"){
+      if(dlg){
+        /* حوارٌ بلا إلغاء: إن كان إخباراً لا فعلَ وراءه أُغلق، وإلا بقي —
+           فلا يُتخطّى بمفتاحٍ ما يجب أن يُختار */
+        if(dlg.cancel === false){
+          if(!dlg.onOk && !(dlg.fields || []).length){ dlg = null; render(); e.preventDefault(); }
+          return;
+        }
+        if(kbClick("[data-dcancel]")){ e.preventDefault(); return; }
+        dlg = null; render(); e.preventDefault(); return;
+      }
+      return;
+    }
+    if(dlg || e.ctrlKey || e.metaKey || e.altKey) return;
+    if(kbTyping(e.target)) return;
+    var c = e.code || "";
+    if(c === "Slash" || e.key === "/" || e.key === "?"){ e.preventDefault(); kbHelp(); return; }
+    if(c === "KeyN"){
+      e.preventDefault();
+      if(ui.tab !== "spend") kbClick('.nav [data-tab="spend"]');
+      setTimeout(function(){
+        var a = document.getElementById("amt") || document.querySelector("[data-quick]");
+        if(a){ try{ a.focus(); a.select && a.select(); }catch(x){} }
+      }, 60);
+      return;
+    }
+    if(c === "KeyT"){
+      e.preventDefault();
+      if(ui.month !== todayKey()){ ui.month = todayKey(); try{ sessionStorage.setItem("kh_month", ui.month); }catch(x){} render(); }
+      return;
+    }
+    /* في واجهةٍ عربيّة: اليمينُ ما قبل واليسارُ ما بعد — كما يُقرأ شريطُ الشهور */
+    if(c === "ArrowRight" || c === "ArrowLeft"){
+      var t = e.target;
+      if(t && t.closest && t.closest(".msrow,.ygrid,[data-hscroll]")) return;
+      e.preventDefault();
+      var d = (c === "ArrowLeft") ? 1 : -1;
+      kbClick(ui.tab === "year" ? '[data-ynav="' + d + '"]' : '[data-nav="' + d + '"]');
+      return;
+    }
+    var m = /^Digit([1-9])$/.exec(c);
+    if(m){
+      var tk = KB_TABS[+m[1] - 1];
+      if(tk && kbClick('.nav [data-tab="' + tk + '"]')) e.preventDefault();
+    }
+  }
+  try{
+    document.addEventListener("keydown", kbKey);
+    document.addEventListener("click", function(e){
+      var b = e.target && e.target.closest && e.target.closest("[data-kbhelp]");
+      if(b){ e.preventDefault(); kbHelp(); }
+    });
+  }catch(e){}
 })();
 </script>
 
