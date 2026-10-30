@@ -2338,6 +2338,8 @@ padding:10px 15px;border-top:1px solid var(--line)}
 .nav button.ng .g svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.7;
   stroke-linecap:round;stroke-linejoin:round}
 @media (min-width:820px){ .nav button.ng .g{width:19px;height:19px} }
+
+@media (max-width:819px){ .toast{bottom:calc(104px + env(safe-area-inset-bottom))} }
 </style>
 
 <div id="root"></div>
@@ -2517,7 +2519,8 @@ padding:10px 15px;border-top:1px solid var(--line)}
     "هدف": ["هدف", "هدفان", "أهداف", "هدفاً"],
     "فرع": ["فرع", "فرعان", "فروع", "فرعاً"],
     "جهة": ["جهة", "جهتان", "جهات", "جهةً"],
-    "أمر": ["أمر", "أمران", "أوامر", "أمراً"]
+    "أمر": ["أمر", "أمران", "أوامر", "أمراً"],
+    "قسط": ["قسط", "قسطان", "أقساط", "قسطاً"]
   };
   var AR_ADJ = {
     "نشط": ["نشط", "نشطان", "نشطة", "نشطاً"],
@@ -7394,7 +7397,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
       h += '<p>ثوابتُ وأقساطٌ تتكرّر كلَّ شهر — أسجّلها الآن بدل أن تكتبها بيدك؟</p>'
         + '<ul class="dlist">' + p.map(function(x){
             return '<li><span>' + esc(x.n) + (typeOf(x.s || x.c) === "inst"
-                ? ' <span class="tpill tp-inst">قسط · ' + instLeft(x.s || x.c, k) + ' متبقٍ</span>' : "")
+? ' <span class="tpill tp-inst">بقي ' + arN(instLeft(x.s || x.c, k), "قسط") + '</span>' : "")
               + '</span><span class="dv">' + fmt(x.a) + '</span></li>';
           }).join("")
         + '<li><span><b>الإجمالي</b></span><span class="dv">' + fmt(t) + '</span></li></ul>'
@@ -7443,7 +7446,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
       + '<ul class="dlist">'
       + p.map(function(x){
           return '<li><span>' + esc(x.n) + (typeOf(x.s || x.c) === "inst"
-              ? ' <span class="tpill tp-inst">قسط · ' + instLeft(x.s || x.c, ui.month) + ' متبقٍ</span>' : "")
+? ' <span class="tpill tp-inst">بقي ' + arN(instLeft(x.s || x.c, ui.month), "قسط") + '</span>' : "")
             + '</span><span class="dv">' + fmt(x.a) + '</span></li>';
         }).join("")
       + '<li><span><b>الإجمالي</b></span><span class="dv">' + fmt(t) + '</span></li></ul>'
@@ -7459,7 +7462,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
     if(m.dist && Object.keys(m.dist).length) return true;
     return !!(m.inc && (num(m.inc.salary) || num(m.inc.extra)));
   }
-  var AR_M3 = ["ينا","فبر","مار","أبر","ماي","يون","يول","أغس","سبت","أكت","نوف","ديس"];
+  var AR_M3 = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"].map(function(n){ return n.length <= 5 ? n : n.slice(0, 3); });
   function stripYear(){
     return ui.stripYear || String(ui.month || todayKey()).slice(0, 4);
   }
@@ -7560,7 +7563,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
     { k: "rep",   n: "التقارير", g: "<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M4 20h16M7 16v-5M12 16V7M17 16v-8\"/></svg>", kids: ["rep", "year"] }
   ];
   var SUB_N = { spend: "العمليّات", env: "أرصدة البنود", plan: "البنود والأهداف", wish: "الأمنيات",
-                accts: "الحسابات", inv: "الاستثمار", rep: "التحليل", year: "السنة" };
+                accts: "الحسابات", inv: "الاستثمار", rep: "التقارير", year: "السنة" };
   function navGroupOf(t){
     for(var i = 0; i < NAV_G.length; i++) if(NAV_G[i].kids.indexOf(t) >= 0) return NAV_G[i];
     return null;
@@ -8022,7 +8025,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
              "مدخرات الأهداف + قيمة الاستثمار",
              wealth < 0 ? "var(--warn)" : "var(--ok)"))
       + (dP > 0 ? stat("توزيع هذا الشهر", fmt(dM) + " / " + fmt(dP),
-             dM >= dP ? "نُفِّذ بالكامل" : "متبقٍ " + fmt(dP - dM) + " لم تُحوَّل بعد",
+dM >= dP ? "نُفِّذ بالكامل" : "بقي " + fmt(dP - dM) + " لم يُحوَّل بعد",
              dM >= dP ? "var(--ok)" : "var(--gold)") : "")
       + stat("قيمة استثمارك", fmt(investVal()),
              investIn() ? (profit >= 0 ? "ربح " : "خسارة ") + fmt(Math.abs(profit)) + " من " + fmt(investIn())
@@ -8063,7 +8066,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
         + '<span class="ov" style="color:var(--ok)">' + fmt(iA) + '</span></div>'
         + (LB2 ? '<div class="own"><span class="ol"><span class="od" style="background:var(--warn)"></span>'
             + '<span><span class="on">ما عليك</span><span class="os">أقساط والتزامات</span></span></span>'
-            + '<span class="ov neg">−' + fmt(LB2) + '</span></div>' : "")
+            + '<span class="ov neg">\u200E−' + fmt(LB2) + '</span></div>' : "")
         + '<div class="own tot"><span class="ol"><span class="od" style="background:var(--ink)"></span>'
         + '<span><span class="on">صافي ثروتك</span></span></span>'
         + '<span class="ov' + (NW2 < 0 ? " neg" : "") + '">' + fmt(NW2) + '</span></div>'
@@ -8781,6 +8784,13 @@ padding:10px 15px;border-top:1px solid var(--line)}
   function guideCard(){
     var g = guideOf(ui.tab || "dash");
     if(!g) return "";
+    var S = seenMap(), key = "guide-" + g.k;
+    if(!S[key] && ui._gLast !== g.k){
+      ui._gLast = g.k;
+      if(!state.gv) state.gv = {};
+      state.gv[g.k] = (state.gv[g.k] || 0) + 1;
+      if(state.gv[g.k] > 2){ S[key] = 1; return ""; }
+    }
     return '<div class="hintnote gcard" data-note="guide-' + g.k + '">'
       + '<b>' + g.i + ' ' + esc(g.n) + '</b> — ' + esc(g.w)
       + ' <button class="mini" data-guide="1">الدليل الكامل</button></div>';
@@ -9226,9 +9236,9 @@ padding:10px 15px;border-top:1px solid var(--line)}
     var isAn = (ui.repTab !== "show");
     h += '<div class="wfil lfil nospan">'
       + '<button class="chip sm' + (isAn ? " on" : "") + '" data-reptab="an">'
-      + '◈ تحليل</button>'
+      + '◈ الحكم</button>'
       + '<button class="chip sm' + (isAn ? "" : " on") + '" data-reptab="show">'
-      + '▤ عرض</button></div>';
+      + '▤ التفاصيل</button></div>';
     h += '<div class="card repbar nospan"><span class="rl">الفترة</span>'
       + PICKS.map(function(n){
           return '<button class="chip sm' + (num(ui.repN) === n ? " on" : "")
@@ -10015,7 +10025,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
             + '<span class="fill"><i style="width:' + (cap ? Math.min(100, used / cap * 100) : 100)
             + '%;background:' + (over ? "var(--warn)" : c.c) + '"></i></span>'
             + (over ? '<span class="capwarn">تجاوزت الحد بـ ' + fmt(over) + '</span>'
-                    : '<span>متبقٍ <b>' + fmt(catFree(c, k)) + '</b></span>') + '</div>';
+: '<span>بقي <b>' + fmt(catFree(c, k)) + '</b></span>') + '</div>';
         }
 
         s += '<div class="subs">';
@@ -10164,7 +10174,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
       h += IL.map(function(i){
         return '<div class="instbox"><div class="instrow">'
           + '<span><span class="inm">' + esc(i.n) + '</span>'
-          + '<span class="ix">' + fmt(i.p) + ' × ' + i.left + ' متبقٍ · آخر قسط ' + i.end + '</span></span>'
++ '<span class="ix">' + fmt(i.p) + ' · بقي ' + arN(i.left, "قسط") + ' · آخرها ' + esc(mName(i.end)) + '</span></span>'
           + '<span class="iv">' + fmt(i.p * i.left) + '</span></div>'
           + instBar(i, k) + '</div>';
       }).join("");
@@ -10785,7 +10795,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
              + '<span class="lgn to"><s>صار</s><b>' + fmt(st.o) + '</b></span></span>')
           : ('<span class="lgmv"><span class="lgn out"><s>صُرف</s><b>'
              + fmt(it.a) + '</b></span></span>'))
-      + '<span class="rt"><b class="a wno">−' + fmt(it.a) + '</b>'
+      + '<span class="rt"><b class="a wno">\u200E−' + fmt(it.a) + '</b>'
       + (ui.logEdit ? "" : ('<s class="b"><button class="del" data-del="' + esc(it.id)
          + '" title="احذفها">×</button></s>'))
       + '</span></div>';
@@ -11006,8 +11016,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
     cut("cap");
 
     h += '<div class="sec"><h2>محافظك</h2>'
-      + '<span class="hint">قيمتُها تتغيّر وحدَها — اكتبها كلَّ شهرٍ '
-      + 'ليُعرف ربحُك</span>'
+      + '<button class="mini" data-addinv="1">+ محفظة</button>'
       + '</div><div class="card">';
     h += '<div class="qtab head"><span>المحفظة</span><span>قيمتها اليوم</span>'
       + '<span>الربح</span><span>شهرياً</span></div>';
@@ -11067,7 +11076,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
         + ' value="' + (isFinite(icap) ? icap : "") + '">'
         + (iover ? ('<span class="capwarn">تجاوزتَه بـ ' + fmt(iover) + '</span>')
              : (isFinite(icap)
-                 ? ('<span>متبقٍ <b>' + fmt(Math.max(0, icap - iused)) + '</b></span>')
+? ('<span>بقي <b>' + fmt(Math.max(0, icap - iused)) + '</b></span>')
                  : '<span>بلا سقف — اكتبه إن أردتَ حدّاً</span>'))
         + '</div>'
         + '<div class="ahint" style="padding:0 15px 12px">هذا سقفُك أنت — '
@@ -11105,7 +11114,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
                 ? '<span class="salpill">💰 حساب الراتب</span>' : "")
             + '<button class="mini" data-acctedit="' + a.id + '" style="margin-inline-start:auto">✎ تعديل</button></div>'
             + (sp6 ? '<div class="arow"><span class="al">صُرف منه</span>'
-                     + '<span class="spentpill">−' + fmt(sp6) + '</span>'
+                     + '<span class="spentpill">\u200E−' + fmt(sp6) + '</span>'
                      + '<span class="ahint" style="padding:0">هذا الشهر</span></div>' : "")
             + (isDebt(a) ? debtContract(a) : "")
             + '<div class="arow"><span class="al">الغرض</span>'
@@ -11222,7 +11231,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
       + (num(a.mpay) || "") + '" placeholder="شهرياً"></div>'
       + '<div class="dprog"><span class="dbar"><i style="width:' + (debtPct(a) * 100) + '%"></i></span>'
       + '<span class="dtx">سدّدت <b>' + fmt(paid) + '</b> من <b>' + fmt(princ) + '</b>'
-      + ' · باقٍ <b class="rem">' + fmt(left) + '</b></span></div>'
++ ' · بقي <b class="rem">' + fmt(left) + '</b></span></div>'
       + '<div class="ahint">'
       + (n === null
           ? 'اكتب القسط الشهري ليُحسب موعد انتهائه.'
@@ -11315,8 +11324,8 @@ padding:10px 15px;border-top:1px solid var(--line)}
       h += IL.map(function(i){
         return '<div class="row"><span class="ic" style="background:var(--warn-soft);color:var(--warn)">📆</span>'
           + '<span><span class="nm">' + esc(i.n) + '</span>'
-          + '<span class="sub">' + fmt(i.p) + ' × ' + i.left + ' متبقٍ · آخر قسط ' + esc(mName(i.end)) + '</span></span>'
-          + '<span class="rt"><span class="a" style="color:var(--warn)">−' + fmt(i.p * i.left) + '</span></span></div>';
++ '<span class="sub">' + fmt(i.p) + ' · بقي ' + arN(i.left, "قسط") + ' · آخرها ' + esc(mName(i.end)) + '</span></span>'
+          + '<span class="rt"><span class="a" style="color:var(--warn)">\u200E−' + fmt(i.p * i.left) + '</span></span></div>';
       }).join("");
       h += debtAccts().map(function(a){
         var n = debtMonthsLeft(a), end = debtEnd(a);
@@ -11325,16 +11334,16 @@ padding:10px 15px;border-top:1px solid var(--line)}
           + '<span class="sub">'
           + (n === null
               ? 'بلا قسط محدَّد — سدّدت ' + fmt(debtPaid(a)) + ' من ' + fmt(debtPrinc(a))
-              : fmt(debtMonthly(a)) + ' × ' + n + ' متبقٍ · انتهاؤه ' + esc(mName(end)))
+: fmt(debtMonthly(a)) + ' · بقي ' + arN(n, "قسط") + ' · انتهاؤه ' + esc(mName(end)))
           + '</span>'
           + '<span class="track"><i style="width:' + (debtPct(a) * 100)
           + '%;background:var(--ok)"></i></span></span>'
-          + '<span class="rt"><span class="a" style="color:var(--warn)">−' + fmt(debtLeft(a)) + '</span></span></div>';
+          + '<span class="rt"><span class="a" style="color:var(--warn)">\u200E−' + fmt(debtLeft(a)) + '</span></span></div>';
       }).join("");
       h += '<div class="row"><span class="ic" style="background:var(--card-2)">Σ</span>'
         + '<span><span class="nm">إجمالي ما عليك</span>'
         + '<span class="sub">' + (instFreeMonth(ui.month) ? "تتحرر أموالك في " + mName(instFreeMonth(ui.month)) : "") + '</span></span>'
-        + '<span class="rt"><span class="a" style="color:var(--warn)">−' + fmt(LB) + '</span></span></div></div>';
+        + '<span class="rt"><span class="a" style="color:var(--warn)">\u200E−' + fmt(LB) + '</span></span></div></div>';
       h += '<div class="hintnote" data-note="n683513d">هذا <b>كامل ما تبقى عليك</b>، ويُطرح من ثروتك مرة واحدة. '
         + 'أما خطتك فتقتطع <b>' + fmt(instMonthly(ui.month)) + '</b> ريال شهرياً فقط — '
         + 'الرقمان مختلفان لأن أحدهما دَيْن والآخر قسط شهر.'
@@ -11740,8 +11749,13 @@ padding:10px 15px;border-top:1px solid var(--line)}
   function ledgerGrid(y){
     var months = yearMonths(y), now = todayKey(), mode = ledgerMode();
     var cats = visibleCats();
+    if(!ui.ledOpen)
+      return '<div class="sec"><h2>الدفتر</h2></div><div class="card"><div class="mrow">'
+        + '<span class="mn">صحّح أرقامَ سنتك<span class="ms">جدولٌ يُكتب فيه دخلُك وصرفُك وخطّتُك شهراً بشهر — '
+        + 'لمن نسي أن يسجّل أو أراد تصحيحاً</span></span>'
+        + '<button class="mini" data-ledopen="1">افتح الدفتر</button></div></div>';
     var h = '<div class="sec"><h2>الدفتر</h2>'
-      + '<span class="hint">دخلُك وصرفُك شهراً بشهر — تُصحّح أيَّ خانةٍ في مكانها</span></div>'
+      + '<button class="mini" data-ledopen="1">أغلِق</button></div>'
       + '<div class="card">'
       + '<div class="ledbar"><div class="chips">'
       + '<button class="chip sm' + (mode === "plan" ? " on" : "") + '" data-ledmode="plan">الخطة</button>'
@@ -11894,7 +11908,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
       h += '<div class="sec"><h2>البنود عبر السنة</h2><span class="hint">اسحب أفقياً</span></div>'
         + '<div class="card"><div class="yhint" data-note="ne904238">أحمرُ الرقم = أعلى شهر في ذلك البند</div>'
         + '<div class="ygrid"><table><thead><tr><th class="cn">البند</th>'
-        + yearMonths(y).map(function(k){ return '<th>' + k.slice(5) + '</th>'; }).join("")
+        + yearMonths(y).map(function(k){ return '<th>' + AR_M3[+k.slice(5) - 1] + '</th>'; }).join("")
         + '<th>المجموع</th><th>الشهري</th></tr></thead><tbody>';
       var yrow = function(name, v, t, fold, open, nk, cls){
         var peak = Math.max.apply(null, v);
@@ -11977,10 +11991,10 @@ padding:10px 15px;border-top:1px solid var(--line)}
       h += '<div class="sec"><h2>متى تتحرر</h2><span class="hint">آخر قسط لكل التزام</span></div>'
         + '<div class="card">';
       h += IL.map(function(i){
-        return '<div class="tl"><span class="tm">' + esc(i.end) + '</span>'
-          + '<span class="tn">' + esc(i.n) + ' <span class="tpill tp-inst">'
-          + i.left + ' متبقٍ</span></span>'
-          + '<span class="tv">−' + fmt(i.p * i.left) + '</span></div>';
+        return '<div class="tl"><span class="tm">' + esc(mName(i.end)) + '</span>'
+          + '<span class="tn">' + esc(i.n) + ' <span class="tpill tp-inst">بقي '
+          + arN(i.left, "قسط") + '</span></span>'
+          + '<span class="tv">\u200E−' + fmt(i.p * i.left) + '</span></div>';
       }).join("");
       var fm = instFreeMonth(thisM);
       if(fm)
@@ -11990,7 +12004,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
       h += '</div>';
     }
 
-    var AG = activeGoals();
+    var AG = [];
     if(AG.length){
       h += '<div class="sec"><h2>أهدافك</h2><span class="hint">أين وصلت</span></div><div class="card">';
       h += AG.map(function(g){
@@ -12497,7 +12511,11 @@ padding:10px 15px;border-top:1px solid var(--line)}
       + '<footer>' + (saveBlocked ? 'الحفظ متعذّر — اقرأ التنبيه أعلاه' : saveProof())
       + ' <span class="vtag">مصروف ' + esc(verLabel()) + '</span></footer></div>'
       + navbar() + dlgHTML();
-    applyNotes();
+      applyNotes();
+      if(state.arDigits) try{
+        var tw = document.createTreeWalker(document.getElementById("root"), NodeFilter.SHOW_TEXT, null), tn;
+        while((tn = tw.nextNode())) if(tn.nodeValue.indexOf("\u00b7") >= 0) tn.nodeValue = tn.nodeValue.replace(/\u00b7/g, "\u2022");
+      }catch(eDot){}
     wire(); if(!setNav()) colLayout(); setJump(); wire(); dlgWire(); restoreFocus();
     putTyped();
 
@@ -15386,7 +15404,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
     if(ui.month === todayKey()) return todayDate();
     return mkFirst(ui.month);
   }
-  var APP_VERSION = "0.2-beta+46";
+  var APP_VERSION = "0.2-beta+47";
   function verLabel(){ return APP_VERSION; }
   function channel(){
     var m = /-([a-z]+)(?:\+[\w.]+)?$/.exec(APP_VERSION || "");
@@ -17233,6 +17251,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
       if(b){ e.preventDefault(); kbHelp(); return; }
       if(t0.closest("[data-qadd]")){ e.preventDefault(); quickAddDlg(); return; }
       if(t0.closest("[data-ptools]")){ e.preventDefault(); ui.planTools = !ui.planTools; render(); return; }
+      if(t0.closest("[data-ledopen]")){ e.preventDefault(); ui.ledOpen = !ui.ledOpen; render(); return; }
       var qc = t0.closest("[data-qac]");
       if(qc && dlg && dlg.qa){
         e.preventDefault();
