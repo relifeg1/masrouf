@@ -2555,6 +2555,14 @@ padding:10px 15px;border-top:1px solid var(--line)}
   /* «+» في الشريط دائماً — فزرُّ الترويسة تكرار */
   .tact .btnpri[data-qadd]{display:none}
 }
+
+/* ══ طقسُ بداية الشهر ══ */
+.ritsteps{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 12px}
+.ritsteps span{font-size:12.5px;padding:5px 12px;border-radius:99px;background:var(--card-2);color:var(--ink-3);
+  border:1px solid var(--line)}
+.ritsteps span.d{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.ritsteps span.on{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
+.wiz.rit .dv.neg{color:var(--warn)}
 </style>
 
 <div id="root"></div>
@@ -3128,7 +3136,14 @@ padding:10px 15px;border-top:1px solid var(--line)}
   var CLS_DEFAULT = { fuel:"need", grocery:"need", bills:"need", telecom:"need", health:"need",
                       food:"want", personal:"want", family:"want", other:"want",
                       charity:"duty", install:"duty", subsc:"want" };
-  function clsOf(c){ return c.cls || CLS_DEFAULT[c.k] || "want"; }
+  /* تصنيفٌ واحد: ما اخترتَه، وإلا فنوعُ مالِه — ما يُدفع بمبلغه كلَّ شهرٍ
+     (ثابتٌ وقسطٌ وموسميّ) التزام — وإلا فافتراضُ البند. */
+  function clsOf(c){
+    if(!c) return "want";
+    if(c.cls) return c.cls;
+    if(layerRigid(c, ui.month)) return "duty";
+    return CLS_DEFAULT[c.k] || "want";
+  }
   function clsInfo(k){
     for(var i=0;i<CLASSES.length;i++) if(CLASSES[i].k === k) return CLASSES[i];
     return CLASSES[1];
@@ -3967,8 +3982,14 @@ padding:10px 15px;border-top:1px solid var(--line)}
      التزام: ثابت وأقساط وموسمي — لا تتفاوض عليها هذا الشهر.
      ادخار: بند الاستثمار (والأهداف تُحسب معه خارج الجدول).
      مرن:   ما تبقّى — وهو وحده ما تملك خفضه فعلاً. */
+  /* الطبقةُ من التصنيف: الالتزامُ وحده لا يتفاوض، وما سواه تصرفه */
   function layerOf(c, mk){
     if(invCat() && c.k === INVK) return "save";
+    return clsOf(c) === "duty" ? "duty" : "flex";
+  }
+  /* أكثرُ مالِ البند بمبلغٍ ثابت؟ — منه يُفترض التصنيف */
+  function layerRigid(c, mk){
+    if(invCat() && c.k === INVK) return false;
     mk = mk || ui.month;
     /* بند كـ«أقساط» نوعه متغيّر وفروعه أقساط — فالعبرة
        بموضع المال لا باسم الأب. وهو المنطق نفسه في planByType،
@@ -3979,13 +4000,13 @@ padding:10px 15px;border-top:1px solid var(--line)}
     }
     add(typeOf(c), subs.length ? catFree(c, mk) : linePlan(c, mk, c.k));
     subs.forEach(function(x){ add(typeOf(x), linePlan(x, mk, lineKey(c.k, x.id))); });
-    return duty > flex ? "duty" : "flex";
+    return duty > flex;
   }
   var LAYERS = [
     { k: "inc",  n: "دخلك" },
-    { k: "duty", n: "ما لا يتفاوض" },
-    { k: "save", n: "ادفع لنفسك" },
-    { k: "flex", n: "ما تصرفه" }
+    { k: "duty", n: "التزاماتك" },
+    { k: "save", n: "ادّخارك" },
+    { k: "flex", n: "احتياجٌ وكماليّ" }
   ];
   function layerSums(mk){
     /* تُبنى بـ layerOf نفسه الذي يرشّح الجدول، لا بـ planByType — وإلا
@@ -7821,10 +7842,11 @@ padding:10px 15px;border-top:1px solid var(--line)}
         value: by.name !== undefined ? by.name : c.n },
       { key: "emo", label: "الرمز", type: "hidden", emo: true,
         value: by.emo !== undefined ? by.emo : (c.img || c.e) },
-      { key: "acct", label: "حسابه المخصَّص", type: "select",
+      /* الحسابُ والهدفُ متقدّمان: تحت «تفاصيل أكثر» — يُفتحان لمن يحتاجهما */
+      { key: "acct", label: "حسابه المخصَّص", type: "select", more: true,
         value: by.acct !== undefined ? by.acct : (c.acct || ""),
         options: acctPickOptions() },
-      { key: "goal", label: "يدّخر لهدف (اختياريّ)", type: "select",
+      { key: "goal", label: "يدّخر لهدف (اختياريّ)", type: "select", more: true,
         value: by.goal !== undefined ? by.goal : (c.goal || ""),
         options: [{ v: "", n: "— لا يدّخر لهدف —" }].concat(
           activeGoals().filter(function(g){
@@ -8205,6 +8227,87 @@ padding:10px 15px;border-top:1px solid var(--line)}
       + (left > 0 ? "نفّذ التحويلات (" + fmt(left) + ")" : "اكتمل التوزيع") + '</button>'
       + '<button class="act" data-setsal="1">حساب الراتب</button>'
       + '<button class="act" data-wizdone="1">لاحقاً</button></div></div>';
+  }
+
+  /* ══ بدايةُ الشهر ══
+     حالُ الشهر في m.setup: لا شيء ← "inc" (اعتُمد الدخل) ← "fix" (سُجّلت
+     الثوابت أو تُركت) ← "dist" (وُزّع الراتب أو تُرك) ← true (شهرُك جاهز).
+     وكلُّ خطوةٍ لا عملَ فيها تُتخطّى: لا ثوابتَ ← لا خطوةَ ثوابت. */
+  function ritualHasDist(){ return autoSplit().length > 0 && accts().length > 0; }
+  function ritualStep(mk){
+    var st = (state.months[mk] || {}).setup;
+    if(st === true) return 0;
+    if(!st) return 1;
+    if(st === "inc") return autoPending(mk).length ? 2 : (ritualHasDist() ? 3 : 4);
+    if(st === "fix") return ritualHasDist() ? 3 : 4;
+    return 4;
+  }
+  function ritualCard(){
+    var k = ui.month;
+    /* شهرٌ مضى لا يُبدأ — والطقسُ لشهرك الجاري وما بعده */
+    if(k < todayKey()) return "";
+    var step = ritualStep(k);
+    if(!step) return "";
+    var names = ["الدخل", "الثوابت", "التوزيع", "الخطة"];
+    var head = '<div class="ritsteps">' + names.map(function(n, i){
+      var st = i + 1;
+      return '<span class="' + (st < step ? "d" : (st === step ? "on" : "")) + '">'
+        + (st < step ? "✓ " : (st + " ")) + n + '</span>';
+    }).join("") + '</div>';
+    var h = '<div class="wiz rit"><h3>بدايةُ ' + esc(mName(k)) + '</h3>' + head;
+    if(step === 1){
+      var o = incObj(k);
+      h += '<p>كم يدخلك هذا الشهر؟ ومنه تُحسب خطّتُك كلُّها.</p>'
+        + '<div class="row2">'
+        + '<div class="f"><label for="wsal">الراتب</label>'
+        + '<input id="wsal" class="ni w" type="number" inputmode="numeric" value="' + o.salary + '" style="width:100%"></div>'
+        + '<div class="f"><label for="wext">دخل إضافي</label>'
+        + '<input id="wext" class="ni w" type="number" inputmode="numeric" value="' + o.extra + '" style="width:100%"></div>'
+        + '</div>'
+        + '<div class="acts"><button class="act solid" data-wizinc="1">اعتمد الدخل</button>'
+        + '<button class="act" data-wizskip="1">ليس الآن</button></div>';
+    } else if(step === 2){
+      var p = autoPending(k), t = 0;
+      p.forEach(function(x){ t += x.a; });
+      h += '<p>ثوابتُ وأقساطٌ تتكرّر كلَّ شهر — أسجّلها الآن بدل أن تكتبها بيدك؟</p>'
+        + '<ul class="dlist">' + p.map(function(x){
+            return '<li><span>' + esc(x.n) + (typeOf(x.s || x.c) === "inst"
+                ? ' <span class="tpill tp-inst">قسط · ' + instLeft(x.s || x.c, k) + ' متبقٍ</span>' : "")
+              + '</span><span class="dv">' + fmt(x.a) + '</span></li>';
+          }).join("")
+        + '<li><span><b>الإجمالي</b></span><span class="dv">' + fmt(t) + '</span></li></ul>'
+        + '<div class="acts"><button class="act solid" data-wizfix="1">سجّلها</button>'
+        + '<button class="act" data-wizfixskip="1">سأسجّلها بنفسي</button></div>';
+    } else if(step === 3){
+      var sp = autoSplit(), src = salaryAcct(), planned = distPlanned(), moved = distMoved(k), left = planned - moved;
+      h += '<p>' + (src
+          ? 'من <b>' + esc(src.bank + " · " + src.n) + '</b> إلى حساب كلِّ هدفٍ ومحفظةٍ وبند — تحويلاتٌ تُخصم وتُضاف.'
+          : '<span style="color:var(--warn)">لم تحدّد حسابَ الراتب بعد.</span> اخترْه أوّلاً.') + '</p>'
+        + '<ul class="dlist">' + sp.map(function(x){
+            var ok = distDone(k, x);
+            return '<li><span>' + (ok ? "✓ " : "") + esc(x.n)
+              + (x.acct ? ' ← ' + esc(x.acct.bank + " · " + x.acct.n)
+                        : ' <span style="color:var(--warn)">بلا حساب</span>')
+              + '</span><span class="dv">' + fmt(x.a) + '</span></li>';
+          }).join("")
+        + '<li><span>يبقى للمصروف</span><span class="dv">' + fmt(income(k) - planned) + '</span></li></ul>'
+        + '<div class="acts">'
+        + (left > 0 && src ? '<button class="act solid" data-rundist="' + k + '">حوّل (' + fmt(left) + ')</button>' : "")
+        + (src ? "" : '<button class="act solid" data-setsal="1">اختر حساب الراتب</button>')
+        + '<button class="act" data-wizdone="1">' + (left > 0 ? "تخطَّ التوزيع" : "التالي") + '</button></div>';
+    } else {
+      var S = monthSurplus(k);
+      h += '<p>هكذا يتوزّع دخلُك هذا الشهر. راجع الخطّة إن تغيّر شيء، وإلا فشهرُك جاهز.</p>'
+        + '<ul class="dlist">'
+        + '<li><span>الدخل</span><span class="dv">' + fmt(S.inc) + '</span></li>'
+        + '<li><span>خطّةُ البنود</span><span class="dv">' + fmt(S.plan) + '</span></li>'
+        + '<li><span>الادّخار والاستثمار</span><span class="dv">' + fmt(S.save) + '</span></li>'
+        + '<li><span><b>' + (S.sur < 0 ? "خطّتُك أكبر من دخلك بـ" : "غيرُ موزَّع") + '</b></span>'
+        + '<span class="dv' + (S.sur < 0 ? " neg" : "") + '">' + fmt(Math.abs(S.sur)) + '</span></li></ul>'
+        + '<div class="acts"><button class="act solid" data-wizend="1">شهرُك جاهز ✓</button>'
+        + '<button class="act" data-tab="plan">راجع الخطّة</button></div>';
+    }
+    return h + '</div>';
   }
   function wizFixed(){
     if(monthSetup() !== "fix") return "";
@@ -8771,8 +8874,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
 
     cut("spend");
 
-    h += wizard();
-    h += wizFixed();
+    h += ritualCard();
     h += doneBanner();
     cut("act");
 
@@ -9120,9 +9222,9 @@ padding:10px 15px;border-top:1px solid var(--line)}
         sub = "الراتب والدخل الإضافي";
       } else {
         amt = L[x.k]; left -= amt; rest = left;
-        sub = x.k === "duty" ? "ثابت وأقساط وموسمي"
+        sub = x.k === "duty" ? "ما صنّفتَه التزاماً — فواتيرُ وأقساط"
             : x.k === "save" ? "أهداف واستثمار"
-            : "البنود المرنة";
+            : "ما صنّفتَه احتياجاً أو كماليّاً";
       }
       /* العلامة للختام وحده: الخطة أُغلقت أم لا — لا على كل مرحلة */
       var shut = x.k === "flex" && Math.abs(rest) < 1;
@@ -9209,7 +9311,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
   function flexTargets(mk){
     var out = [];
     visibleCats().forEach(function(c){
-      if(layerOf(c, mk) !== "flex") return;
+      if(layerOf(c, mk) !== "flex" || isRigid(c)) return;
       if((c.subs || []).length) return;      /* ذو فروع يُوزّع من داخله */
       out.push({ d: "c:" + c.k, n: c.n, w: catPlan(c, mk) });
     });
@@ -9249,7 +9351,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
   function buildRows(mk){
     var out = [];
     visibleCats().forEach(function(c){
-      if(layerOf(c, mk) !== "flex") return;
+      if(layerOf(c, mk) !== "flex" || isRigid(c)) return;
       if((c.subs || []).length) return;
       var sug = catAvg(c.k, 3);
       if(!sug) return;
@@ -9414,7 +9516,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
   function whatIfRows(mk){
     var out = [];
     visibleCats().forEach(function(c){
-      if(layerOf(c, mk) !== "flex") return;
+      if(layerOf(c, mk) !== "flex" || isRigid(c)) return;
       if((c.subs || []).length) return;
       out.push({ k: c.k, n: c.n, e: c.e, c: c.c, now: catPlan(c, mk) });
     });
@@ -9503,7 +9605,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
     }
     var t = typeOf(c);
     if(t === "inst") return "duty";
-    if(t === "fix") return "need";
+    if(t === "fix" || t === "seas") return "duty";
     return "want";
   }
   var clsDraft = null;
@@ -9955,8 +10057,8 @@ padding:10px 15px;border-top:1px solid var(--line)}
 
     /* ── الصورةُ الكبرى: حكمٌ على الراتب قبل الحكم على بنودِه ── */
     var S = salaryStat(MS, mk), SV = salaryVerdict(S);
-    var SEG = [{ k: "duty", n: "مرهون",  v: S.duty, c: "warn" },
-               { k: "flex", n: "مرن",    v: S.flex, c: "accent" },
+    var SEG = [{ k: "duty", n: "التزام",  v: S.duty, c: "warn" },
+               { k: "flex", n: "احتياجٌ وكماليّ", v: S.flex, c: "accent" },
                { k: "save", n: "ادّخار", v: S.save, c: "ok" },
                { k: "rest", n: "خارجَ الخطّة", v: Math.max(0, S.rest), c: "ink-3" }];
     var tot = S.incNow > 0 ? Math.max(S.incNow, S.plan) : S.plan;
@@ -9972,7 +10074,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
           }).join("") + '</div>') : "")
       + (S.incNow > 0 && S.duty > 0
           ? ('<p class="salheld">من كلِّ مئة ريالٍ تدخل، <b>' + S.held
-             + '</b> مرهونةٌ قبل أن يبدأ شهرُك — ومساحةُ مناورتك ما بقي.</p>')
+             + '</b> التزاماتٌ قبل أن يبدأ شهرُك — ومساحةُ مناورتك ما بقي.</p>')
           : "")
       + '</div>';
 
@@ -10197,9 +10299,9 @@ padding:10px 15px;border-top:1px solid var(--line)}
 
     /* ── ١ · مسار الريال ── */
     var FLOW = [
-      { n: "التزامات ثابتة وأقساط", v: T.duty, c: "var(--warn)",
-        s: "فواتير وأقساط وما لا يتفاوض" },
-      { n: "معيشة مرنة", v: T.flex, c: "var(--ink-2)", s: "ما تملك خفضه" },
+      { n: "التزام", v: T.duty, c: "var(--warn)",
+        s: "فواتيرُ وأقساطٌ وما لا تتفاوض عليه" },
+      { n: "احتياجٌ وكماليّ", v: T.flex, c: "var(--ink-2)", s: "ما تملك خفضه" },
       { n: "ادّخار وصل فعلاً", v: T.saveMoved, c: "var(--ok)", s: "أهداف واستثمار" },
       { n: left >= 0 ? "بقي بلا صرف" : "صُرف من رصيد سابق", v: Math.abs(left),
         c: "var(--line-2)", s: left >= 0 ? "لم يخرج من حسابك" : "صرفتَ فوق دخل الفترة" }
@@ -10819,8 +10921,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
         + '</ul></div>';
     }
 
-    h += wizard();
-    h += wizFixed();
+    h += ritualCard();
     h += doneBanner();
 
     h += '<div class="flag ' + (un === 0 ? "ok" : (un > 0 ? "hint" : "bad")) + '">'
@@ -15868,19 +15969,22 @@ padding:10px 15px;border-top:1px solid var(--line)}
       var m = month(ui.month);
       m.inc = { salary: num(sEl && sEl.value), extra: num(eEl && eEl.value) };
       m.setup = "inc";
+      toast("اعتُمد دخلُ " + mName(ui.month));
       save(); render();
     });
     on("[data-wizskip]", function(){ month(ui.month).setup = true; save(); render(); });
-    on("[data-wizdone]", function(){
-      month(ui.month).setup = autoPending(ui.month).length ? "fix" : true; save(); render();
+    on("[data-wizdone]", function(){ month(ui.month).setup = "dist"; save(); render(); });
+    on("[data-wizend]", function(){
+      month(ui.month).setup = true; save(); render();
+      toast("شهرُك جاهز — " + mName(ui.month));
     });
     on("[data-wizfix]", function(){
       var n = autoRecord(ui.month);
-      month(ui.month).setup = true;
+      month(ui.month).setup = "fix";
       toast(n ? ("سُجّلت " + arN(n, "عملية", "ثابتة") + "") : "لا شيء لتسجيله");
       save(); render();
     });
-    on("[data-wizfixskip]", function(){ month(ui.month).setup = true; save(); render(); });
+    on("[data-wizfixskip]", function(){ month(ui.month).setup = "fix"; save(); render(); });
     on("[data-autorec]", function(){
       var n = autoRecord(ui.month);
       toast(n ? ("سُجّلت " + arN(n, "عملية") + "") : "لا شيء لتسجيله");
@@ -16201,7 +16305,9 @@ padding:10px 15px;border-top:1px solid var(--line)}
     on("[data-rundist]", function(b){
       var mk = b.getAttribute("data-rundist"), r = runDist(mk);
       if(r.nosrc){ toast("حدّد حساب الراتب أولاً"); return; }
-      month(mk).setup = true;
+      /* التوزيعُ خطوةٌ لا نهاية: كان يقفز بالشهر إلى «جاهز» فلا تُعرض
+         الثوابتُ أبداً. ومن وزّع من شاشة الحسابات بعد الطقس لا يُعاد إليه */
+      if(month(mk).setup !== true) month(mk).setup = "dist";
       var sa = salaryAcct();
       toast(sa && num(sa.bal) < 0
         ? ("نُفّذ " + r.done + " تحويل — ورصيد " + sa.n + " صار " + fmt(sa.bal))
@@ -16701,7 +16807,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "0.2-beta+43";
+  var APP_VERSION = "0.2-beta+44";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
