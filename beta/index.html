@@ -2493,6 +2493,32 @@ padding:10px 15px;border-top:1px solid var(--line)}
   .qinc .qs s{font-size:12px}
   .qinc .qs.big b{font-size:30px}
 }
+
+/* ══ الجوال: هدفُ اللمس ══
+   ٨٣٪ من عناصر اللمس كانت دون ٣٢ بكسلاً. يكبُر الشكلُ حيث يحتمل،
+   وحيث لا يحتمل — دائرةُ ✓ وأيقونةُ البند — تتّسع منطقةُ اللمس وحدَها
+   بطبقةٍ شفّافة فلا يتغيّر ما يُرى. */
+@media (max-width:819px){
+  .mini,.chip,.mstoday{min-height:34px}
+  .msrow .ms{min-height:36px}
+  .mstrip2 .msy{width:36px;height:36px}
+  .mnav button{width:40px;height:40px}
+  .gear,.syncdot{min-width:40px;min-height:40px}
+  .act,.btnpri,.addbtn{min-height:44px}
+  .lcell,.ni{min-height:38px}
+  .qin{min-height:42px}
+  .qtab .qok,.qtab .qi,.carrybtn,.syncdot{position:relative}
+  .qtab .qok::after,.qtab .qi::after,.carrybtn::after,.syncdot::after,.qwhy::after{
+    content:"";position:absolute;inset:-10px}
+  .setjump{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;position:sticky;top:0;z-index:20;
+    background:var(--bg);padding:8px 0 10px;margin:0 -16px;padding-inline:16px}
+  .setjump::-webkit-scrollbar{display:none}
+  .setjump button{flex:none;min-height:36px;padding:0 14px;border-radius:99px;border:1px solid var(--line);
+    background:var(--card);color:var(--ink-2);font:inherit;font-size:13px;white-space:nowrap;cursor:pointer}
+  .v-set > .sec{scroll-margin-top:64px}
+}
+.setjump{display:none}
+@media (max-width:819px){ .setjump{display:flex} }
 </style>
 
 <div id="root"></div>
@@ -13425,7 +13451,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
       + ' <span class="vtag">مصروف ' + esc(verLabel()) + '</span></footer></div>'
       + navbar() + dlgHTML();
     applyNotes();
-    wire(); if(!setNav()) colLayout(); wire(); dlgWire(); restoreFocus();
+    wire(); if(!setNav()) colLayout(); setJump(); wire(); dlgWire(); restoreFocus();
     putTyped();
 
     /* الرسم يقع عشراتِ المرّات — فلا يُسجَّل إلا ما أبطأ منه، وإلا
@@ -13533,6 +13559,31 @@ padding:10px 15px;border-top:1px solid var(--line)}
   }
 
   /* الإعدادات: قائمة أقسام + لوحة القسم المختار */
+  /* الإعداداتُ على الجوال سبعةٌ وعشرون قسماً في عمودٍ واحد — اثنتا عشرةَ
+     شاشة. فهرسٌ أفقيّ يلتصق بالأعلى ويقفز إلى القسم. والحاسبُ له قائمتُه */
+  function setJump(){
+    var wrap = document.querySelector("#root > .wrap");
+    if(!wrap || ui.tab !== "set" || window.innerWidth >= 1180) return;
+    var secs = Array.prototype.slice.call(wrap.children).filter(function(el){
+      return el.classList && el.classList.contains("sec") && el.querySelector("h2");
+    });
+    if(secs.length < 6) return;
+    var box = document.createElement("div");
+    box.className = "setjump";
+    box.setAttribute("role", "navigation");
+    box.setAttribute("aria-label", "أقسام الإعدادات");
+    box.innerHTML = secs.map(function(el, i){
+      el.id = "sj" + i;
+      return '<button data-sj="' + i + '">' + esc(el.querySelector("h2").textContent.trim()) + '</button>';
+    }).join("");
+    wrap.insertBefore(box, secs[0]);
+    box.onclick = function(e){
+      var b = e.target && e.target.closest ? e.target.closest("[data-sj]") : null;
+      if(!b) return;
+      var t = document.getElementById("sj" + b.getAttribute("data-sj"));
+      if(t) t.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+  }
   function setNav(){
     var wrap = document.querySelector("#root > .wrap");
     if(!wrap || ui.tab !== "set" || window.innerWidth < 1180) return false;
@@ -16445,7 +16496,7 @@ padding:10px 15px;border-top:1px solid var(--line)}
   /* ═══ التثبيت على الجهاز ═══
      يعمل في النسخة المستقلّة، ويصمت في غيرها بلا خطأ. */
   /* رقم النسخة يُحقن عند البناء — فتعرف ما الذي يشغّله الناس */
-  var APP_VERSION = "0.2-beta+40";
+  var APP_VERSION = "0.2-beta+41";
   /* يُعرض رقماً لا تاريخاً: التاريخ لا يميّز تحديثين في يوم، ولا يقول
      لصاحبه كم تحديثاً فاته. والرقم يُردّ إلى تحديثٍ بعينه. */
   function verLabel(){ return APP_VERSION; }
